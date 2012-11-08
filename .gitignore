@@ -161,3 +161,17 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+
+
+#MICROCHIP MPLAB FILES
+*.cof
+*.o
+*.hex
+*.map
+*.mcs
+
+
+# Emacs Files
+*.h~
+*.c~
+*.txt~
