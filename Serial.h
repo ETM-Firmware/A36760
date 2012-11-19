@@ -3,26 +3,28 @@
 
 // Command List
 
-#define CMD_PAC_SET_MODE_A                    0x20
-#define CMD_PAC_SET_MODE_B                    0x21
+#define CMD_SET_MAGNETRON_CURRENT_REMOTE_MODE           0x10
+#define CMD_SET_MAGNETRON_CURRENT_LOCAL_MODE            0x11
 
+#define CMD_PAC_SET_MODE_A                              0x20
+#define CMD_PAC_SET_MODE_B                              0x21
 
-#define CMD_SET_MAGNETRON_MAGNET_CURRENT      0x2B
-#define CMD_SET_LAMBDA_VOLTAGE_MODE_A         0x2A
-#define CMD_SET_LAMBDA_VOLTAGE_MODE_B         0x2D
-#define CMD_SET_MAGNETRON_FILAMENT_VOLTAGE    0x2C
+#define CMD_SET_MAGNETRON_MAGNET_CURRENT                0x2B
+#define CMD_SET_LAMBDA_VOLTAGE_MODE_A                   0x2A
+#define CMD_SET_LAMBDA_VOLTAGE_MODE_B                   0x2D
+#define CMD_SET_MAGNETRON_FILAMENT_VOLTAGE              0x2C
 
+#define CMD_READ_RAM_VALUE                              0x30
 
-
-#define CMD_READ_RAM_VALUE                    0x30
+#define CMD_CLEAR_PROCESSOR_RESET_DATA                  0x40
 
 #define CMD_SET_MAGNET_PS_CAL_DATA                      0xD0
 #define CMD_READ_MAGNET_PS_CAL_DATA                     0xD1
 #define CMD_SAVE_MAGNET_PS_CAL_DATA_TO_EEPROM           0xD2
 
-#define CMD_SET_FILAMNET_PS_CAL_DATA                    0xD3
-#define CMD_READ_FILAMNET_PS_CAL_DATA                   0xD4
-#define CMD_SAVE_FILAMNET_PS_CAL_DATA_TO_EEPROM         0xD5
+#define CMD_SET_FILAMENT_PS_CAL_DATA                    0xD3
+#define CMD_READ_FILAMENT_PS_CAL_DATA                   0xD4
+#define CMD_SAVE_FILAMENT_PS_CAL_DATA_TO_EEPROM         0xD5
 
 #define CMD_SET_THYR_CATHODE_PS_CAL_DATA                0xD6
 #define CMD_READ_THYR_CATHODE_PS_CAL_DATA               0xD7
@@ -46,7 +48,7 @@
 
 #define CMD_SET_MAGNETRON_MODE_B_CAL_DATA               0xE5
 #define CMD_READ_MAGNETRON_MODE_B_CAL_DATA              0xE6
-#define CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA              0xE7
+#define CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA_TO_EEPROM    0xE7
 
 #define CMD_SET_CNTRL_CAL_DATA                          0xE8
 #define CMD_READ_CNTRL_CAL_DATA                         0xE9
@@ -55,14 +57,14 @@
 
 
 
-#define CMD_GENERATE_WDT_RESET                          0x40
+
 
 
 
 // RAM Locations
 #define RAM_READ_STATE                                          0x01
-
-
+#define RAM_READ_VERSION                                        0x02
+#define RAM_READ_LOCAL_REMOTE_MAGNET_CURRENT_CONTROL            0x03
 
 #define RAM_READ_THYR_CATH_HTR_VOTAGE_SET_POINT                 0x11
 #define RAM_READ_THYR_CATH_HTR_VOTAGE_ADC                       0x10
@@ -215,5 +217,6 @@ extern struct CommandStringStruct command_string;
 
 void DoSerialCommand(void);
 
+unsigned int GenerateMagnetVprog(unsigned int iprog);
 
 #endif

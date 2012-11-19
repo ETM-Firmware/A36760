@@ -1,0 +1,21 @@
+
+2012-10-30 - Changes to make Magnet Voltage based on Mode A Voltage
+A34760.h line 31 added new Compilte time option __SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE (also DISABLED THIS OPTION)
+
+Serial.c line 208 added #if defineds for __SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE around CMD_SET_MAGNETRON_MAGNET_CURRENT
+
+
+A34760.c line 1587/1617 - Added check for __SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE.  If this option is not set, calculate the magenet current from mode A magnetron voltage
+
+A34760.c Line 2257 - Added function Calculate Poly
+
+A34760.c Line 1084 - Added check to NOT scale to power supply if set in state warp up
+
+
+2012-11-05
+Added Auto Restart Code 
+
+A34760.c Line 1060  - Added code at processor startup to read persitent ram if restarting from fast fault reset
+
+A34760.c Line 209/229 - Added code durring warmup.  if the fast restart pin is set, the warmup will finish in 2 seconds
+

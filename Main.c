@@ -140,6 +140,10 @@ int main(void) {
   _init_prog_address(EE_address_pulse_counter_repository_in_EEPROM, pulse_counter_repository_in_EEPROM);
   _memcpy_p2d16(pulse_counter_repository_ram_copy, EE_address_pulse_counter_repository_in_EEPROM, _EE_ROW);
 
+  _init_prog_address(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_in_EEPROM);
+  _memcpy_p2d16(control_loop_cal_data_ram_copy, EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+
+  ram_config_set_magnetron_magnet_current_from_GUI = 0;
 
   while (1) {
     DoStateMachine();

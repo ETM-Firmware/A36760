@@ -540,6 +540,7 @@ extern unsigned int ps_hv_lambda_mode_B_config_ram_copy[16];
 extern unsigned int ps_magnetron_mode_A_config_ram_copy[16];
 extern unsigned int ps_magnetron_mode_B_config_ram_copy[16];
 extern unsigned int pulse_counter_repository_ram_copy[16];
+extern unsigned int control_loop_cal_data_ram_copy[16];
 
 extern unsigned long EE_address_ps_magnet_config_in_EEPROM;
 extern unsigned long EE_address_ps_filament_config_in_EEPROM;
@@ -550,6 +551,7 @@ extern unsigned long EE_address_ps_hv_lambda_mode_B_config_in_EEPROM;
 extern unsigned long EE_address_ps_magnetron_mode_A_config_in_EEPROM;
 extern unsigned long EE_address_ps_magnetron_mode_B_config_in_EEPROM;
 extern unsigned long EE_address_pulse_counter_repository_in_EEPROM;
+extern unsigned long EE_address_control_loop_cal_data_in_EEPROM;
 
 
 // U64 MCP23017 Deffenitions                    
@@ -578,6 +580,8 @@ extern unsigned long EE_address_pulse_counter_repository_in_EEPROM;
 
 extern MCP23017 U64_MCP23017;
 
+
+extern unsigned char ram_config_set_magnetron_magnet_current_from_GUI;
 
 extern volatile unsigned int lvdinterrupt_counter;
 

@@ -3,6 +3,7 @@
 #include "A34760.h"
 #include "config.h"
 #include "faults.h"
+#include "Version.h"
 #include <libpic30.h>
 
 /*
@@ -34,7 +35,6 @@ unsigned int MakeCRC(unsigned char command_byte, unsigned char register_byte, un
 unsigned int ReadFromRam(unsigned int ram_location);
 void SendCommand(unsigned char command_byte, unsigned char register_byte, unsigned int data_word);
 
-unsigned int GenerateMagnetVprog(unsigned int iprog);
 unsigned int GenerateFilamentIprog(unsigned int vprog);
 unsigned int GenerateLambdaIprog(unsigned int vprog);
 
@@ -147,6 +147,8 @@ void ExecuteCommand(void) {
     {
 
 
+#define BUILD_DATE __DATE__
+
       
 #if defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
       // We have compiled in the mode that untilizes the serial port to set the magnetron operating parameters (instead of the analong interface)
@@ -204,28 +206,36 @@ void ExecuteCommand(void) {
       break;
 
 #endif // #if defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+    case CMD_SET_MAGNETRON_CURRENT_REMOTE_MODE:
+      ram_config_set_magnetron_magnet_current_from_GUI = 0;
+      break;
       
-#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
-
-    case CMD_SET_MAGNETRON_MAGNET_CURRENT:
-      itemp = data_word;
-      vtemp = GenerateMagnetVprog(itemp);
-      SetPowerSupplyTarget(&ps_magnet, vtemp, itemp);
-      ps_magnet_config_ram_copy[EEPROM_V_SET_POINT] = ps_magnet.v_command_set_point;
-      ps_magnet_config_ram_copy[EEPROM_I_SET_POINT] = ps_magnet.i_command_set_point;
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_ram_copy);
+    case CMD_SET_MAGNETRON_CURRENT_LOCAL_MODE:
+      ram_config_set_magnetron_magnet_current_from_GUI = 1;
       break;
 
-#endif //#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
+
+      //#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
+    case CMD_SET_MAGNETRON_MAGNET_CURRENT:
+      if (ram_config_set_magnetron_magnet_current_from_GUI) {
+	itemp = data_word;
+	vtemp = GenerateMagnetVprog(itemp);
+	SetPowerSupplyTarget(&ps_magnet, vtemp, itemp);
+	ps_magnet_config_ram_copy[EEPROM_V_SET_POINT] = ps_magnet.v_command_set_point;
+	ps_magnet_config_ram_copy[EEPROM_I_SET_POINT] = ps_magnet.i_command_set_point;
+	_wait_eedata();
+	_erase_eedata(EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
+	_wait_eedata();
+	_write_eedata_row(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_ram_copy);
+      }
+      break;
+
+      //#endif //#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
 
       
     case CMD_READ_RAM_VALUE:
       return_data_word = ReadFromRam(command_string.register_byte);
       break;
-      
 
     case CMD_SET_MAGNET_PS_CAL_DATA:
       ps_magnet_config_ram_copy[command_string.register_byte] = data_word;
@@ -242,6 +252,128 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_ram_copy);
       break;
 
+    case CMD_SET_FILAMENT_PS_CAL_DATA:
+      ps_filament_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_FILAMENT_PS_CAL_DATA:
+      return_data_word = ps_filament_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_FILAMENT_PS_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
+      break;
+
+    case CMD_SET_THYR_CATHODE_PS_CAL_DATA:
+      ps_thyr_cathode_htr_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_THYR_CATHODE_PS_CAL_DATA:
+      return_data_word = ps_thyr_cathode_htr_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_THYR_CATHODE_PS_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_thyr_cathode_htr_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_thyr_cathode_htr_config_in_EEPROM, ps_thyr_cathode_htr_config_ram_copy);
+      break;
+
+    case CMD_SET_THYR_RESERVOIR_PS_CAL_DATA:
+      ps_thyr_reservoir_htr_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_THYR_RESERVOIR_PS_CAL_DATA:
+      return_data_word = ps_thyr_reservoir_htr_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_THYR_RESERVOIR_PS_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, ps_thyr_reservoir_htr_config_ram_copy);
+      break;
+
+    case CMD_SET_HV_LAMBDA_MODE_A_CAL_DATA:
+      ps_hv_lambda_mode_A_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_HV_LAMBDA_MODE_A_CAL_DATA:
+      return_data_word = ps_hv_lambda_mode_A_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_HV_LAMBDA_MODE_A_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, ps_hv_lambda_mode_A_config_ram_copy);
+      break;
+
+    case CMD_SET_HV_LAMBDA_MODE_B_CAL_DATA:
+      ps_hv_lambda_mode_B_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_HV_LAMBDA_MODE_B_CAL_DATA:
+      return_data_word = ps_hv_lambda_mode_B_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_HV_LAMBDA_MODE_B_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, ps_hv_lambda_mode_B_config_ram_copy);
+      break;
+
+    case CMD_SET_MAGNETRON_MODE_A_CAL_DATA:
+      ps_magnetron_mode_A_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_MAGNETRON_MODE_A_CAL_DATA:
+      return_data_word = ps_magnetron_mode_A_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_MAGNETRON_MODE_A_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_magnetron_mode_A_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_magnetron_mode_A_config_in_EEPROM, ps_magnetron_mode_A_config_ram_copy);
+      break;
+
+    case CMD_SET_MAGNETRON_MODE_B_CAL_DATA:
+      ps_magnetron_mode_B_config_ram_copy[command_string.register_byte] = data_word;
+      break;
+      
+    case CMD_READ_MAGNETRON_MODE_B_CAL_DATA:
+      return_data_word = ps_magnetron_mode_B_config_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_magnetron_mode_B_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_magnetron_mode_B_config_in_EEPROM, ps_magnetron_mode_B_config_ram_copy);
+      break;
+
+    case CMD_SET_CNTRL_CAL_DATA:
+      control_loop_cal_data_ram_copy[command_string.register_byte] = data_word;
+      break;
+
+    case CMD_READ_CNTRL_CAL_DATA:
+      return_data_word = control_loop_cal_data_ram_copy[command_string.register_byte];
+      break;
+      
+    case CMD_SAVE_CNTRL_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
+      break;
+
+
+
     case CMD_SET_MAGNETRON_FILAMENT_VOLTAGE:
       vtemp = data_word;
       itemp = GenerateFilamentIprog(vtemp);
@@ -254,7 +386,7 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
       break;
 
-    case CMD_GENERATE_WDT_RESET:
+    case CMD_CLEAR_PROCESSOR_RESET_DATA:
       // DPARKER using this command to reset "reset data"
       debug_status_register = 0;
       _POR = 0;
@@ -265,7 +397,6 @@ void ExecuteCommand(void) {
       _WDTO = 0;
       _IOPUWR = 0;
       last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
-
       break;
 
 
@@ -541,6 +672,13 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = control_state;
       break;
       
+    case RAM_READ_VERSION:
+      data_return = VERSION_NUMBER;
+      break;
+
+    case RAM_READ_LOCAL_REMOTE_MAGNET_CURRENT_CONTROL:
+      data_return = ram_config_set_magnetron_magnet_current_from_GUI;
+      break;
       
       
       

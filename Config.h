@@ -30,7 +30,7 @@
 
 // ----------------- Magnet Supply Configuration ----------------------- //
 
-#define MAGNET_SUPPLY_WARMUP_RAMP_TIME              300                      // 100ms Units - 30 Seconds total
+#define MAGNET_SUPPLY_WARMUP_RAMP_TIME              100                      // 100ms Units - 10 Seconds total
 
 #define MAX_MAGNET_SUPPLY_VOLTAGE_SET_POINT         32000                    // 32 Volts
 

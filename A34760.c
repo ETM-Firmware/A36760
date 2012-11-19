@@ -11,6 +11,7 @@
 #include "ETMdsp.h"
 #include "Config.h"
 
+unsigned char ram_config_set_magnetron_magnet_current_from_GUI;
 
 volatile unsigned int _PERSISTENT last_known_action;
 volatile unsigned int _PERSISTENT last_osccon;
@@ -1651,10 +1652,10 @@ void FilterADCs(void) {
   unsigned int itemp;
 #endif
 
-#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
+  //#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
   unsigned int vtemp_2;
   unsigned int itemp_2;
-#endif
+  //#endif
 
   last_known_action = LAST_ACTION_FILTER_ADC;
 
@@ -1681,14 +1682,16 @@ void FilterADCs(void) {
   SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
 #endif
   
-#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
-  // The Magnet Current is calculated from Mode A program voltage
-  itemp_2 = CalculatePoly(ps_hv_lambda_mode_A.v_command_set_point);
-  vtemp_2 = GenerateMagnetVprog(itemp_2);
-  SetPowerSupplyTarget(&ps_magnet, vtemp_2, itemp_2);
-#endif
-
-
+  //#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
+  if (!ram_config_set_magnetron_magnet_current_from_GUI) {
+    // The Magnet Current is calculated from Mode A program voltage
+    itemp_2 = CalculatePoly(ps_hv_lambda_mode_A.v_command_set_point);
+    vtemp_2 = GenerateMagnetVprog(itemp_2);
+    SetPowerSupplyTarget(&ps_magnet, vtemp_2, itemp_2);
+  }
+  //#endif
+    
+  
 
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
