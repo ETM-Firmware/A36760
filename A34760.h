@@ -24,8 +24,13 @@
 
 // --------- Compile Time Options -----------------
 
-//#define __SET_MAGNETRON_OVER_SERIAL_INTERFACE  // If this is set the magnetron voltage/current is set over the serial interface
+//#define __SELECT_ARI_BENCHTOP_MODE           // This will set the VPROG from the GUI and select the benchtop fault settings
+
+
+#ifdef __SELECT_ARI_BENCHTOP_MODE
+#define __SET_MAGNETRON_OVER_SERIAL_INTERFACE  // If this is set the magnetron voltage/current is set over the serial interface
                                                // If this mode is not selected, the the set point is set over the analog interface
+#endif
 
 
 //#define __SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE // If this is set the magnet current is set over the serial interface
