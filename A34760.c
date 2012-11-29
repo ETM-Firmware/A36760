@@ -1322,7 +1322,7 @@ void UpdateDacAll(void) {
   dac_value_array[4] = ps_filament.v_dac_set_point;
   dac_value_array[5] = ps_filament.i_dac_set_point;
   dac_value_array[6] = ps_hv_lambda_mode_A.v_dac_set_point;
-  dac_value_array[6] = ps_hv_lambda_mode_B.v_dac_set_point;
+  dac_value_array[7] = ps_hv_lambda_mode_B.v_dac_set_point;
 
   dac_write_failed = 1;
   number_tries = 0;
