@@ -33,9 +33,6 @@
 #endif
 
 
-//#define __SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE // If this is set the magnet current is set over the serial interface
-                      // If this mode is not selected, then the magenet current is derived from the lambda Mode A program voltage 
-
 
 /* 
    -------------- Resource Summary  -------------------
@@ -199,8 +196,9 @@
 /* 
    --- 12-BIT ADC Configuration ---
    Goal, when setup, the system will scan through the selected Analog channels and sample
-   ADC_CONV_CLK_33Tcy makes the ADC clock about 1uS
-   
+     
+   ADC_CONV_CLK_7Tcy2 makes the ADC cloack 350ns at 10 MHz Clock
+
    AN3 -  PFN Rev Current           - Only sampled after a pulse
    
    AN4 - pac_#1                     - 2.56s tau - Analog Input Bandwidth = 200 Hz
@@ -219,13 +217,16 @@
    AN13 - lambda_vmon               - Only Sampled at EOC
 */
 
-#define A34760_ADCON1_VALUE (ADC_MODULE_ON & ADC_IDLE_STOP & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON)
+
+
+#define A34760_ADCON1_VALUE (ADC_MODULE_OFF & ADC_IDLE_STOP & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON)
 #define A34760_ADCON2_VALUE (ADC_VREF_AVDD_AVSS & ADC_SCAN_ON & ADC_SAMPLES_PER_INT_11 & ADC_ALT_BUF_OFF & ADC_ALT_INPUT_OFF)
-#define A34760_ADCON3_VALUE (ADC_SAMPLE_TIME_11 & ADC_CONV_CLK_SYSTEM & ADC_CONV_CLK_11Tcy)
+#define A34760_ADCON3_VALUE (ADC_SAMPLE_TIME_3 & ADC_CONV_CLK_SYSTEM & ADC_CONV_CLK_7Tcy2)
 #define A34760_ADCHS_VALUE  (ADC_CH0_POS_SAMPLEA_AN3 & ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN3 & ADC_CH0_NEG_SAMPLEB_VREFN)
 #define A34760_ADPCFG_VALUE (ENABLE_AN3_ANA & ENABLE_AN4_ANA & ENABLE_AN5_ANA & ENABLE_AN6_ANA & ENABLE_AN7_ANA & ENABLE_AN8_ANA & ENABLE_AN9_ANA & ENABLE_AN10_ANA & ENABLE_AN11_ANA & ENABLE_AN12_ANA & ENABLE_AN13_ANA)
 #define A34760_ADCSSL_VALUE (SKIP_SCAN_AN0 & SKIP_SCAN_AN1 & SKIP_SCAN_AN2 & SKIP_SCAN_AN14 & SKIP_SCAN_AN15)
 
+// With these settings, the effective sample rate is around 150K samples/sec
 
 
 
@@ -394,6 +395,7 @@ typedef struct {
   DPARKER add flow diagram doc number
 */
 #define STATE_START_UP                       0x04
+#define STATE_FAST_RECOVERY_START_UP         0x06
 #define STATE_SYSTEM_COLD_READY              0x14
 #define STATE_WARM_UP                        0x24
 #define STATE_SYSTEM_WARM_READY              0x34

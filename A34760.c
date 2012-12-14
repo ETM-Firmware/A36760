@@ -11,6 +11,8 @@
 #include "ETMdsp.h"
 #include "Config.h"
 
+void ReadADCtoPACArray(void);
+
 unsigned char ram_config_set_magnetron_magnet_current_from_GUI;
 
 volatile unsigned int _PERSISTENT last_known_action;
@@ -118,7 +120,14 @@ volatile unsigned char global_adc_ignore_this_sample;
 unsigned char a_b_selected_mode;
 
 
-void DoA34335StartUp(void);
+
+void DoA34760StartUpCommon(void);
+void DoA34760StartUpNormalProcess(void);
+void DoA34760StartUpFastProcess(void);
+void DoA34760StartUpCommonPostProcess(void);
+
+
+
 void CalcPowerSupplySettings(POWERSUPPLY* ptr_ps);
 void UpdateDacAll(void);
 void Do10msTicToc(void);
@@ -126,6 +135,8 @@ void DoThyratronPIDs(void);
 void DoMagnetronFilamentAdjust(void);
 void ReadIsolatedAdcToRam(void);
 void FilterADCs(void);
+void FastReadAndFilterFeedbacks(void);
+void FastReadAndFilterPACInputs(void);
 void ExitHvOnState(void);
 void DoColdShutDown(void);
 void DoWarmShutDown(void);
@@ -173,7 +184,11 @@ void DoStateMachine(void) {
   switch(control_state) {
     
   case STATE_START_UP:
-    DoA34335StartUp();
+
+    DoA34760StartUpCommon();
+    DoA34760StartUpNormalProcess();
+    DoA34760StartUpCommonPostProcess();
+    
     if (CheckStartupFailed()) {
       control_state = STATE_FAULT_MCU_CORE_FAULT;
     } else {
@@ -181,6 +196,28 @@ void DoStateMachine(void) {
     }
     break;
     
+  case STATE_FAST_RECOVERY_START_UP:
+
+    // It takes a 360uS to get to here (really just to read flash)
+
+    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    DoA34760StartUpCommon();  // This Takes 4.6ms (4.55 ms of this is loading and intialization of Power Supply Structures)
+    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    DoA34760StartUpFastProcess(); // This takes 4.3mS 
+    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    DoA34760StartUpCommonPostProcess(); // This takes 60uS
+    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    
+    if (CheckStartupFailed()) {
+      control_state = STATE_FAULT_MCU_CORE_FAULT;
+    } else {
+      control_state = STATE_HV_ON;
+    }
+
+    break;
+
+    
+
   case STATE_SYSTEM_COLD_READY:
     DoColdShutDown();
     while (control_state == STATE_SYSTEM_COLD_READY) {
@@ -236,7 +273,7 @@ void DoStateMachine(void) {
     // DPARKER SaveDataToEEPROM(); -- New Commands to deal with EEPROM access and storage
     DoWarmShutDown();
     ScalePowerSupply(&ps_hv_lambda_mode_A,100,100);
-    ScalePowerSupply(&ps_hv_lambda_mode_A,100,100);
+    ScalePowerSupply(&ps_hv_lambda_mode_B,100,100);
     ScalePowerSupply(&ps_filament,100,100);
     ScalePowerSupply(&ps_magnet,100,100);
     ScalePowerSupply(&ps_thyr_reservoir_htr,100,100);
@@ -272,7 +309,8 @@ void DoStateMachine(void) {
       } else if (PIN_FP_MODULATOR_HV_ON_INPUT == !ILL_MODULATOR_HV_ON) {
 	control_state = STATE_SYSTEM_WARM_READY;
       } else if (lambda_supply_startup_counter >= LAMBDA_SUPPLY_STARTUP_DELAY) {
-	control_state = STATE_HV_ON;      
+	control_state = STATE_HV_ON;
+	HVLambdaStartCharging();
       }
     }
     break;
@@ -284,11 +322,8 @@ void DoStateMachine(void) {
     arc_counter_fast = 0;
     arc_counter_this_hv_on = 0;
     pulse_counter_this_hv_on = 0;
-    
     global_run_post_pulse_process = 0;
-    
-    HVLambdaStartCharging();
-    
+        
     while (control_state == STATE_HV_ON) {
       last_known_action = LAST_ACTION_HV_ON_LOOP;
       Do10msTicToc();
@@ -382,22 +417,16 @@ void DoStateMachine(void) {
   }
 }
 
+void DoA34760StartUpCommon(void) {
+  unsigned int *unsigned_int_ptr;  
 
 
-void DoA34335StartUp(void) {
-  unsigned int *unsigned_int_ptr;
-  unsigned int i2c_test = 0;
-
-  unsigned long long pulse_counter_persistent_store;
-  unsigned long pulse_counter_this_hv_on_store;
-  unsigned long arc_counter_persistent_store;
-  unsigned int arc_counter_this_hv_on_store;
-
-
-  debug_status_register = 0;
+  // This is debugging info info  If the processor reset, a code that indicates the last major point that the processor entered should be held in RAM at last_known_action
   previous_last_action = last_known_action;
   last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
-  // Check the reset state of the MCU
+
+  // Figure out why the processor restarted and save to the debug status register
+  debug_status_register = 0;
   if (_POR) {
     debug_status_register |= STATUS_POR_RESET;
     // _POR = 0;
@@ -427,13 +456,29 @@ void DoA34335StartUp(void) {
     //_IOPUWR = 0;
   }
 
+  
+  // Debug Counter Initializations
+  global_debug_counter.magnetron_current_adc_glitch = 0;
+  global_debug_counter.magnetron_voltage_adc_glitch = 0;
+  global_debug_counter.i2c_bus_error = 0;
+  global_debug_counter.spi1_bus_error = 0;
+  global_debug_counter.spi2_bus_error = 0;
+  global_debug_counter.external_adc_false_trigger = 0;
+  global_debug_counter.LTC2656_write_error = 0;
+  global_debug_counter.setpoint_not_valid = 0;
+  global_debug_counter.scale16bit_saturation = 0;
+  global_debug_counter.reversescale16bit_saturation = 0;
+
+
+
+
+  
   /*
     Initialize the thyratron heater PID structure
-    
     DPARKER add these values to H file
   */
   thyratron_cathode_heater_PID.abcCoefficients = &pid_thyratron_cathode_heater_abcCoefficient[0];    /*Set up pointer to derived coefficients */
-
+  
   thyratron_cathode_heater_PID.controlHistory = &pid_thyratron_cathode_heater_controlHistory[0];     /*Set up pointer to controller history samples */
   PIDInit(&thyratron_cathode_heater_PID);                                                    /*Clear the controler history and the controller output */
   pid_thyratron_cathode_heater_kCoeffs[0] = Q15(0.02);
@@ -448,6 +493,8 @@ void DoA34335StartUp(void) {
   pid_thyratron_reservoir_heater_kCoeffs[1] = Q15(0.08);
   pid_thyratron_reservoir_heater_kCoeffs[2] = Q15(0.08);
   PIDCoeffCalc(&pid_thyratron_reservoir_heater_kCoeffs[0], &thyratron_reservoir_heater_PID); /*Derive the a,b, & c coefficients from the Kp, Ki & Kd */
+
+
   
     
   // --- ps_magnet initialization ---
@@ -483,7 +530,6 @@ void DoA34335StartUp(void) {
   ps_magnet.i_adc_under_scale    = MakeScale(MAGNET_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_magnet.i_adc_over_min_value = MAGNET_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_magnet.i_adc_max_oor        = MAGNET_SUPPLY_IADC_MAX_OUT_OT_RANGE;
-
 
   SetPowerSupplyTarget(&ps_magnet, ps_magnet_config_ram_copy[EEPROM_V_SET_POINT], ps_magnet_config_ram_copy[EEPROM_I_SET_POINT]);
   
@@ -523,12 +569,8 @@ void DoA34335StartUp(void) {
   ps_filament.i_adc_over_min_value = FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_filament.i_adc_max_oor        = FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-
   SetPowerSupplyTarget(&ps_filament, ps_filament_config_ram_copy[EEPROM_V_SET_POINT], ps_filament_config_ram_copy[EEPROM_I_SET_POINT]);
   
-
-
-
 
 
   // --- ps_thyr_cathode_htr initialization ---
@@ -564,7 +606,6 @@ void DoA34335StartUp(void) {
   ps_thyr_cathode_htr.i_adc_under_scale    = MakeScale(THYR_CATH_HTR_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_thyr_cathode_htr.i_adc_over_min_value = THYR_CATH_HTR_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_thyr_cathode_htr.i_adc_max_oor        = THYR_CATH_HTR_SUPPLY_IADC_MAX_OUT_OT_RANGE;
-
 
   SetPowerSupplyTarget(&ps_thyr_cathode_htr, ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_SET_POINT]);
   
@@ -604,7 +645,6 @@ void DoA34335StartUp(void) {
   ps_thyr_reservoir_htr.i_adc_over_min_value = THYR_RESER_HTR_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_thyr_reservoir_htr.i_adc_max_oor        = THYR_RESER_HTR_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-
   SetPowerSupplyTarget(&ps_thyr_reservoir_htr, ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
@@ -642,7 +682,6 @@ void DoA34335StartUp(void) {
   ps_hv_lambda_mode_A.i_adc_under_scale    = MakeScale(HV_LAMBDA_MODE_A_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_hv_lambda_mode_A.i_adc_over_min_value = HV_LAMBDA_MODE_A_IADC_MIN_OVER_CURRENT;
   ps_hv_lambda_mode_A.i_adc_max_oor        = HV_LAMBDA_MODE_A_IADC_MAX_OUT_OT_RANGE;
-
 
   SetPowerSupplyTarget(&ps_hv_lambda_mode_A, ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
 
@@ -730,7 +769,6 @@ void DoA34335StartUp(void) {
 
 
 
-
   // --- ps_magnetron_mode_B initialization ---
 
   ps_magnetron_mode_B.warmup_ramp_time     = MAGNETRON_MODE_B_WARMUP_RAMP_TIME;
@@ -765,33 +803,15 @@ void DoA34335StartUp(void) {
   ps_magnetron_mode_B.i_adc_over_min_value = MAGNETRON_MODE_B_IADC_MIN_OVER_CURRENT;
   ps_magnetron_mode_B.i_adc_max_oor        = MAGNETRON_MODE_B_IADC_MAX_OUT_OT_RANGE;
 
-
   ps_magnetron_mode_B.i_adc_max_reading    = 0;
   ps_magnetron_mode_B.i_adc_min_reading    = 0xFFFF;
   ps_magnetron_mode_B.v_adc_max_reading    = 0;
   ps_magnetron_mode_B.v_adc_min_reading    = 0xFFFF;
 
-
-
   SetPowerSupplyTarget(&ps_magnetron_mode_B, ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
 
 
-
-  // Debug Counter Initializations
-  global_debug_counter.magnetron_current_adc_glitch = 0;
-  global_debug_counter.magnetron_voltage_adc_glitch = 0;
-  global_debug_counter.i2c_bus_error = 0;
-  global_debug_counter.spi1_bus_error = 0;
-  global_debug_counter.spi2_bus_error = 0;
-  global_debug_counter.external_adc_false_trigger = 0;
-  global_debug_counter.LTC2656_write_error = 0;
-  global_debug_counter.setpoint_not_valid = 0;
-  global_debug_counter.scale16bit_saturation = 0;
-  global_debug_counter.reversescale16bit_saturation = 0;
-
-
-
-
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
 
   // --------- BEGIN IO PIN CONFIGURATION ------------------
   
@@ -805,7 +825,7 @@ void DoA34335StartUp(void) {
   PIN_MAGNETRON_FILAMENT_ENABLE = !OLL_MAGNETRON_FILAMENT_ENABLED;
   
   PIN_SUM_FAULT_FIBER = !OLL_SUM_FAULT_FIBER_FAULT;
-  PIN_SPARE_OPTICAL_OUT = !OLL_SPARE_OPTICAL_OUT_LIGHT_ON;
+  //DPARKER PIN_SPARE_OPTICAL_OUT = !OLL_SPARE_OPTICAL_OUT_LIGHT_ON;
   PIN_UART2_TX = !OLL_PIN_UART2_TX_LIGHT_ON;
 
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;
@@ -885,8 +905,6 @@ void DoA34335StartUp(void) {
 
 
 
-
-
   // ----------- Configure Interupts -------------- //
 
 
@@ -902,7 +920,7 @@ void DoA34335StartUp(void) {
   _T1IP = 5;  // Lower Priority than INT1, Higher than everything else  
 
   // Configure ADC Interrupt
-  _ADIE = 1;
+  _ADIE = 0;
   _ADIF = 0;
   _ADIP = 4;
 
@@ -919,49 +937,7 @@ void DoA34335StartUp(void) {
   _LVDIF = 0;
   _LVDIE = 0;
   _LVDIP = 7;
-  _LVDL = 0b1100;  //DPAKER LVDL should trigger at 4.1 Volts
-
-  // ---------- Configure Timers ----------------- //
-
-
-  // Configure TMR1
-  T1CON = A34760_T1CON_VALUE;
-
-
-  // Configure TMR2
-  T2CON = A34760_T2CON_VALUE;
-  PR2 = A34760_PR2_VALUE;  
-  TMR2 = 0;
-  _T2IF = 0;
-  //_T2IP = 3;
-  //_T2IE = 1;
-  T2CONbits.TON = 1;
-  
-  //T3CON = 0;
-
-
-  // Configure TMR4
-  T4CON = A34760_T4CON_VALUE;
-
-
-  // Configure TMR5
-  T5CON = A34760_T5CON_VALUE;
-  TMR5 = 0;
-  _T5IF = 0;
-  PR5 = A34760_PR5_VALUE; 
-  T5CONbits.TON = 1;
-
- 
-
-
-  // ---- Configure the dsPIC ADC Module ------------ //
-  ADCON1 = A34760_ADCON1_VALUE;             // Configure the high speed ADC module based on H file parameters
-  ADCON2 = A34760_ADCON2_VALUE;             // Configure the high speed ADC module based on H file parameters
-  ADCON3 = A34760_ADCON3_VALUE;             // Configure the high speed ADC module based on H file parameters
-  ADCHS  = A34760_ADCHS_VALUE;              // Configure the high speed ADC module based on H file parameters
-
-  ADPCFG = A34760_ADPCFG_VALUE;             // Set which pins are analog and which are digital I/O
-  ADCSSL = A34760_ADCSSL_VALUE;             // Set which analog pins are scanned
+  _LVDL = 0b1100;  //DPARKER LVDL should trigger at 4.1 Volts
 
   
 
@@ -983,21 +959,38 @@ void DoA34335StartUp(void) {
   uart1_output_buffer.write_location = 0;
   uart1_output_buffer.read_location = 0;
 
-
   U1MODE = A34760_U1MODE_VALUE;
   U1BRG = A34760_U1BRG_VALUE;
   U1STA = A34760_U1STA_VALUE;
   
-  _U1TXIF = 0;	// Clear the Transmit Interrupt Flag
-  _U1TXIE = 1;	// Enable Transmit Interrupts
-  _U1RXIF = 0;	// Clear the Recieve Interrupt Flag
-  _U1RXIE = 1;	// Enable Recieve Interrupts
-  
-  U1MODEbits.UARTEN = 1;	// And turn the peripheral on
-  
-  PIN_RS422_DE = OLL_RS422_DE_ENABLE_RS422_DRIVER;  // Enable the U69-RS422 Driver output (The reciever is always enabled)
-  
-  command_string.data_state = COMMAND_BUFFER_EMPTY;  // The command buffer is empty
+
+
+ // ---------- Configure Timers ----------------- //
+
+
+  // Configure TMR1
+  T1CON = A34760_T1CON_VALUE;
+
+
+  // Configure TMR2
+  T2CON = A34760_T2CON_VALUE;
+  PR2 = A34760_PR2_VALUE;  
+  TMR2 = 0;
+  _T2IF = 0;
+
+
+  // Configure TMR4
+  T4CON = A34760_T4CON_VALUE;
+
+
+  // Configure TMR5
+  T5CON = A34760_T5CON_VALUE;
+  TMR5 = 0;
+  _T5IF = 0;
+  PR5 = A34760_PR5_VALUE; 
+
+
+
 
 
   // --------------- Initialize U44 - LTC2656 ------------------------- //
@@ -1008,9 +1001,6 @@ void DoA34335StartUp(void) {
   U44_LTC2656.por_select_value = 0;
   U44_LTC2656.spi_port = SPI_PORT_1;
   
-  SetupLTC2656(&U44_LTC2656);
-  
-
 
   // ---------------- Initialize U64 - MCP23017 ----------------//
 
@@ -1022,51 +1012,11 @@ void DoA34335StartUp(void) {
   U64_MCP23017.output_latch_a_in_ram = MCP23017_U64_LATA_INITIAL;
   U64_MCP23017.output_latch_b_in_ram = MCP23017_U64_LATB_INITIAL;
 
-  
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);  
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATA, U64_MCP23017.output_latch_a_in_ram);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATB, U64_MCP23017.output_latch_b_in_ram);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRA, MCP23017_U64_IODIRA_VALUE);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRB, MCP23017_U64_IODIRB_VALUE);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLA, MCP23017_U64_IPOLA_VALUE);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLB, MCP23017_U64_IPOLB_VALUE);
-  
-  if ((i2c_test & 0xFF00) == 0xFA00) {
-    // There was a fault on the i2c bus, the MCP23017 did not initialize properly
-    debug_status_register |= STATUS_DIGITAL_IO_EXP_ERROR;
-    global_debug_counter.i2c_bus_error++;
-  }
 
-  i2c_test = MCP23017ReadSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRA);
-  if ((i2c_test & 0x00FF) != MCP23017_U64_IODIRA_VALUE) {
-    // The MCP Write/Read operation failed
-    debug_status_register |= STATUS_DIGITAL_IO_EXP_ERROR;
-    global_debug_counter.i2c_bus_error++;
-  }
- 
-  
-  /*
-    Check to See if this was a faulty processor Reset.
-    If it was a faulty processor Reset, the following must occur
-    * Durring warmup, if the Fast Restart Pin is set, the warmup will be truncated to 2 seconds
-    
-    * Read persistent RAM values and save to EEPROM as nessesary
-    1) When the processor restarts, copy the persistent counters to a new RAM locations
-    2) Load values from EEPROM
-    3) The following statement *should* be true
-    4) pulse_counter_persistent(from_before_arc) = pulse_counter_persistent(stored_in_EEPROM) + pulse_counter_this_hv_on(from_before_arc)
-    4a) If that math works out, save the pulse information.  If that math does not work out, throw away pre-arc data and just reload from EEPROM
-  */
-  
-  pulse_counter_persistent_store = pulse_counter_persistent;
-  pulse_counter_this_hv_on_store = pulse_counter_this_hv_on;
-  arc_counter_persistent_store = arc_counter_persistent;
-  arc_counter_this_hv_on_store = arc_counter_this_hv_on;
+  ResetAllFaults();
 
 
-
+  // DPARKER - At some point want to recover the pulse and arc counter from RAM
   // ------------ Load the pulse and arc counters ---------------- //
   unsigned_int_ptr = &pulse_counter_persistent;              //unsigned_int_ptr now points to the Least Significant word of pulse_counter_persistent
   *unsigned_int_ptr = pulse_counter_repository_ram_copy[3];
@@ -1082,6 +1032,29 @@ void DoA34335StartUp(void) {
   *unsigned_int_ptr = pulse_counter_repository_ram_copy[5];
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of arc_counter_persistent
   *unsigned_int_ptr = pulse_counter_repository_ram_copy[4];
+  
+  arc_counter_this_hv_on = 0;
+  pulse_counter_this_hv_on = 0;
+ 
+  
+  /*
+    Check to See if this was a faulty processor Reset.
+    If it was a faulty processor Reset, the following must occur
+    * Durring warmup, if the Fast Restart Pin is set, the warmup will be truncated to 2 seconds
+    
+    * Read persistent RAM values and save to EEPROM as nessesary
+    1) When the processor restarts, copy the persistent counters to a new RAM locations
+    2) Load values from EEPROM
+    3) The following statement *should* be true
+    4) pulse_counter_persistent(from_before_arc) = pulse_counter_persistent(stored_in_EEPROM) + pulse_counter_this_hv_on(from_before_arc)
+    4a) If that math works out, save the pulse information.  If that math does not work out, throw away pre-arc data and just reload from EEPROM
+  */
+  /*
+  pulse_counter_persistent_store = pulse_counter_persistent;
+  pulse_counter_this_hv_on_store = pulse_counter_this_hv_on;
+  arc_counter_persistent_store = arc_counter_persistent;
+  arc_counter_this_hv_on_store = arc_counter_this_hv_on;
+
 
   if (PIN_FP_FAST_RESTART == ILL_FAST_RESTART) {
     if (pulse_counter_persistent_store > 5) {
@@ -1103,23 +1076,153 @@ void DoA34335StartUp(void) {
     }
     
     SavePulseCountersToEEPROM();
-    
-  }
+    }
+  */   
 
-  arc_counter_this_hv_on = 0;
-  pulse_counter_this_hv_on = 0;
+
+ 
+}
+
+
+
+void DoA34760StartUpNormalProcess(void) {
+  unsigned int i2c_test = 0;
 
   
-  // --------------- The board should now be initialized Start the startup process ------------------- //
-
+  // Test U64 - MCP23017
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);  
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATA, U64_MCP23017.output_latch_a_in_ram);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATB, U64_MCP23017.output_latch_b_in_ram);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRA, MCP23017_U64_IODIRA_VALUE);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRB, MCP23017_U64_IODIRB_VALUE);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLA, MCP23017_U64_IPOLA_VALUE);
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLB, MCP23017_U64_IPOLB_VALUE);
+  
+  if ((i2c_test & 0xFF00) == 0xFA00) {
+    // There was a fault on the i2c bus, the MCP23017 did not initialize properly
+    debug_status_register |= STATUS_DIGITAL_IO_EXP_ERROR;
+    global_debug_counter.i2c_bus_error++;
+  }
+  
+  i2c_test = MCP23017ReadSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRA);
+  if ((i2c_test & 0x00FF) != MCP23017_U64_IODIRA_VALUE) {
+    // The MCP Write/Read operation failed
+    debug_status_register |= STATUS_DIGITAL_IO_EXP_ERROR;
+    global_debug_counter.i2c_bus_error++;
+  }
+ 
   DisableMagnetronFilamentSupply();
   DisableMagnetronMagnetSupply();
   DisableHVLambdaSupply();
-
-  ResetHWLatches();
-  ClrWdt();
   
 }
+
+
+
+
+
+
+void DoA34760StartUpFastProcess(void) {
+#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+  unsigned int vtemp;
+  unsigned int itemp;
+#endif
+  
+  unsigned int vtemp_2;
+  unsigned int itemp_2;
+
+  // Taken from StartWarmUp(); & the start of State Warm Ready
+  PIDInit(&thyratron_reservoir_heater_PID);
+  PIDInit(&thyratron_cathode_heater_PID);
+
+  // DPARKER, there are a lot more power supply configuration calls going on here than are needed, that is a lot of wasted CPU cycles as these are complex math operations
+  ScalePowerSupply(&ps_hv_lambda_mode_A,100,100);   // DPARKER this may be re-adjusted below
+  ScalePowerSupply(&ps_hv_lambda_mode_B,100,100);   // DPARKER this may be re-adjusted below
+  ScalePowerSupply(&ps_filament,100,100);           // DPARKER this may be re-adjusted below
+  ScalePowerSupply(&ps_magnet,100,100);             // DPARKER this may be re-adjusted below
+  ScalePowerSupply(&ps_thyr_reservoir_htr,100,100); // DPARKER this is not actually being used
+  ScalePowerSupply(&ps_thyr_cathode_htr,100,100);   // DPARKER this is not actually being used
+  
+  EnableMagnetronMagnetSupply();
+  EnableMagnetronFilamentSupply();
+  HVLambdaStartCharging();  // DPARKER TMR1 and TMR2 must be initialized and ready to go before this call. DPARKER T1 Interrupt must also be ready to go
+
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  // Setup the ADC to read PAC and save to RAM as appropriate
+  FastReadAndFilterPACInputs();
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+
+
+#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+
+  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+#endif
+  
+  if (!ram_config_set_magnetron_magnet_current_from_GUI) {
+    // The Magnet Current is calculated from Mode A program voltage
+    itemp_2 = CalculatePoly(ps_hv_lambda_mode_A.v_command_set_point);
+    vtemp_2 = GenerateMagnetVprog(itemp_2);
+    SetPowerSupplyTarget(&ps_magnet, vtemp_2, itemp_2);
+  }
+    
+  // DPARKER Calculate and Setup Magnetron Filament Power
+  // DoMagnetronFilamentAdjust();  
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  UpdateDacAll();
+
+
+  // DPARKER PUT AS MUCH OF A DELAY HERE AS POSSIBLE
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  FastReadAndFilterFeedbacks(); // DPARKER - Move this to as late as possible (want time to feedbacks to get as stable as possible before reading)
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  UpdateFaults();
+
+  // DPARKER - NO CONFIG/CHANGES to the I/O Expander for NOW
+}
+
+
+
+
+void DoA34760StartUpCommonPostProcess(void) {
+  
+  T2CONbits.TON = 1;
+  T5CONbits.TON = 1;
+  
+  SetupLTC2656(&U44_LTC2656);  // DPARKER - This function sets the ADC outputs to Zero which is not what we want in a fast Restart
+
+  // ---- Configure the dsPIC ADC Module ------------ //
+  ADCON1 = A34760_ADCON1_VALUE;             // Configure the high speed ADC module based on H file parameters
+  ADCON2 = A34760_ADCON2_VALUE;             // Configure the high speed ADC module based on H file parameters
+  ADCON3 = A34760_ADCON3_VALUE;             // Configure the high speed ADC module based on H file parameters
+  ADCHS  = A34760_ADCHS_VALUE;              // Configure the high speed ADC module based on H file parameters
+
+  ADPCFG = A34760_ADPCFG_VALUE;             // Set which pins are analog and which are digital I/O
+  ADCSSL = A34760_ADCSSL_VALUE;             // Set which analog pins are scanned
+  ADCON1bits.ADON = 1;
+  _ADIF = 0;
+  _ADIE = 1;
+ 
+  
+  // Begin UART operation
+  _U1TXIF = 0;	// Clear the Transmit Interrupt Flag
+  _U1TXIE = 1;	// Enable Transmit Interrupts
+  _U1RXIF = 0;	// Clear the Recieve Interrupt Flag
+  _U1RXIE = 1;	// Enable Recieve Interrupts
+  
+  U1MODEbits.UARTEN = 1;	// And turn the peripheral on
+  PIN_RS422_DE = OLL_RS422_DE_ENABLE_RS422_DRIVER;  // Enable the U69-RS422 Driver output (The reciever is always enabled)
+  command_string.data_state = COMMAND_BUFFER_EMPTY;  // The command buffer is empty
+ 
+  ResetHWLatches();
+  ClrWdt();
+}
+
+
 
 
 
@@ -1148,7 +1251,9 @@ void SetPowerSupplyTarget(POWERSUPPLY* ptr_ps, unsigned int v_command, unsigned 
   if (control_state != STATE_WARM_UP) {
     ScalePowerSupply(ptr_ps,100,100);
   }
-  CalcPowerSupplySettings(ptr_ps);
+  CalcPowerSupplySettings(ptr_ps);  // DPARKER is this call redundant since ScalePowerSupply also calls ScalePowerSupply
+
+  // DPARKER need to figure out how to combine ScalePowerSupply & SetPowerSupplyTarget & CalcPowerSupplySettings
   
   
   // DPARKER Record Saturation Errors for each supply???
@@ -1652,10 +1757,8 @@ void FilterADCs(void) {
   unsigned int itemp;
 #endif
 
-  //#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
   unsigned int vtemp_2;
   unsigned int itemp_2;
-  //#endif
 
   last_known_action = LAST_ACTION_FILTER_ADC;
 
@@ -1726,6 +1829,173 @@ void FilterADCs(void) {
   ps_hv_lambda_mode_B.v_adc_reading = RCFilter16Tau(ps_hv_lambda_mode_B.v_adc_reading, adc_reading);
   // lambda_vmon is read at EOC
 }
+
+
+
+
+
+void FastReadAndFilterFeedbacks(void) {
+  /*
+    This function should be called once durring fast restart.
+    The ADC value array is populated, averaged and the the result of that average used to set initial condition for RC Filter.
+
+    From Internal DAC
+    AN3 -  PFN Rev Current           - Only sampled after a pulse 
+ 
+    AN4 - pac_#1                     - 2.56s tau - Analog Input Bandwidth = 200 Hz
+    AN5 - pac_#2                     - 2.56s tau - Analog Input Bandwidth = 200 Hz
+
+    AN6 - Thyratron Cathode Heater   - 160mS tau - Analog Input Bandwidth = 10 Hz
+    AN7 - Thyratron Reservoir Heater - 160mS tau - Analog Input Bandwidth = 10 Hz
+
+    AN8  - magnet_current            - 160mS tau - Analog Input Bandwidth = 200 Hz
+    AN9  - magnet_voltage            - 160mS tau - Analog Input Bandwidth = 200 Hz
+ 
+    AN10 - filament_voltage          - 160mS tau - Analog Input Bandwidth = 200 Hz    
+    AN11 - filament_current          - 160mS tau - Analog Input Bandwidth = 200 Hz    
+ 
+    AN12 - lambda_vpeak              - 640mS tau - Analog Input Bandwidth = 200 Hz
+    AN13 - lambda_vmon               - Only Sampled at EOC
+  */
+
+
+  unsigned int index;
+  unsigned int n;
+  unsigned int adc_reading;
+  
+  // Configure ADC for this particular operation
+  ADCON1 = A34760_ADCON1_VALUE;
+  ADCON2 = (ADC_VREF_AVDD_AVSS & ADC_SCAN_ON & ADC_SAMPLES_PER_INT_8 & ADC_ALT_BUF_ON & ADC_ALT_INPUT_OFF);
+  ADCON3 = A34760_ADCON3_VALUE;
+  ADCHS  = A34760_ADCHS_VALUE;
+  ADPCFG = A34760_ADPCFG_VALUE;
+  ADCSSL = (SKIP_SCAN_AN0 & SKIP_SCAN_AN1 & SKIP_SCAN_AN2 & SKIP_SCAN_AN3 & SKIP_SCAN_AN4 & SKIP_SCAN_AN5 & SKIP_SCAN_AN14 & SKIP_SCAN_AN15);
+  ADCON1bits.ADON = 1;
+
+  index = 0;
+  while (index < 128) {
+    while(!_BUFS);
+    // Copy each reading into 8 data readings 
+    for (n = 0; n < 8; n++) {
+      thyratron_cathode_heater_voltage_array[index] = ADCBUF0;
+      thyratron_reservoir_heater_voltage_array[index] = ADCBUF1;
+      magnetron_magnet_current_array[index] = ADCBUF2;
+      magnetron_magnet_voltage_array[index] = ADCBUF3;
+      magnetron_filament_current_array[index] = ADCBUF4;
+      magnetron_filament_voltage_array[index] = ADCBUF5;
+      lambda_vpeak_array[index] = ADCBUF6;
+      lambda_vmon_array[index++] = ADCBUF7;
+    }
+    while(_BUFS);
+    // Copy each reading into 8 data readings 
+    for (n = 0; n < 8; n++) {
+      thyratron_cathode_heater_voltage_array[index] = ADCBUF8;
+      thyratron_reservoir_heater_voltage_array[index] = ADCBUF9;
+      magnetron_magnet_current_array[index] = ADCBUFA;
+      magnetron_magnet_voltage_array[index] = ADCBUFB;
+      magnetron_filament_current_array[index] = ADCBUFC;
+      magnetron_filament_voltage_array[index] = ADCBUFD;
+      lambda_vpeak_array[index] = ADCBUFE;
+      lambda_vmon_array[index++] = ADCBUFF;
+    }
+  }
+  ADCON1bits.ADON = 0;
+
+  //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
+  adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
+  ps_thyr_cathode_htr.v_adc_reading = adc_reading;
+
+  //AN7 - Thyratron Reservoir Heater - 16 samples/tau - Analog Input Bandwidth = 10 Hz
+  adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
+  ps_thyr_reservoir_htr.v_adc_reading = adc_reading;
+
+  //AN8  - magnet_current            - 16 samples/tau - Analog Input Bandwidth = 200 Hz  
+  adc_reading = AverageADC128(magnetron_magnet_current_array);
+  ps_magnet.i_adc_reading = adc_reading;
+
+  //AN9  - magnet_voltage            - 16 samples/tau - Analog Input Bandwidth = 200 Hz
+  adc_reading = AverageADC128(magnetron_magnet_voltage_array);
+  ps_magnet.v_adc_reading = adc_reading;
+ 
+  //AN10 - filament_voltage          - 16 samples/tau - Analog Input Bandwidth = 200 Hz    
+  adc_reading = AverageADC128(magnetron_filament_voltage_array);
+  ps_filament.v_adc_reading = adc_reading;
+
+  //AN11 - filament_current          - 16 samples/tau - Analog Input Bandwidth = 200 Hz    
+  adc_reading = AverageADC128(magnetron_filament_current_array);
+  ps_filament.i_adc_reading = adc_reading;
+
+  //AN12 - lambda_vpeak              - 64 samples/tau - Analog Input Bandwidth = 200 Hz
+  adc_reading = AverageADC128(lambda_vpeak_array);
+  ps_hv_lambda_mode_A.v_adc_reading = adc_reading;
+
+  //AN13 - lambda_vmon               - not averaged / filtered  - Analog Input Bandwidth = 200 Hz
+  adc_reading = AverageADC128(lambda_vmon_array);
+  ps_hv_lambda_mode_B.v_adc_reading = adc_reading;
+
+}
+
+
+
+
+void FastReadAndFilterPACInputs(void) {
+  unsigned int index;
+  unsigned int n;
+  unsigned int adc_reading;
+  
+  // Configure ADC for this particular operation
+  ADCON1 = A34760_ADCON1_VALUE;
+  ADCON2 = (ADC_VREF_AVDD_AVSS & ADC_SCAN_ON & ADC_SAMPLES_PER_INT_8 & ADC_ALT_BUF_ON & ADC_ALT_INPUT_OFF);
+  ADCON3 = A34760_ADCON3_VALUE;
+  ADCHS  = A34760_ADCHS_VALUE;
+  ADPCFG = A34760_ADPCFG_VALUE;
+  ADCSSL = (SKIP_SCAN_AN0 & SKIP_SCAN_AN1 & SKIP_SCAN_AN2 & SKIP_SCAN_AN3 & SKIP_SCAN_AN6 & SKIP_SCAN_AN7 & SKIP_SCAN_AN8 & SKIP_SCAN_AN9 & SKIP_SCAN_AN10 & SKIP_SCAN_AN11 & SKIP_SCAN_AN12 & SKIP_SCAN_AN13 & SKIP_SCAN_AN14 & SKIP_SCAN_AN15);
+  ADCON1bits.ADON = 1;
+
+  
+  // Repeate the sample sequence until we have filled up the pac arrays
+  index = 0;
+  while (index < 128) {
+    // wait for buffer 0-8 to fill up
+    while(!_BUFS);
+    for (n = 0; n < 4; n++) {
+      pac_1_array[index] = ADCBUF0;
+      pac_2_array[index++] = ADCBUF1;
+      pac_1_array[index] = ADCBUF2;
+      pac_2_array[index++] = ADCBUF3;
+      pac_1_array[index] = ADCBUF4;
+      pac_2_array[index++] = ADCBUF5;
+      pac_1_array[index] = ADCBUF6;
+      pac_2_array[index++] = ADCBUF7;  
+    }
+    
+    // wait for buffers 9-F to fill up
+    while(_BUFS);
+    for (n = 0; n < 4; n++) {
+      pac_1_array[index] = ADCBUF8;
+      pac_2_array[index++] = ADCBUF9;
+      pac_1_array[index] = ADCBUFA;
+      pac_2_array[index++] = ADCBUFB;
+      pac_1_array[index] = ADCBUFC;
+      pac_2_array[index++] = ADCBUFD;
+      pac_1_array[index] = ADCBUFE;
+      pac_2_array[index++] = ADCBUFF;  
+    }    
+  }
+  ADCON1bits.ADON = 0;
+  
+
+  // Average Pac Array and Populte the RC Filter
+  // This is just copied from Filter ADCs
+  adc_reading = AverageADC128(pac_1_array);
+  pac_1_adc_reading = adc_reading;
+  
+  adc_reading = AverageADC128(pac_2_array);
+  pac_2_adc_reading = adc_reading;
+}
+
+
+
 
 
 
@@ -2228,6 +2498,8 @@ void _ISRNOPSV _T1Interrupt(void) {
 void _ISRNOPSV _ADCInterrupt(void) {
   _ASAM = 0; // Stop Auto Sampling
   _ADIF = 0;
+  
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
 
   last_known_action = LAST_ACTION_ADC_INTERRUPT;
   // DPARKER what for the conversion to complete???
@@ -2354,3 +2626,6 @@ unsigned int CalculatePoly(unsigned int set_point) {
   
   return value; 
 }
+
+
+

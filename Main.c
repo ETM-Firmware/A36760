@@ -13,6 +13,7 @@
 #include "config.h"
 
 
+void ReadAllEEpromToRAM(void);
 
 _prog_addressT EE_address_ps_magnet_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_magnet_config_in_EEPROM[] = PS_MAGNET_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
@@ -111,8 +112,27 @@ _ICD(PGD);
 
 int main(void) {
 
-  control_state = STATE_START_UP;
+  PIN_SPARE_OPTICAL_OUT = 0;
+  TRIS_PIN_SPARE_OPTICAL_OUT = TRIS_OUTPUT_MODE;
+  __delay32(100);
+  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
 
+
+  ReadAllEEpromToRAM();  // Ream all configuration from EEPROM into RAM
+
+  control_state = STATE_FAST_RECOVERY_START_UP;  // This is the initial State of the processor
+ 
+  ram_config_set_magnetron_magnet_current_from_GUI = 0;  // On processor rest, Magnet current is set from Mode A Voltage and not from the GUI
+
+
+  while (1) {
+    DoStateMachine();
+  }
+}
+
+
+
+void ReadAllEEpromToRAM(void) {
   _init_prog_address(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_in_EEPROM);
   _memcpy_p2d16(ps_magnet_config_ram_copy, EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
 
@@ -142,10 +162,4 @@ int main(void) {
 
   _init_prog_address(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_in_EEPROM);
   _memcpy_p2d16(control_loop_cal_data_ram_copy, EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-
-  ram_config_set_magnetron_magnet_current_from_GUI = 0;
-
-  while (1) {
-    DoStateMachine();
-  }
 }
