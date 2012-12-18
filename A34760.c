@@ -2213,11 +2213,15 @@ void _ISRNOPSV _T1Interrupt(void) {
   
   // DPARKER - Consider adding more checks - Magnet Current, Actual Lambda Voltage, Check all the fault registers to confirm good to go!!!!
 
+
+  // DPARKER, moved these to allow operation even if there is an EOC Fault
+  PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+  _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
+  _INT1IE = 1;
+
+
   if  (PIN_HV_LAMBDA_EOC_INPUT == ILL_HV_LAMBDA_AT_EOC) {
     // Everything is ready to fire, enable the the thyratron trigger and Enable the Trigger Interrupt
-    PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
-    _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
-    _INT1IE = 1;
   } else {
     // If the lamabda has not reached EOC, need to set the appropriate fault bit    
     RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
