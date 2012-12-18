@@ -44,6 +44,8 @@ unsigned char control_state;
 unsigned int pac_1_adc_reading;
 unsigned int pac_2_adc_reading;
 
+
+unsigned int fast_reset_counter_persistent;
 unsigned long _PERSISTENT arc_counter_persistent;
 unsigned int arc_counter_consecutive;
 unsigned int _PERSISTENT arc_counter_this_hv_on;
@@ -200,13 +202,13 @@ void DoStateMachine(void) {
 
     // It takes a 360uS to get to here (really just to read flash)
 
-    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    PIN_UART2_TX = !PIN_UART2_TX;
     DoA34760StartUpCommon();  // This Takes 4.6ms (4.55 ms of this is loading and intialization of Power Supply Structures)
-    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    PIN_UART2_TX = !PIN_UART2_TX;
     DoA34760StartUpFastProcess(); // This takes 4.3mS 
-    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    PIN_UART2_TX = !PIN_UART2_TX;
     DoA34760StartUpCommonPostProcess(); // This takes 60uS
-    PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+    PIN_UART2_TX = !PIN_UART2_TX;
     
     if (CheckStartupFailed()) {
       control_state = STATE_FAULT_MCU_CORE_FAULT;
@@ -323,6 +325,9 @@ void DoStateMachine(void) {
     arc_counter_this_hv_on = 0;
     pulse_counter_this_hv_on = 0;
     global_run_post_pulse_process = 0;
+    PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
+
+    _T1IE = 1; // This is added for the fast restart process.  Normally _T1IE is set in HVLambdaStartCharging(), but the fast restart clears this bit temporarily
         
     while (control_state == STATE_HV_ON) {
       last_known_action = LAST_ACTION_HV_ON_LOOP;
@@ -331,9 +336,9 @@ void DoStateMachine(void) {
       if (global_run_post_pulse_process) {
 	last_known_action = LAST_ACTION_POST_PULSE_PROC;
 	// The Pulse Interrupt sets this Flag - And this sequence runs only once
-	// Update all the pulse data
 	global_run_post_pulse_process = 0;	
 	
+	// Update all the pulse data
 	pulse_counter_this_hv_on++;
 	pulse_counter_persistent++;
 	prf_pulse_counter++;
@@ -341,12 +346,7 @@ void DoStateMachine(void) {
 	ReadIsolatedAdcToRam(); // Durring the pulse interrupt, the magnetron voltage and current was sampled.  Read back that data here
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
 
-
-	// DPARKER impliment and test a current control PID LOOP
-
-	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
-	UpdateIOExpanderOutputs();               // DPAKRER is this needed here?  The io expander outputs should never change in state HV on!!!!
-
+	
 	// Read the state of the A_B select Optical input and adjust the system as nesseasry
 	if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
 	  a_b_selected_mode = PULSE_MODE_A;
@@ -355,6 +355,13 @@ void DoStateMachine(void) {
 	  a_b_selected_mode = PULSE_MODE_B;
 	  PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
 	}
+
+
+	// DPARKER impliment and test a current control PID LOOP
+	
+	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
+	//UpdateIOExpanderOutputs();               // DPAKRER is this needed here?  The io expander outputs should never change in state HV on!!!!
+	
       }
       
       // DPARKER need to write new timing diagram - should be simplier
@@ -811,7 +818,7 @@ void DoA34760StartUpCommon(void) {
   SetPowerSupplyTarget(&ps_magnetron_mode_B, ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
 
 
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
 
   // --------- BEGIN IO PIN CONFIGURATION ------------------
   
@@ -825,7 +832,7 @@ void DoA34760StartUpCommon(void) {
   PIN_MAGNETRON_FILAMENT_ENABLE = !OLL_MAGNETRON_FILAMENT_ENABLED;
   
   PIN_SUM_FAULT_FIBER = !OLL_SUM_FAULT_FIBER_FAULT;
-  //DPARKER PIN_SPARE_OPTICAL_OUT = !OLL_SPARE_OPTICAL_OUT_LIGHT_ON;
+  //DPARKER PIN REPURPOSED PIN_UART2_TX = !OLL_SPARE_OPTICAL_OUT_LIGHT_ON;
   PIN_UART2_TX = !OLL_PIN_UART2_TX_LIGHT_ON;
 
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;
@@ -835,7 +842,7 @@ void DoA34760StartUpCommon(void) {
   PIN_MAIN_CONTACTOR_CLOSE = !OLL_MAIN_CONTACTOR_CLOSED;
   PIN_SAMPLE_PFN_IREV = !OLL_SAMPLE_PFN_IREV_TRIGGER;
   PIN_RS422_DE = OLL_RS422_DE_ENABLE_RS422_DRIVER;
-  PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
+  // DPARKER PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
   PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
 
 
@@ -867,7 +874,7 @@ void DoA34760StartUpCommon(void) {
 
   // Optical Output PIns
   TRIS_PIN_SUM_FAULT_FIBER = TRIS_OUTPUT_MODE;
-  TRIS_PIN_SPARE_OPTICAL_OUT = TRIS_OUTPUT_MODE;
+  //DPARKER PIN REPURPOSED TRIS_PIN_SPARE_OPTICAL_OUT = TRIS_OUTPUT_MODE;
   TRIS_PIN_UART2_TX = TRIS_OUTPUT_MODE;
 
   // Digital Control Input Pins
@@ -1000,6 +1007,8 @@ void DoA34760StartUpCommon(void) {
   U44_LTC2656.pin_por_select = _PIN_NOT_CONNECTED;
   U44_LTC2656.por_select_value = 0;
   U44_LTC2656.spi_port = SPI_PORT_1;
+
+  SetupLTC2656(&U44_LTC2656);
   
 
   // ---------------- Initialize U64 - MCP23017 ----------------//
@@ -1036,6 +1045,9 @@ void DoA34760StartUpCommon(void) {
   arc_counter_this_hv_on = 0;
   pulse_counter_this_hv_on = 0;
  
+  fast_reset_counter_persistent = pulse_counter_repository_ram_copy[6];
+  
+
   
   /*
     Check to See if this was a faulty processor Reset.
@@ -1088,6 +1100,7 @@ void DoA34760StartUpCommon(void) {
 void DoA34760StartUpNormalProcess(void) {
   unsigned int i2c_test = 0;
 
+  ClearOutputsLTC2656(&U44_LTC2656);
   
   // Test U64 - MCP23017
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
@@ -1133,6 +1146,9 @@ void DoA34760StartUpFastProcess(void) {
   unsigned int vtemp_2;
   unsigned int itemp_2;
 
+  fast_reset_counter_persistent++;
+  pulse_counter_repository_ram_copy[6] = fast_reset_counter_persistent;
+
   // Taken from StartWarmUp(); & the start of State Warm Ready
   PIDInit(&thyratron_reservoir_heater_PID);
   PIDInit(&thyratron_cathode_heater_PID);
@@ -1148,11 +1164,12 @@ void DoA34760StartUpFastProcess(void) {
   EnableMagnetronMagnetSupply();
   EnableMagnetronFilamentSupply();
   HVLambdaStartCharging();  // DPARKER TMR1 and TMR2 must be initialized and ready to go before this call. DPARKER T1 Interrupt must also be ready to go
+  _T1IE = 0;  // We don't want to enter the interrupt until we get to STATE_HV_ON
 
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
   // Setup the ADC to read PAC and save to RAM as appropriate
   FastReadAndFilterPACInputs();
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
 
 
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
@@ -1172,15 +1189,19 @@ void DoA34760StartUpFastProcess(void) {
     
   // DPARKER Calculate and Setup Magnetron Filament Power
   // DoMagnetronFilamentAdjust();  
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
   UpdateDacAll();
 
 
-  // DPARKER PUT AS MUCH OF A DELAY HERE AS POSSIBLE
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
   FastReadAndFilterFeedbacks(); // DPARKER - Move this to as late as possible (want time to feedbacks to get as stable as possible before reading)
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
+
+  // DPARKER - convert filament voltage readback to the program that will the exact same value.  Scale the filament to that value.  Do all this before you program the DAC
+
+  control_state = STATE_HV_ON;  //  Want to check the faults based on STATE_HV_ON
   UpdateFaults();
+  control_state = STATE_FAST_RECOVERY_START_UP;
 
   // DPARKER - NO CONFIG/CHANGES to the I/O Expander for NOW
 }
@@ -1193,8 +1214,6 @@ void DoA34760StartUpCommonPostProcess(void) {
   T2CONbits.TON = 1;
   T5CONbits.TON = 1;
   
-  SetupLTC2656(&U44_LTC2656);  // DPARKER - This function sets the ADC outputs to Zero which is not what we want in a fast Restart
-
   // ---- Configure the dsPIC ADC Module ------------ //
   ADCON1 = A34760_ADCON1_VALUE;             // Configure the high speed ADC module based on H file parameters
   ADCON2 = A34760_ADCON2_VALUE;             // Configure the high speed ADC module based on H file parameters
@@ -2012,6 +2031,7 @@ void ExitHvOnState(void) {
   _INT1IE = 0;    // Disable the INT1 Interrupt.  INT1 enables T1 Interrupt.
   SET_CPU_IPL(0); // Enable all interrupts
   SavePulseCountersToEEPROM();
+  PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = !OLL_DO_FAST_RESTART;
 }
 
 void SavePulseCountersToEEPROM(void) {
@@ -2499,7 +2519,7 @@ void _ISRNOPSV _ADCInterrupt(void) {
   _ASAM = 0; // Stop Auto Sampling
   _ADIF = 0;
   
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_UART2_TX = !PIN_UART2_TX;
 
   last_known_action = LAST_ACTION_ADC_INTERRUPT;
   // DPARKER what for the conversion to complete???

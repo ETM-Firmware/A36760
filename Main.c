@@ -98,7 +98,7 @@ _FWDT(WDT_ON & WDTPSA_1 & WDTPSB_16);  // Watchdog Timer is enabled, 32ms TIMEOU
 
 
 //_FBORPOR(PWRT_64 & BORV_27 & PBOR_ON & MCLR_EN); // Brown out and Power on Timer settings
-_FBORPOR(PWRT_64 & BORV_45 & PBOR_OFF & MCLR_EN); // Brown out and Power on Timer settings
+_FBORPOR(PWRT_OFF & BORV_45 & PBOR_OFF & MCLR_EN); // Brown out and Power on Timer settings
 
 // _FBS()  // No Boot Segment
 
@@ -112,16 +112,19 @@ _ICD(PGD);
 
 int main(void) {
 
-  PIN_SPARE_OPTICAL_OUT = 0;
-  TRIS_PIN_SPARE_OPTICAL_OUT = TRIS_OUTPUT_MODE;
-  __delay32(100);
-  PIN_SPARE_OPTICAL_OUT = !PIN_SPARE_OPTICAL_OUT;
+  PIN_MCU_CLOCK_OUT_TEST_POINT = 1;
+  TRIS_PIN_MCU_CLOCK_OUT_TEST_POINT = TRIS_OUTPUT_MODE;
+  __delay32(10000);
 
+
+  control_state = STATE_WARM_UP;
+  if ((PIN_FP_MODULATOR_ENABLE_INPUT == ILL_MODULATOR_ENABLED) && (PIN_FP_MODULATOR_HV_ON_INPUT == ILL_MODULATOR_HV_ON) && (PIN_FAST_RESTART_STORAGE_CAP_INPUT == ILL_DO_FAST_RESTART)) {
+    control_state = STATE_FAST_RECOVERY_START_UP;  // Execute fast startup straight to HV ON
+  }
+  
 
   ReadAllEEpromToRAM();  // Ream all configuration from EEPROM into RAM
 
-  control_state = STATE_FAST_RECOVERY_START_UP;  // This is the initial State of the processor
- 
   ram_config_set_magnetron_magnet_current_from_GUI = 0;  // On processor rest, Magnet current is set from Mode A Voltage and not from the GUI
 
 

@@ -1,4 +1,5 @@
 #include "Serial.h"
+#include "A34760_PINS.h"
 #include "Buffer64.h"
 #include "A34760.h"
 #include "config.h"
@@ -147,8 +148,6 @@ void ExecuteCommand(void) {
     {
 
 
-#define BUILD_DATE __DATE__
-
       
 #if defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
       // We have compiled in the mode that untilizes the serial port to set the magnetron operating parameters (instead of the analong interface)
@@ -235,6 +234,16 @@ void ExecuteCommand(void) {
       
     case CMD_READ_RAM_VALUE:
       return_data_word = ReadFromRam(command_string.register_byte);
+      break;
+
+
+    case CMD_FORCE_SOFTWARE_RESTART:
+      PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
+      __delay32(100000); // this should be 10ms
+      PIN_MCU_CLOCK_OUT_TEST_POINT = 1;
+      __delay32(100);
+      PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
+     __asm__ ("Reset");
       break;
 
     case CMD_SET_MAGNET_PS_CAL_DATA:

@@ -4,19 +4,23 @@
 void SetupLTC2656(LTC2656* ptr_LTC2656) {
   // See h File For Documentation
   
-  PinSetTris(ptr_LTC2656->pin_cable_select, TRIS_DIGITAL_OUTPUT);
-  PinSetTris(ptr_LTC2656->pin_dac_clear, TRIS_DIGITAL_OUTPUT);
-  PinSetTris(ptr_LTC2656->pin_load_dac, TRIS_DIGITAL_OUTPUT);
-  PinSetTris(ptr_LTC2656->pin_por_select, TRIS_DIGITAL_OUTPUT);
-
+  PinSetValue(ptr_LTC2656->pin_dac_clear, !LTC2656_CLEAR_OUTPUTS);
   PinSetValue(ptr_LTC2656->pin_load_dac, LTC2656_LOAD_DAC);
   PinSetValue(ptr_LTC2656->pin_cable_select, !LTC2656_SELECT_CHIP);
   PinSetValue(ptr_LTC2656->pin_por_select, ptr_LTC2656->por_select_value);
-
-  PinSetValue(ptr_LTC2656->pin_dac_clear, LTC2656_CLEAR_OUTPUTS);
   
+  PinSetTris(ptr_LTC2656->pin_cable_select, TRIS_DIGITAL_OUTPUT);
+  PinSetTris(ptr_LTC2656->pin_dac_clear, TRIS_DIGITAL_OUTPUT);
+  PinSetTris(ptr_LTC2656->pin_load_dac, TRIS_DIGITAL_OUTPUT);
+  PinSetTris(ptr_LTC2656->pin_por_select, TRIS_DIGITAL_OUTPUT);  
+}
+
+
+void ClearOutputsLTC2656(LTC2656* ptr_LTC2656) {
+  PinSetValue(ptr_LTC2656->pin_dac_clear, LTC2656_CLEAR_OUTPUTS);
   PinSetValue(ptr_LTC2656->pin_dac_clear, !LTC2656_CLEAR_OUTPUTS);
 }
+
 
 
 unsigned char WriteLTC2656(LTC2656* ptr_LTC2656, unsigned int command_word, unsigned int data_word) {

@@ -18,6 +18,8 @@
 
 #define CMD_CLEAR_PROCESSOR_RESET_DATA                  0x40
 
+#define CMD_FORCE_SOFTWARE_RESTART                      0xA0
+
 #define CMD_SET_MAGNET_PS_CAL_DATA                      0xD0
 #define CMD_READ_MAGNET_PS_CAL_DATA                     0xD1
 #define CMD_SAVE_MAGNET_PS_CAL_DATA_TO_EEPROM           0xD2

@@ -99,9 +99,17 @@
 #define TRIS_PIN_SUM_FAULT_FIBER             _TRISA7
 #define OLL_SUM_FAULT_FIBER_FAULT            0
 
-#define PIN_SPARE_OPTICAL_OUT                _LATA9
-#define TRIS_PIN_SPARE_OPTICAL_OUT           _TRISA9
-#define OLL_SPARE_OPTICAL_OUT_LIGHT_ON       1
+//#define PIN_SPARE_OPTICAL_OUT                _LATA9
+//#define TRIS_PIN_SPARE_OPTICAL_OUT           _TRISA9
+//#define OLL_SPARE_OPTICAL_OUT_LIGHT_ON       1
+
+// Note this is the same pin as spare optical out, it just uses different names
+#define PIN_FAST_RESTART_STORAGE_CAP_INPUT   _RA9
+#define ILL_DO_FAST_RESTART                  0
+#define PIN_FAST_RESTART_STORAGE_CAP_OUTPUT  _LATA9
+#define OLL_DO_FAST_RESTART                  0
+
+
 
 #define PIN_UART2_TX                         _LATF5
 #define TRIS_PIN_UART2_TX                    _TRISF5

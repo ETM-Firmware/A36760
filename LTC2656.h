@@ -83,8 +83,14 @@ void SetupLTC2656(LTC2656* ptr_LTC2656);
               
    This function should be called when somewhere durring the startup of the processor.
    This will configure the SPI port (selected by spi_port) and the CS pin.
-   This will also set all the outputs to Zero.
-   
+*/
+
+void ClearOutputsLTC2656(LTC2656* ptr_LTC2656);
+/*  
+   Function Arguments:
+   *ptr_LTC2656 : This is pointer to the structure that defines a particular LTC2656 chip
+              
+   This function will set all the outputs to their Power On Reset value (either 0 or .5 based on the POR pin)
 */
 
 
