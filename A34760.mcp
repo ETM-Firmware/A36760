@@ -129,8 +129,8 @@ file_020=Version.h
 file_021=A34760.h
 file_022=A34760_PINS.h
 file_023=Buffer64.h
-file_024=C:\Program Files\Microchip\mplabc30\v3.31\lib\libdsp-elf.a
-file_025=C:\Program Files\Microchip\mplabc30\v3.31\lib\libdsp-coff.a
+file_024=C:\Program Files (x86)\Microchip\mplabc30\v3.31\lib\libdsp-coff.a
+file_025=C:\Program Files (x86)\Microchip\mplabc30\v3.31\lib\libdsp-elf.a
 [SUITE_INFO]
 suite_guid={479DDE59-4D56-455E-855E-FFF59A3DB57E}
 suite_state=

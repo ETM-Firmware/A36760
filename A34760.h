@@ -24,7 +24,7 @@
 
 // --------- Compile Time Options -----------------
 
-//#define __SELECT_ARI_BENCHTOP_MODE           // This will set the VPROG from the GUI and select the benchtop fault settings
+#define __SELECT_ARI_BENCHTOP_MODE           // This will set the VPROG from the GUI and select the benchtop fault settings
 
 
 #ifdef __SELECT_ARI_BENCHTOP_MODE

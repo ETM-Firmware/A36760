@@ -108,7 +108,7 @@
 #define ILL_DO_FAST_RESTART                  0
 #define PIN_FAST_RESTART_STORAGE_CAP_OUTPUT  _LATA9
 #define OLL_DO_FAST_RESTART                  0
-
+#define TRIS_PIN_FAST_RESTART_STORAGE_CAP    _TRISA9
 
 
 #define PIN_UART2_TX                         _LATF5
