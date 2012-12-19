@@ -117,6 +117,7 @@ volatile unsigned char global_adc_ignore_this_sample;
 
 unsigned char a_b_selected_mode;
 
+volatile unsigned char next_pulse_a_b_selected_mode;
 
 void DoA34335StartUp(void);
 void CalcPowerSupplySettings(POWERSUPPLY* ptr_ps);
@@ -169,6 +170,7 @@ unsigned int mode_B_pulse_magnetron_voltage_adc_reading_filtered;
 void DoStateMachine(void) {
   unsigned int warmup_counter;
   unsigned int lambda_supply_startup_counter;
+
 
   switch(control_state) {
     
@@ -305,21 +307,12 @@ void DoStateMachine(void) {
 
 	ReadIsolatedAdcToRam(); // Durring the pulse interrupt, the magnetron voltage and current was sampled.  Read back that data here
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
-
+	a_b_selected_mode = next_pulse_a_b_selected_mode;
 
 	// DPARKER impliment and test a current control PID LOOP
-
 	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
 	UpdateIOExpanderOutputs();               // DPAKRER is this needed here?  The io expander outputs should never change in state HV on!!!!
 
-	// Read the state of the A_B select Optical input and adjust the system as nesseasry
-	if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
-	  a_b_selected_mode = PULSE_MODE_A;
-	  PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
-	} else {
-	  a_b_selected_mode = PULSE_MODE_B;
-	  PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
-	}
       }
       
       // DPARKER need to write new timing diagram - should be simplier
@@ -2175,6 +2168,17 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
 
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
+
+  // Read the state of the A_B select Optical input and adjust the system as nesseasry
+  
+  if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
+    next_pulse_a_b_selected_mode = PULSE_MODE_A;
+    PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
+  } else {
+    next_pulse_a_b_selected_mode = PULSE_MODE_B;
+    PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
+  }
+	
 
   
   // Set up Timer1 to produce interupt at end of charge period
