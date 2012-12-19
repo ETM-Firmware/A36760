@@ -46,6 +46,10 @@ file_018=.
 file_019=.
 file_020=.
 file_021=.
+file_022=.
+file_023=.
+file_024=.
+file_025=.
 [GENERATED_FILES]
 file_000=no
 file_001=no
@@ -69,6 +73,10 @@ file_018=no
 file_019=no
 file_020=no
 file_021=no
+file_022=no
+file_023=no
+file_024=no
+file_025=no
 [OTHER_FILES]
 file_000=no
 file_001=no
@@ -92,6 +100,10 @@ file_018=no
 file_019=no
 file_020=no
 file_021=no
+file_022=no
+file_023=no
+file_024=no
+file_025=no
 [FILE_INFO]
 file_000=Main.c
 file_001=LTC2656.c
@@ -113,8 +125,12 @@ file_016=ETMdsp.h
 file_017=Config.h
 file_018=Serial.h
 file_019=faults.h
-file_020=C:\Program Files\Microchip\mplabc30\v3.30c\lib\libdsp-elf.a
-file_021=C:\Program Files\Microchip\mplabc30\v3.30c\lib\libdsp-coff.a
+file_020=A34760.h
+file_021=A34760_PINS.h
+file_022=Buffer64.h
+file_023=Version.h
+file_024=C:\Program Files (x86)\Microchip\mplabc30\v3.31\lib\libdsp-coff.a
+file_025=C:\Program Files (x86)\Microchip\mplabc30\v3.31\lib\libdsp-elf.a
 [SUITE_INFO]
 suite_guid={479DDE59-4D56-455E-855E-FFF59A3DB57E}
 suite_state=
