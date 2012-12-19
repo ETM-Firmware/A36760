@@ -108,7 +108,7 @@ _FSS(WR_PROT_SEC_OFF & NO_SEC_CODE & NO_SEC_EEPROM & NO_SEC_RAM);
 
 _FGS(CODE_PROT_OFF);
 
-_ICD(PGD);
+_FICD(PGD);
 
 int main(void) {
 
