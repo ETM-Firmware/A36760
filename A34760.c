@@ -120,6 +120,8 @@ volatile unsigned char global_adc_ignore_this_sample;
 
 
 unsigned char a_b_selected_mode;
+volatile unsigned char next_pulse_a_b_selected_mode;
+
 
 
 
@@ -345,18 +347,9 @@ void DoStateMachine(void) {
 
 	ReadIsolatedAdcToRam(); // Durring the pulse interrupt, the magnetron voltage and current was sampled.  Read back that data here
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
-
+	a_b_selected_mode = next_pulse_a_b_selected_mode;
 	
-	// Read the state of the A_B select Optical input and adjust the system as nesseasry
-	if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
-	  a_b_selected_mode = PULSE_MODE_A;
-	  PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
-	} else {
-	  a_b_selected_mode = PULSE_MODE_B;
-	  PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
-	}
-
-
+	
 	// DPARKER impliment and test a current control PID LOOP
 	
 	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
@@ -2469,8 +2462,20 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   while(!_T1IF);                                                   // whait for the holdoff time to pass
 
 
+  // Read the state of the A_B select Optical input and adjust the system as nesseasry
+  if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
+    next_pulse_a_b_selected_mode = PULSE_MODE_A;
+    PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
+  } else {
+    next_pulse_a_b_selected_mode = PULSE_MODE_B;
+    PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
+  }
+  
+
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
+
+
 
   
   // Set up Timer1 to produce interupt at end of charge period
