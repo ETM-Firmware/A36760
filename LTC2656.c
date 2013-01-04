@@ -10,7 +10,7 @@ void SetupLTC2656(LTC2656* ptr_LTC2656) {
   PinSetValue(ptr_LTC2656->pin_por_select, ptr_LTC2656->por_select_value);
   
   PinSetTris(ptr_LTC2656->pin_cable_select, TRIS_DIGITAL_OUTPUT);
-  PinSetTris(ptr_LTC2656->pin_dac_clear, TRIS_DIGITAL_OUTPUT);
+  PinSetTris(ptr_LTC2656->pin_dac_clear, TRIS_DIGITAL_INPUT);
   PinSetTris(ptr_LTC2656->pin_load_dac, TRIS_DIGITAL_OUTPUT);
   PinSetTris(ptr_LTC2656->pin_por_select, TRIS_DIGITAL_OUTPUT);  
 }

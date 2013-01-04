@@ -32,7 +32,7 @@
 #define _PORT_PORTD 0xD0
 #define _PORT_PORTE 0xE0
 #define _PORT_PORTF 0xF0
-#define _PORT_PORTG 0x00
+#define _PORT_PORTG 0x90
 
 #define _PIN_NOT_CONNECTED 0x20
 

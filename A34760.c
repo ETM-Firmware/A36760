@@ -302,6 +302,7 @@ void DoStateMachine(void) {
   case STATE_HV_STARTUP:
     // THIS STATE uses the same faults as STATE_SYSTEM_WARM_READY
     lambda_supply_startup_counter = 0;
+    PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
     while (control_state == STATE_HV_STARTUP) {
       Do10msTicToc();
       DoSerialCommand();
@@ -331,7 +332,6 @@ void DoStateMachine(void) {
     arc_counter_this_hv_on = 0;
     pulse_counter_this_hv_on = 0;
     global_run_post_pulse_process = 0;
-    PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
 
     _T1IE = 1; // This is added for the fast restart process.  Normally _T1IE is set in HVLambdaStartCharging(), but the fast restart clears this bit temporarily
         
@@ -498,7 +498,7 @@ void DoA34760StartUpCommon(void) {
   pid_thyratron_reservoir_heater_kCoeffs[1] = Q15(0.08);
   pid_thyratron_reservoir_heater_kCoeffs[2] = Q15(0.08);
   PIDCoeffCalc(&pid_thyratron_reservoir_heater_kCoeffs[0], &thyratron_reservoir_heater_PID); /*Derive the a,b, & c coefficients from the Kp, Ki & Kd */
-
+  ClrWdt();
 
   
     
@@ -689,7 +689,7 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_A.i_adc_max_oor        = HV_LAMBDA_MODE_A_IADC_MAX_OUT_OT_RANGE;
 
   SetPowerSupplyTarget(&ps_hv_lambda_mode_A, ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
-
+  
 
 
   // --- ps_hv_lambda_mode_B initialization ---
@@ -728,7 +728,7 @@ void DoA34760StartUpCommon(void) {
 
 
   SetPowerSupplyTarget(&ps_hv_lambda_mode_B, ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
-
+  
 
 
   // --- ps_magnetron_mode_A initialization ---
@@ -771,7 +771,7 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_A.v_adc_min_reading    = 0xFFFF;
 
   SetPowerSupplyTarget(&ps_magnetron_mode_A, ps_magnetron_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
-
+  
 
 
   // --- ps_magnetron_mode_B initialization ---
@@ -814,6 +814,7 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_B.v_adc_min_reading    = 0xFFFF;
 
   SetPowerSupplyTarget(&ps_magnetron_mode_B, ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
+  
 
 
   PIN_UART2_TX = !PIN_UART2_TX;
@@ -959,7 +960,7 @@ void DoA34760StartUpCommon(void) {
   // --------- CONFIGURATION FOR THE SPI BUSSES ---------------- //
   OpenSPI1((A34760_SPI1CON_VALUE & A34760_SPI1CON_CLOCK), A34760_SPI1STAT_VALUE);  // Configure SPI bus 1 based on H file parameters
   OpenSPI2((A34760_SPI2CON_VALUE & A34760_SPI2CON_CLOCK), A34760_SPI2STAT_VALUE);  // Configure SPI bus 2 based on H file parameters
-
+  
 
   // ------ CONFIGURE the CAN Modules to be OFF -------------- //
   C1CTRL = 0b0000000100000000;
@@ -1054,8 +1055,6 @@ void DoA34760StartUpCommon(void) {
  
   fast_reset_counter_persistent = pulse_counter_repository_ram_copy[6];
   
-
-  
   /*
     Check to See if this was a faulty processor Reset.
     If it was a faulty processor Reset, the following must occur
@@ -1112,14 +1111,14 @@ void DoA34760StartUpNormalProcess(void) {
   // Test U64 - MCP23017
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
-  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);  
+  i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IOCON, MCP23017_DEFAULT_IOCON);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATA, U64_MCP23017.output_latch_a_in_ram);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_OLATB, U64_MCP23017.output_latch_b_in_ram);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRA, MCP23017_U64_IODIRA_VALUE);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IODIRB, MCP23017_U64_IODIRB_VALUE);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLA, MCP23017_U64_IPOLA_VALUE);
   i2c_test |= MCP23017WriteSingleByte(&U64_MCP23017, MCP23017_REGISTER_IPOLB, MCP23017_U64_IPOLB_VALUE);
-  
+    
   if ((i2c_test & 0xFF00) == 0xFA00) {
     // There was a fault on the i2c bus, the MCP23017 did not initialize properly
     debug_status_register |= STATUS_DIGITAL_IO_EXP_ERROR;
@@ -1136,7 +1135,6 @@ void DoA34760StartUpNormalProcess(void) {
   DisableMagnetronFilamentSupply();
   DisableMagnetronMagnetSupply();
   DisableHVLambdaSupply();
-  
 }
 
 
@@ -1157,6 +1155,7 @@ void DoA34760StartUpFastProcess(void) {
 
   fast_reset_counter_persistent++;
   pulse_counter_repository_ram_copy[6] = fast_reset_counter_persistent;
+  PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
 
   // Taken from StartWarmUp(); & the start of State Warm Ready
   PIDInit(&thyratron_reservoir_heater_PID);
@@ -1169,7 +1168,7 @@ void DoA34760StartUpFastProcess(void) {
   ScalePowerSupply(&ps_magnet,100,100);             // DPARKER this may be re-adjusted below
   ScalePowerSupply(&ps_thyr_reservoir_htr,100,100); // DPARKER this is not actually being used
   ScalePowerSupply(&ps_thyr_cathode_htr,100,100);   // DPARKER this is not actually being used
-  
+
   EnableMagnetronMagnetSupply();
   EnableMagnetronFilamentSupply();
   HVLambdaStartCharging();  // DPARKER TMR1 and TMR2 must be initialized and ready to go before this call. DPARKER T1 Interrupt must also be ready to go
@@ -1211,7 +1210,7 @@ void DoA34760StartUpFastProcess(void) {
   control_state = STATE_HV_ON;  //  Want to check the faults based on STATE_HV_ON
   UpdateFaults();
   control_state = STATE_FAST_RECOVERY_START_UP;
-
+  
   // DPARKER - NO CONFIG/CHANGES to the I/O Expander for NOW
 }
 
@@ -1282,6 +1281,8 @@ void SetPowerSupplyTarget(POWERSUPPLY* ptr_ps, unsigned int v_command, unsigned 
     ScalePowerSupply(ptr_ps,100,100);
   }
   CalcPowerSupplySettings(ptr_ps);  // DPARKER is this call redundant since ScalePowerSupply also calls ScalePowerSupply
+
+  ClrWdt();
 
   // DPARKER need to figure out how to combine ScalePowerSupply & SetPowerSupplyTarget & CalcPowerSupplySettings
   
@@ -1438,6 +1439,7 @@ void CalcPowerSupplySettings(POWERSUPPLY* ptr_ps) {
   if (ptr_ps->i_adc_over_rel < ptr_ps->i_adc_over_min_value) {
     ptr_ps->i_adc_over_rel = ptr_ps->i_adc_over_min_value;
   }
+  ClrWdt();
 }
 
 
@@ -1467,6 +1469,7 @@ void UpdateDacAll(void) {
     if (dac_write_failed) {
       global_debug_counter.LTC2656_write_error++;
     }
+    ClrWdt();
   }
   if (number_tries >= 20) {
     RecordThisControlBoardFault(FAULT_CB_SPI_UNRECOVERABLE_ERROR);
@@ -2161,11 +2164,11 @@ void StartWarmUp(void) {
 
 
 void EnableMagnetronFilamentSupply(void) {
-  PIN_MAGNETRON_FILAMENT_ENABLE = OLL_MAGNETRON_MAGNET_ENABLED;
+  PIN_MAGNETRON_FILAMENT_ENABLE = OLL_MAGNETRON_FILAMENT_ENABLED;
 }
 
 void DisableMagnetronFilamentSupply(void) {
-  PIN_MAGNETRON_FILAMENT_ENABLE = !OLL_MAGNETRON_MAGNET_ENABLED;
+  PIN_MAGNETRON_FILAMENT_ENABLE = !OLL_MAGNETRON_FILAMENT_ENABLED;
 }
 
 void EnableMagnetronMagnetSupply(void) {

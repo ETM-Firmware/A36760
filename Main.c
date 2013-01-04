@@ -93,7 +93,8 @@ _FOSC(ECIO & CSW_FSCM_OFF); // Primary Oscillator with PLL and Startup with User
 
 
 // Watchdog Timeout is 2 Millisconds with no pre scallers
-_FWDT(WDT_ON & WDTPSA_1 & WDTPSB_16);  // Watchdog Timer is enabled, 32ms TIMEOUT
+_FWDT(WDT_ON & WDTPSA_1 & WDTPSB_2);  // Watchdog Timer is enabled, 4ms TIMEOUT
+//_FWDT(WDT_ON & WDTPSA_1 & WDTPSB_16);  // Watchdog Timer is enabled, 32ms TIMEOUT
 //_FWDT(WDT_OFF & WDTPSA_1 & WDTPSB_16);  // Watchdog Timer is disnabled, 32ms TIMEOUT
 
 

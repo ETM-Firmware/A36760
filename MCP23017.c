@@ -16,6 +16,7 @@ unsigned int MCP23017WriteSingleByte(MCP23017* ptr_MCP23017, unsigned char MCP23
   
   error_check |= GenerateI2CStop(ptr_MCP23017->i2c_port);                                                     // Generate Stop Condition
   
+  ClrWdt();
   return error_check;
 }
 
@@ -38,6 +39,7 @@ unsigned int MCP23017ReadSingleByte(MCP23017* ptr_MCP23017, unsigned char MCP230
   
   error_check |= GenerateI2CStop(ptr_MCP23017->i2c_port);                                                     // Generate Stop Condition
   
+  ClrWdt();
   return error_check;
 }
 
