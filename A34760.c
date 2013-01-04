@@ -13,10 +13,14 @@
 
 void ReadADCtoPACArray(void);
 
+volatile unsigned int timing_error_int1_count = 0;
+
 unsigned char ram_config_set_magnetron_magnet_current_from_GUI;
 
 volatile unsigned int _PERSISTENT last_known_action;
 volatile unsigned int _PERSISTENT last_osccon;
+
+unsigned int _PERSISTENT processor_crash_count;
 
 unsigned int previous_last_action;
 
@@ -338,8 +342,6 @@ void DoStateMachine(void) {
       if (global_run_post_pulse_process) {
 	last_known_action = LAST_ACTION_POST_PULSE_PROC;
 	// The Pulse Interrupt sets this Flag - And this sequence runs only once
-	global_run_post_pulse_process = 0;	
-	
 	// Update all the pulse data
 	pulse_counter_this_hv_on++;
 	pulse_counter_persistent++;
@@ -349,12 +351,15 @@ void DoStateMachine(void) {
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
 	a_b_selected_mode = next_pulse_a_b_selected_mode;
 	
-	
 	// DPARKER impliment and test a current control PID LOOP
 	
 	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
 	//UpdateIOExpanderOutputs();               // DPAKRER is this needed here?  The io expander outputs should never change in state HV on!!!!
 	
+	// Set up the 100ms Timer that will roll if there is not another pulse in the next 100mS
+	TMR2 = 0;
+	_T2IF = 0;          
+	global_run_post_pulse_process = 0;	
       }
       
       // DPARKER need to write new timing diagram - should be simplier
@@ -956,6 +961,11 @@ void DoA34760StartUpCommon(void) {
   OpenSPI2((A34760_SPI2CON_VALUE & A34760_SPI2CON_CLOCK), A34760_SPI2STAT_VALUE);  // Configure SPI bus 2 based on H file parameters
 
 
+  // ------ CONFIGURE the CAN Modules to be OFF -------------- //
+  C1CTRL = 0b0000000100000000;
+  C2CTRL = 0b0000000100000000;
+  
+
   // ----------------- UART #1 Setup and Data Buffer -------------------------//
   // Setup the UART input and output buffers
   uart1_input_buffer.write_location = 0;  
@@ -1142,6 +1152,8 @@ void DoA34760StartUpFastProcess(void) {
   
   unsigned int vtemp_2;
   unsigned int itemp_2;
+
+  processor_crash_count++;
 
   fast_reset_counter_persistent++;
   pulse_counter_repository_ram_copy[6] = fast_reset_counter_persistent;
@@ -1519,7 +1531,13 @@ void Do10msTicToc(void) {
     led_pulse_count = ((led_pulse_count + 1) & 0b00001111);
     if (led_pulse_count == 0) {
       // 10ms * 16 counter has ocurred
-      PIN_MAIN_CONTACTOR_CLOSE = !PIN_MAIN_CONTACTOR_CLOSE;  // Flash the LED
+      // Flash the LED - NOTE "PIN_MAIN_CONTACTOR_CLOSE = !PIN_MAIN_CONTACTOR_CLOSE" was causing any changes made in Port F durring interrupt to be overwritten
+      if (PIN_MAIN_CONTACTOR_CLOSE) {
+	PIN_MAIN_CONTACTOR_CLOSE = 0;
+      } else {
+	PIN_MAIN_CONTACTOR_CLOSE = 1;
+      }  
+      
       average_pulse_repetition_frequency_deci_herz = RCFilter16Tau(average_pulse_repetition_frequency_deci_herz, ((prf_pulse_counter*125)>>1));
       prf_pulse_counter = 0;  
     }
@@ -2487,9 +2505,9 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
 
 
-  // Set up the 100ms Timer that will roll if there is not another pulse in the next 100mS
-  TMR2 = 0;
-  _T2IF = 0;          
+  if (global_run_post_pulse_process) {
+    timing_error_int1_count++;
+  }
 
   global_run_post_pulse_process = 1; // This tells the main control loop that a pulse has occured and that it should run the post pulse process once (and only once) 
   global_adc_ignore_this_sample = 1;  // This allows the internal ADC ISR to know that there was a pulse and to discard all the data from the sequence where the pulse occured
@@ -2530,7 +2548,12 @@ void _ISRNOPSV _ADCInterrupt(void) {
   _ASAM = 0; // Stop Auto Sampling
   _ADIF = 0;
   
-  PIN_UART2_TX = !PIN_UART2_TX;
+  // Switch the sate of PIN_UART2_TX (debugging info)
+  if (PIN_UART2_TX) {
+    PIN_UART2_TX = 0;
+  } else {
+    PIN_UART2_TX = 1;
+  }
 
   last_known_action = LAST_ACTION_ADC_INTERRUPT;
   // DPARKER what for the conversion to complete???

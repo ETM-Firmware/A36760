@@ -118,6 +118,25 @@
 #define _PIN_RE14 _PORT_PORTE | 0x0E
 #define _PIN_RE15 _PORT_PORTE | 0x0F
 
+
+#define _PIN_RF0 _PORT_PORTF | 0x00
+#define _PIN_RF1 _PORT_PORTF | 0x01
+#define _PIN_RF3 _PORT_PORTF | 0x03
+#define _PIN_RF4 _PORT_PORTF | 0x04
+#define _PIN_RF5 _PORT_PORTF | 0x05
+#define _PIN_RF6 _PORT_PORTF | 0x06
+#define _PIN_RF7 _PORT_PORTF | 0x07
+#define _PIN_RF8 _PORT_PORTF | 0x08
+#define _PIN_RF9 _PORT_PORTF | 0x09
+#define _PIN_RF10 _PORT_PORTF | 0x0A
+#define _PIN_RF11 _PORT_PORTF | 0x0B
+#define _PIN_RF12 _PORT_PORTF | 0x0C
+#define _PIN_RF13 _PORT_PORTF | 0x0D
+#define _PIN_RF14 _PORT_PORTF | 0x0E
+#define _PIN_RF15 _PORT_PORTF | 0x0F
+
+
+
 #define _PIN_RG0 _PORT_PORTG | 0x00
 #define _PIN_RG1 _PORT_PORTG | 0x01
 #define _PIN_RG3 _PORT_PORTG | 0x03

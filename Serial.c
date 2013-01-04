@@ -406,6 +406,7 @@ void ExecuteCommand(void) {
       _WDTO = 0;
       _IOPUWR = 0;
       last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
+      processor_crash_count = 0;
       break;
 
 
@@ -727,13 +728,15 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       
     case RAM_READ_COUNT_SCALE16BIT_SATURATION:
       // data_return = global_debug_counter.scale16bit_saturation;  // DPARKER switched for debugging for now
-      data_return = last_osccon;
+      //data_return = last_osccon;  // DPARKER switching meaning again
+      data_return = timing_error_int1_count;
       break;
       
     case RAM_READ_COUNT_REVERSESCALE16BIT_SATURATION:
       //data_return = global_debug_counter.reversescale16bit_saturation;  //DPARKER switched this for now
       // data_return = lvdinterrupt_counter;
-      data_return = previous_last_action;
+      //data_return = previous_last_action;  //DPARKER Changed again
+      data_return = processor_crash_count;
       break;
       
     }
