@@ -17,46 +17,46 @@ void ReadAllEEpromToRAM(void);
 
 _prog_addressT EE_address_ps_magnet_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_magnet_config_in_EEPROM[] = PS_MAGNET_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_magnet_config_ram_copy[16];
+signed int ps_magnet_config_ram_copy[16];
 
 _prog_addressT EE_address_ps_filament_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_filament_config_in_EEPROM[] = PS_FILAMENT_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_filament_config_ram_copy[16];
+signed int ps_filament_config_ram_copy[16];
 
 _prog_addressT EE_address_ps_thyr_cathode_htr_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_thyr_cathode_htr_config_in_EEPROM[] = PS_THYR_CATH_HTR_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_thyr_cathode_htr_config_ram_copy[16];
+signed int ps_thyr_cathode_htr_config_ram_copy[16];
 
 _prog_addressT EE_address_ps_thyr_reservoir_htr_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_thyr_reservoir_htr_config_in_EEPROM[] = PS_THYR_RESER_HTR_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_thyr_reservoir_htr_config_ram_copy[16];
+signed int ps_thyr_reservoir_htr_config_ram_copy[16];
 
 
 _prog_addressT EE_address_ps_hv_lambda_mode_A_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_hv_lambda_mode_A_config_in_EEPROM[] = PS_HV_LAMBDA_MODE_A_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_hv_lambda_mode_A_config_ram_copy[16];
+signed int ps_hv_lambda_mode_A_config_ram_copy[16];
 
 _prog_addressT EE_address_ps_hv_lambda_mode_B_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_hv_lambda_mode_B_config_in_EEPROM[] = PS_HV_LAMBDA_MODE_B_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_hv_lambda_mode_B_config_ram_copy[16];
+signed int ps_hv_lambda_mode_B_config_ram_copy[16];
 
 
 _prog_addressT EE_address_ps_magnetron_mode_A_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_magnetron_mode_A_config_in_EEPROM[] = PS_MAGNETRON_MODE_A_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_magnetron_mode_A_config_ram_copy[16];
+signed int ps_magnetron_mode_A_config_ram_copy[16];
 
 _prog_addressT EE_address_ps_magnetron_mode_B_config_in_EEPROM;
 unsigned int _EEDATA(32) ps_magnetron_mode_B_config_in_EEPROM[] = PS_MAGNETRON_MODE_B_DEFAULT_CONFIG;  // Create 16 word structure in EEPROM and load default configuration values
-unsigned int ps_magnetron_mode_B_config_ram_copy[16];
+signed int ps_magnetron_mode_B_config_ram_copy[16];
 
 _prog_addressT EE_address_pulse_counter_repository_in_EEPROM;
 unsigned int _EEDATA(32) pulse_counter_repository_in_EEPROM[] = {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0};  // Create 16 word structure in EEPROM and load zeros
-unsigned int pulse_counter_repository_ram_copy[16];
+signed int pulse_counter_repository_ram_copy[16];
 
 
 _prog_addressT EE_address_control_loop_cal_data_in_EEPROM;
 unsigned int _EEDATA(32) control_loop_cal_data_in_EEPROM[] = CONTROL_LOOP_CAL_DATA_DEFAULT_CONFIG; // Create 16 word structure in EEPROM and load default configuration values
-unsigned int control_loop_cal_data_ram_copy[16];
+signed int control_loop_cal_data_ram_copy[16];
 
 
 /*
@@ -118,7 +118,6 @@ int main(void) {
   
   PIN_MCU_CLOCK_OUT_TEST_POINT = 1;
   TRIS_PIN_MCU_CLOCK_OUT_TEST_POINT = TRIS_OUTPUT_MODE;
-  __delay32(10000);
 
 
   control_state = STATE_START_UP;
@@ -142,31 +141,41 @@ int main(void) {
 void ReadAllEEpromToRAM(void) {
   _init_prog_address(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_in_EEPROM);
   _memcpy_p2d16(ps_magnet_config_ram_copy, EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_in_EEPROM);
   _memcpy_p2d16(ps_filament_config_ram_copy, EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_thyr_cathode_htr_config_in_EEPROM, ps_thyr_cathode_htr_config_in_EEPROM);
   _memcpy_p2d16(ps_thyr_cathode_htr_config_ram_copy, EE_address_ps_thyr_cathode_htr_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, ps_thyr_reservoir_htr_config_in_EEPROM);
   _memcpy_p2d16(ps_thyr_reservoir_htr_config_ram_copy, EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, ps_hv_lambda_mode_A_config_in_EEPROM);
   _memcpy_p2d16(ps_hv_lambda_mode_A_config_ram_copy, EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, ps_hv_lambda_mode_B_config_in_EEPROM);
   _memcpy_p2d16(ps_hv_lambda_mode_B_config_ram_copy, EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_magnetron_mode_A_config_in_EEPROM, ps_magnetron_mode_A_config_in_EEPROM);
   _memcpy_p2d16(ps_magnetron_mode_A_config_ram_copy, EE_address_ps_magnetron_mode_A_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_ps_magnetron_mode_B_config_in_EEPROM, ps_magnetron_mode_B_config_in_EEPROM);
   _memcpy_p2d16(ps_magnetron_mode_B_config_ram_copy, EE_address_ps_magnetron_mode_B_config_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_pulse_counter_repository_in_EEPROM, pulse_counter_repository_in_EEPROM);
   _memcpy_p2d16(pulse_counter_repository_ram_copy, EE_address_pulse_counter_repository_in_EEPROM, _EE_ROW);
+  ClrWdt();
 
   _init_prog_address(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_in_EEPROM);
   _memcpy_p2d16(control_loop_cal_data_ram_copy, EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+  ClrWdt();
 }

@@ -272,6 +272,8 @@
 
 
 // ---- Hard Coded Delays ---- //
+#define DELAY_TCY_10US                          100       // 10us us at 10MHz Clock
+
 #define DELAY_PULSE_CABLE_SELECT_PROP_DELAY_US  20        // 20uS
                                                           // This delay must be longer than the propogation delay on the Isolated DAC Cable Select Line
 #define DELAY_PULSE_CABLE_SELECT_PROP_DELAY     (FCY_CLK_MHZ*DELAY_PULSE_CABLE_SELECT_PROP_DELAY_US)
@@ -479,22 +481,22 @@ extern unsigned int average_pulse_repetition_frequency_deci_herz;
 // adc variables
 extern volatile unsigned char adc_result_index;
 
-extern volatile unsigned int pfn_rev_current_array[128];
+extern unsigned int pfn_rev_current_array[128];
 
-extern volatile unsigned int pac_1_array[128];
-extern volatile unsigned int pac_2_array[128];
+extern unsigned int pac_1_array[128];
+extern unsigned int pac_2_array[128];
 
-extern volatile unsigned int thyratron_cathode_heater_voltage_array[128];
-extern volatile unsigned int thyratron_reservoir_heater_voltage_array[128];
+extern unsigned int thyratron_cathode_heater_voltage_array[128];
+extern unsigned int thyratron_reservoir_heater_voltage_array[128];
 
-extern volatile unsigned int magnetron_magnet_current_array[128];
-extern volatile unsigned int magnetron_magnet_voltage_array[128];
+extern unsigned int magnetron_magnet_current_array[128];
+extern unsigned int magnetron_magnet_voltage_array[128];
 
-extern volatile unsigned int magnetron_filament_current_array[128];
-extern volatile unsigned int magnetron_filament_voltage_array[128];
+extern unsigned int magnetron_filament_current_array[128];
+extern unsigned int magnetron_filament_voltage_array[128];
 
-extern volatile unsigned int lambda_vpeak_array[128];
-extern volatile unsigned int lambda_vmon_array[128];
+extern unsigned int lambda_vpeak_array[128];
+extern unsigned int lambda_vmon_array[128];
 
 
 extern tPID thyratron_reservoir_heater_PID;
@@ -535,19 +537,19 @@ extern unsigned int mode_A_pulse_magnetron_current_adc_reading_min;
 extern unsigned int mode_B_pulse_magnetron_current_adc_reading_max;
 extern unsigned int mode_B_pulse_magnetron_current_adc_reading_min;
 
-extern volatile BUFFER64BYTE uart1_input_buffer;
-extern volatile BUFFER64BYTE uart1_output_buffer;
+extern BUFFER64BYTE uart1_input_buffer;
+extern BUFFER64BYTE uart1_output_buffer;
 
-extern unsigned int ps_magnet_config_ram_copy[16];
-extern unsigned int ps_filament_config_ram_copy[16];
-extern unsigned int ps_thyr_cathode_htr_config_ram_copy[16];
-extern unsigned int ps_thyr_reservoir_htr_config_ram_copy[16];
-extern unsigned int ps_hv_lambda_mode_A_config_ram_copy[16];
-extern unsigned int ps_hv_lambda_mode_B_config_ram_copy[16];
-extern unsigned int ps_magnetron_mode_A_config_ram_copy[16];
-extern unsigned int ps_magnetron_mode_B_config_ram_copy[16];
-extern unsigned int pulse_counter_repository_ram_copy[16];
-extern unsigned int control_loop_cal_data_ram_copy[16];
+extern signed int ps_magnet_config_ram_copy[16];
+extern signed int ps_filament_config_ram_copy[16];
+extern signed int ps_thyr_cathode_htr_config_ram_copy[16];
+extern signed int ps_thyr_reservoir_htr_config_ram_copy[16];
+extern signed int ps_hv_lambda_mode_A_config_ram_copy[16];
+extern signed int ps_hv_lambda_mode_B_config_ram_copy[16];
+extern signed int ps_magnetron_mode_A_config_ram_copy[16];
+extern signed int ps_magnetron_mode_B_config_ram_copy[16];
+extern signed int pulse_counter_repository_ram_copy[16];
+extern signed int control_loop_cal_data_ram_copy[16];
 
 extern unsigned long EE_address_ps_magnet_config_in_EEPROM;
 extern unsigned long EE_address_ps_filament_config_in_EEPROM;

@@ -82,8 +82,8 @@ fractional pid_thyratron_cathode_heater_kCoeffs[] = {0,0,0};
 
 
 
-volatile BUFFER64BYTE uart1_input_buffer;
-volatile BUFFER64BYTE uart1_output_buffer;
+BUFFER64BYTE uart1_input_buffer;
+BUFFER64BYTE uart1_output_buffer;
 
 LTC2656 U44_LTC2656;
 MCP23017 U64_MCP23017;
@@ -100,22 +100,22 @@ POWERSUPPLY ps_thyr_reservoir_htr;
 
 volatile unsigned char adc_result_index;
 
-volatile unsigned int pfn_rev_current_array[128];
+unsigned int pfn_rev_current_array[128];
 
-volatile unsigned int pac_1_array[128];
-volatile unsigned int pac_2_array[128];
+unsigned int pac_1_array[128];
+unsigned int pac_2_array[128];
 
-volatile unsigned int thyratron_cathode_heater_voltage_array[128];
-volatile unsigned int thyratron_reservoir_heater_voltage_array[128];
+unsigned int thyratron_cathode_heater_voltage_array[128];
+unsigned int thyratron_reservoir_heater_voltage_array[128];
 
-volatile unsigned int magnetron_magnet_current_array[128];
-volatile unsigned int magnetron_magnet_voltage_array[128];
+unsigned int magnetron_magnet_current_array[128];
+unsigned int magnetron_magnet_voltage_array[128];
 
-volatile unsigned int magnetron_filament_current_array[128];
-volatile unsigned int magnetron_filament_voltage_array[128];
+unsigned int magnetron_filament_current_array[128];
+unsigned int magnetron_filament_voltage_array[128];
 
-volatile unsigned int lambda_vpeak_array[128];
-volatile unsigned int lambda_vmon_array[128];
+unsigned int lambda_vpeak_array[128];
+unsigned int lambda_vmon_array[128];
 
 
 volatile unsigned char global_run_post_pulse_process;
@@ -424,7 +424,6 @@ void DoStateMachine(void) {
 
 void DoA34760StartUpCommon(void) {
   unsigned int *unsigned_int_ptr;  
-
 
   // This is debugging info info  If the processor reset, a code that indicates the last major point that the processor entered should be held in RAM at last_known_action
   previous_last_action = last_known_action;
@@ -2526,6 +2525,7 @@ void _ISRNOPSV _T1Interrupt(void) {
     If the lambda is not at EOC, it does not enable the trigger and sets the Lambda EOC Timeout Fault bit
     If the lambda is at EOC, It enables the trigger & sets status bits to show that the lambda is not charging and that the system is ready to fire.    
   */
+  unsigned char lambda_eoc_fault;
 
   last_known_action = LAST_ACTION_T1_INT;
   
@@ -2535,15 +2535,28 @@ void _ISRNOPSV _T1Interrupt(void) {
   
   // DPARKER - Consider adding more checks - Magnet Current, Actual Lambda Voltage, Check all the fault registers to confirm good to go!!!!
 
-  if  (PIN_HV_LAMBDA_EOC_INPUT == ILL_HV_LAMBDA_AT_EOC) {
-    // Everything is ready to fire, enable the the thyratron trigger and Enable the Trigger Interrupt
-    PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
-    _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
-    _INT1IE = 1;
-  } else {
-    // If the lamabda has not reached EOC, need to set the appropriate fault bit    
-    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
+  lambda_eoc_fault = 0;
+  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+    __delay32(DELAY_TCY_10US);
+    if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+      __delay32(DELAY_TCY_10US);
+      if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+	__delay32(DELAY_TCY_10US);
+	if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+	  __delay32(DELAY_TCY_10US);
+	  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+	    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
+	  }
+	} 
+      }
+    }
   }
+
+  // Enable the the thyratron trigger and Enable the Trigger Interrupt 
+  PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+  _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
+  _INT1IE = 1;
+
 }  
 
 
