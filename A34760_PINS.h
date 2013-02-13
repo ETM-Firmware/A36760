@@ -215,7 +215,7 @@
 
 #define PIN_LAMBDA_VOLTAGE_SELECT            _LATB14
 #define TRIS_PIN_LAMBDA_VOLTAGE_SELECT       _TRISB14
-#define OLL_SELECT_LAMBDA_MODE_A_VOLTAGE     1
+#define OLL_SELECT_LAMBDA_MODE_A_VOLTAGE     0
 
 #define PIN_PULSE_IMON_CS                    _LATD6
 #define TRIS_PIN_PULSE_IMON_CS               _TRISD6
