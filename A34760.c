@@ -302,7 +302,6 @@ void DoStateMachine(void) {
   case STATE_HV_STARTUP:
     // THIS STATE uses the same faults as STATE_SYSTEM_WARM_READY
     lambda_supply_startup_counter = 0;
-    PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
     while (control_state == STATE_HV_STARTUP) {
       Do10msTicToc();
       DoSerialCommand();
@@ -332,6 +331,7 @@ void DoStateMachine(void) {
     arc_counter_this_hv_on = 0;
     pulse_counter_this_hv_on = 0;
     global_run_post_pulse_process = 0;
+    PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
 
     _T1IE = 1; // This is added for the fast restart process.  Normally _T1IE is set in HVLambdaStartCharging(), but the fast restart clears this bit temporarily
         
