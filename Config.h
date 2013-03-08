@@ -38,7 +38,7 @@
 #define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
-#define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.05
+#define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
 #define MAGNET_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .50
 #define MAGNET_SUPPLY_VADC_MIN_OVER_VOLTAGE         1000
 #define MAGNET_SUPPLY_VADC_MAX_OUT_OT_RANGE         50                       // 50 * 10ms = 500mS out of range before a fault trips
@@ -49,8 +49,8 @@
 #define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD        26000                    // 26 Amps 
-#define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.05)
-#define MAGNET_SUPPLY_IADC_UNDER_CURRENT_SCALE      (.95)
+#define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.10)
+#define MAGNET_SUPPLY_IADC_UNDER_CURRENT_SCALE      (.90)
 #define MAGNET_SUPPLY_IADC_MIN_OVER_CURRENT         1000
 #define MAGNET_SUPPLY_IADC_MAX_OUT_OT_RANGE         50                       // 50 * 10ms = 500mS out of range before a fault trips
 
@@ -63,12 +63,12 @@
 
 #define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              1000                      // 100ms Units - 100 Seconds total
 
-#define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         13500                    // 13.5 Volts
+#define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         15000                    // 13.5 Volts
 
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         17643                    // 17.643 Volts
 #define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          25000                    // 25000 Volts
 
-#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        13750                    // 13.75 Volts 
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        15500                    // 13.75 Volts 
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.15
 #define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .85
 #define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         2000                     // 2 Volts
