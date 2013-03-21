@@ -238,12 +238,21 @@ void ExecuteCommand(void) {
 
 
     case CMD_FORCE_SOFTWARE_RESTART:
+      /*
+	We don't want to be forcing software resets on a production system
       PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
       __delay32(100000); // this should be 10ms
       PIN_MCU_CLOCK_OUT_TEST_POINT = 1;
       __delay32(100);
       PIN_MCU_CLOCK_OUT_TEST_POINT = 0;
      __asm__ ("Reset");
+      */
+      break;
+
+    case CMD_SOFTWARE_SKIP_WARMUP:
+      if (control_state == STATE_WARM_UP) {
+	software_skip_warmup = 1;
+      }
       break;
 
     case CMD_SET_MAGNET_PS_CAL_DATA:
@@ -727,17 +736,34 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
       
     case RAM_READ_COUNT_SCALE16BIT_SATURATION:
-      // data_return = global_debug_counter.scale16bit_saturation;  // DPARKER switched for debugging for now
-      //data_return = last_osccon;  // DPARKER switching meaning again
-      data_return = timing_error_int1_count;
+      data_return = global_debug_counter.scale16bit_saturation;
       break;
-      
+
+    case RAM_READ_LAST_OSCCON_BEFORE_CRASH:
+      data_return = last_osccon;
+      break;
+
     case RAM_READ_COUNT_REVERSESCALE16BIT_SATURATION:
-      //data_return = global_debug_counter.reversescale16bit_saturation;  //DPARKER switched this for now
-      // data_return = lvdinterrupt_counter;
-      //data_return = previous_last_action;  //DPARKER Changed again
+      data_return = global_debug_counter.reversescale16bit_saturation;
+      break;
+
+    case RAM_READ_COUNT_LVD_INTERRUPT:
+      data_return = lvdinterrupt_counter;
+      break;
+
+    case RAM_READ_LAST_ACTION_BEFORE_CRASH:
+      data_return = previous_last_action;
+      break;
+
+    case RAM_READ_COUNT_PROCESSOR_CRASH:
       data_return = processor_crash_count;
       break;
+      
+    case RAM_READ_COUNT_TIMING_ERROR_INT1:
+      data_return = timing_error_int1_count;
+      break;
+
+
       
     }
   

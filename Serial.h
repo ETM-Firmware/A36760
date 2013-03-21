@@ -19,6 +19,7 @@
 #define CMD_CLEAR_PROCESSOR_RESET_DATA                  0x40
 
 #define CMD_FORCE_SOFTWARE_RESTART                      0xA0
+#define CMD_SOFTWARE_SKIP_WARMUP                        0xA1
 
 #define CMD_SET_MAGNET_PS_CAL_DATA                      0xD0
 #define CMD_READ_MAGNET_PS_CAL_DATA                     0xD1
@@ -148,9 +149,11 @@
 #define RAM_READ_COUNT_SETPOINT_NOT_VALID                       0xA7
 #define RAM_READ_COUNT_SCALE16BIT_SATURATION                    0xA8
 #define RAM_READ_COUNT_REVERSESCALE16BIT_SATURATION             0xA9
-
-
-
+#define RAM_READ_COUNT_TIMING_ERROR_INT1                        0xAA
+#define RAM_READ_COUNT_PROCESSOR_CRASH                          0xAB
+#define RAM_READ_LAST_ACTION_BEFORE_CRASH                       0xAC
+#define RAM_READ_COUNT_LVD_INTERRUPT                            0xAD
+#define RAM_READ_LAST_OSCCON_BEFORE_CRASH                       0xAE
 
 /*
 

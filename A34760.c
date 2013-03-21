@@ -15,6 +15,8 @@ void ReadADCtoPACArray(void);
 
 volatile unsigned int timing_error_int1_count = 0;
 
+unsigned int software_skip_warmup = 0;
+
 unsigned char ram_config_set_magnetron_magnet_current_from_GUI;
 
 volatile unsigned int _PERSISTENT last_known_action;
@@ -242,6 +244,7 @@ void DoStateMachine(void) {
   case STATE_WARM_UP:
     StartWarmUp();
     warmup_counter = 0;
+    software_skip_warmup = 0;
     while (control_state == STATE_WARM_UP) {
       Do10msTicToc();
       DoSerialCommand();
@@ -251,7 +254,7 @@ void DoStateMachine(void) {
       if (_T2IF) {
 	warmup_counter++;
 	_T2IF = 0;
-	if (PIN_FP_FAST_RESTART == ILL_FAST_RESTART) {
+	if ((PIN_FP_FAST_RESTART == ILL_FAST_RESTART) || (software_skip_warmup == 1)) {
 	  ScalePowerSupply(&ps_filament, warmup_counter, 10);
 	  ScalePowerSupply(&ps_magnet, warmup_counter, 10);
 	  ScalePowerSupply(&ps_thyr_cathode_htr, warmup_counter, 10);
@@ -270,9 +273,15 @@ void DoStateMachine(void) {
       } else if (warmup_counter > SYSTEM_WARM_UP_TIME) {
 	ResetHWLatches();
 	control_state = STATE_SYSTEM_WARM_READY;
+	software_skip_warmup = 0;
       } else if ((PIN_FP_FAST_RESTART == ILL_FAST_RESTART) && (warmup_counter > 20)) {
 	ResetHWLatches();
 	control_state = STATE_SYSTEM_WARM_READY;
+	software_skip_warmup = 0;
+      } else if (software_skip_warmup == 1) {
+	ResetHWLatches();
+	control_state = STATE_SYSTEM_WARM_READY;
+	software_skip_warmup = 0;
       }
     }
     break;
