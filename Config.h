@@ -51,7 +51,7 @@
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD        26000                    // 26 Amps 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.10)
 #define MAGNET_SUPPLY_IADC_UNDER_CURRENT_SCALE      (.90)
-#define MAGNET_SUPPLY_IADC_MIN_OVER_CURRENT         1000
+#define MAGNET_SUPPLY_IADC_MIN_OVER_CURRENT         4000
 #define MAGNET_SUPPLY_IADC_MAX_OUT_OT_RANGE         50                       // 50 * 10ms = 500mS out of range before a fault trips
 
 
@@ -80,9 +80,9 @@
 #define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          25912                    // 25.912 Amps
 
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        10500                    // 10.5 Amps 
-#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       1.5
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
 #define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .5
-#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         2000                     // 2 Amps
+#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         4000                     // 2 Amps
 #define FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE         200                       // 200 * 10ms = 2000mS out of range before a fault trips
 
 #define PS_FILAMENT_DEFAULT_CONFIG {13000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 8500, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
