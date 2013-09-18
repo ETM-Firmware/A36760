@@ -34,8 +34,8 @@
 
 #define MAX_MAGNET_SUPPLY_VOLTAGE_SET_POINT         32000                    // 32 Volts
 
-#define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         41739                    // 41.739 Volts
-#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
+#define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         49001                    // 49.001 Volts
+#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          50000                    // 50.000 Volts
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
@@ -45,8 +45,8 @@
 
 #define MAX_MAGNET_SUPPLY_CURRENT_SET_POINT         25000                    // 25 Amps
 
-#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         41535                    // 41.535 Amps
-#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
+#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         25713                    // 25.713 Amps
+#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          26250                    // 26.250 Amps
 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD        26000                    // 26 Amps 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.10)
@@ -65,8 +65,8 @@
 
 #define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         15000                    // 13.5 Volts
 
-#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         17643                    // 17.643 Volts
-#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          25000                    // 25000 Volts
+#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         18339                    // 18.339 Volts
+#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37500 Volts
 
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        15500                    // 13.75 Volts 
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.15
@@ -76,8 +76,8 @@
 
 #define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         10000                    // 10.0 Amps
 
-#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // Bogus Value Because there is no IDAC scale
-#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          25912                    // 25.912 Amps
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         15283                    // 15.283 Amps
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31250                    // 31.250 Amps
 
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        10500                    // 10.5 Amps 
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
