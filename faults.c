@@ -12,6 +12,7 @@ unsigned int CalculatePulseEnergy(unsigned int voltage_adc, unsigned int current
 
 void StorePulseData(POWERSUPPLY* ptr);
 
+unsigned int CalculatePulseEnergyMilliJouleFromCurrent(unsigned int current_adc);
 
 // The status register used for debug purposes
 unsigned int debug_status_register;
@@ -656,6 +657,8 @@ void StorePulseData(POWERSUPPLY* ptr) {
   }
 
   average_energy_per_pulse_centi_joules = RCFilter16Tau(average_energy_per_pulse_centi_joules, CalculatePulseEnergy(pulse_magnetron_voltage_adc_reading, pulse_magnetron_current_adc_reading));
+
+  average_energy_per_pulse_milli_joules_for_heater_foldback = RCFilter64Tau(average_energy_per_pulse_milli_joules_for_heater_foldback, CalculatePulseEnergyMilliJouleFromCurrent(pulse_magnetron_current_adc_reading));
 }
 
 
@@ -721,6 +724,12 @@ unsigned int CalculatePulseEnergy(unsigned int voltage_adc, unsigned int current
 
   return (temp64 & 0xFFFF);
 
+}
+
+
+unsigned int CalculatePulseEnergyMilliJouleFromCurrent(unsigned int current_adc) {
+  // DPARKER WRITE THIS
+  return 0;
 }
 
 

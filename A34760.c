@@ -11,6 +11,20 @@
 #include "ETMdsp.h"
 #include "Config.h"
 
+
+#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095 100,99,99,98,98,97,96,95,95,94,93,92,91,90,89,88,87,86,85,84,82,81,80,79,77,76,75,73,72,70,69,67,65,64,62,60,59,57,55,53,51,49,47,45,43,41,39,37,35,33,30,28,26,24,21,19,16,14,11,9,6,4,1,0
+#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193 100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,97,93,90,86,83,79,76,72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+#ifdef __MG7095
+const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095};
+#else
+const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193};
+#endif
+
+
+
+
+
 void ReadADCtoPACArray(void);
 
 volatile unsigned int timing_error_int1_count = 0;
@@ -40,7 +54,9 @@ unsigned char slow_down_thyratron_pid_counter;
 
 
 unsigned int average_energy_per_pulse_centi_joules;
+unsigned int average_energy_per_pulse_milli_joules_for_heater_foldback;
 unsigned int average_output_power_watts;
+unsigned int average_output_power_watts_for_heater_foldback;
 unsigned int average_pulse_repetition_frequency_deci_herz;
 unsigned int prf_pulse_counter;
 
@@ -1503,6 +1519,10 @@ void Do10msTicToc(void) {
     Other timing functions like flashing LEDs
   */
 
+  unsigned int vtemp;
+  unsigned int itemp;
+
+
   last_known_action = LAST_ACTION_DO_10MS;
   
   if (_POR) {
@@ -1573,6 +1593,25 @@ void Do10msTicToc(void) {
     
     FilterADCs();  // Read Data from the DAC arrays, average, and filter
     
+    // If the magnet current is based on mode A program voltage (instead of from GUI), set the magnet current based on mode A program voltage
+    if (!ram_config_set_magnetron_magnet_current_from_GUI) {
+      // The Magnet Current is calculated from Mode A program voltage
+      itemp = CalculatePoly(ps_hv_lambda_mode_A.v_command_set_point);
+      vtemp = GenerateMagnetVprog(itemp);
+      SetPowerSupplyTarget(&ps_magnet, vtemp, itemp);
+    }
+  
+    if ((control_state == STATE_SYSTEM_COLD_READY) || (control_state == STATE_FAULT_COLD_FAULT)) {
+      ScalePowerSupply(&ps_hv_lambda_mode_A,0,100);
+      ScalePowerSupply(&ps_hv_lambda_mode_A,0,100);
+      ScalePowerSupply(&ps_filament,0,100);
+      ScalePowerSupply(&ps_magnet,0,100);
+      ScalePowerSupply(&ps_thyr_reservoir_htr,0,100);
+      ScalePowerSupply(&ps_thyr_cathode_htr,0,100);
+    }
+
+
+
 
     UpdateFaults();  // Update all the fault registers.  Note this must only happen once every 10ms because some faults are timed
     //  DPARKER figure out some better way to timer certain faults
@@ -1690,26 +1729,34 @@ void DoThyratronPIDs(void) {
 }
 
 
-
-
 void DoMagnetronFilamentAdjust(void) {
   unsigned long temp32;
-  
-  temp32 = average_energy_per_pulse_centi_joules;
-  temp32 *= average_pulse_repetition_frequency_deci_herz;
-  temp32 >>= 10;
-  average_output_power_watts = temp32 & 0xFFFF;
+  unsigned int look_up_position;
+  unsigned int filament_scale;
 
-  // dparker move this to state HV on only
+  temp32 = average_energy_per_pulse_centi_joules;
+  temp32 *= average_pulse_repetition_frequency_deci_herz;  
+  temp32 >>= 10;
+  if (temp32 >= 0xFFFF) {
+    average_output_power_watts = 0xFFFF;
+  } else {
+    average_output_power_watts = temp32 & 0xFFFF;
+  }
+  // This is used for readback functions
+
+
+  temp32 = average_energy_per_pulse_milli_joules_for_heater_foldback;
+  temp32 *= average_pulse_repetition_frequency_deci_herz;
+  temp32 >>= 6;
+  temp32 *= 13;
+  temp32 >>= 11;
+  average_output_power_watts_for_heater_foldback = temp32 & 0xFFFF;
+  look_up_position = average_output_power_watts_for_heater_foldback >> 8;
+
   if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
-    if (average_output_power_watts <= MAGNETRON_FILAMENT_LOW_POWER_EDGE) {
-      ScalePowerSupply(&ps_filament,100,100);
-    } else if (average_output_power_watts >= MAGNETRON_FILAMENT_HIGH_POWER_EDGE) {
-      ScalePowerSupply(&ps_filament,0,100);
-    } else {
-      ScalePowerSupply(&ps_filament, (MAGNETRON_FILAMENT_HIGH_POWER_EDGE - average_output_power_watts), (MAGNETRON_FILAMENT_HIGH_POWER_EDGE-MAGNETRON_FILAMENT_LOW_POWER_EDGE));
-    }  
-  } 
+    filament_scale = FilamentLookUpTable[look_up_position];
+    ScalePowerSupply(&ps_filament,filament_scale,100);
+  }  
 }
 
 
@@ -1833,17 +1880,6 @@ void FilterADCs(void) {
   SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
 #endif
   
-  //#if !defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
-  if (!ram_config_set_magnetron_magnet_current_from_GUI) {
-    // The Magnet Current is calculated from Mode A program voltage
-    itemp_2 = CalculatePoly(ps_hv_lambda_mode_A.v_command_set_point);
-    vtemp_2 = GenerateMagnetVprog(itemp_2);
-    SetPowerSupplyTarget(&ps_magnet, vtemp_2, itemp_2);
-  }
-  //#endif
-    
-  
-
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
   ps_thyr_cathode_htr.v_adc_reading = RCFilter16Tau(ps_thyr_cathode_htr.v_adc_reading, adc_reading);

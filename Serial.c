@@ -37,6 +37,7 @@ unsigned int ReadFromRam(unsigned int ram_location);
 void SendCommand(unsigned char command_byte, unsigned char register_byte, unsigned int data_word);
 
 unsigned int GenerateFilamentIprog(unsigned int vprog);
+unsigned int GenerateFilamentVprog(unsigned int iprog);
 unsigned int GenerateLambdaIprog(unsigned int vprog);
 
 unsigned int GenerateMagnetronVprog(unsigned int iprog);
@@ -393,8 +394,8 @@ void ExecuteCommand(void) {
 
 
     case CMD_SET_MAGNETRON_FILAMENT_VOLTAGE:
-      vtemp = data_word;
-      itemp = GenerateFilamentIprog(vtemp);
+      itemp = data_word;
+      vtemp = GenerateFilamentVprog(itemp);
       SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
       ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
       ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;
@@ -461,6 +462,10 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       
     case RAM_READ_MAGNETRON_FILAMENT_VOLTAGE_SET_POINT:
       data_return = ps_filament.v_command_set_point;
+      break;
+
+    case RAM_READ_MAGNETRON_FILAMENT_CURRENT_SET_POINT:
+      data_return = ps_filament.i_command_set_point;
       break;
 
 
@@ -846,6 +851,11 @@ unsigned int GenerateFilamentIprog(unsigned int vprog) {
   return temp;
 }
 
+unsigned int GenerateFilamentVprog(unsigned int iprog) {
+  unsigned int temp;
+  temp = Scale16Bit(iprog, 19363);
+  return temp;
+}
 
 
 unsigned int ReturnPowerSupplyADCScaledVoltage(POWERSUPPLY* ptr, unsigned int value) {

@@ -3,6 +3,17 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+
+/*
+  Differences between code for MG7095 and MG5193
+
+  * The heater foldback is different (see A34760.c)
+  * The heater software limits and default values are different (set in Config.h)
+  * There is a hardware change for the filament overvoltage (R172 on A34760)
+
+*/
+
 
 /*
   Scaling/Limiting of the Program Voltages, Currents, Ect
@@ -61,40 +72,46 @@
 
 // ----------------- Filament Supply Configuration ----------------------- //
 
-#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              1000                      // 100ms Units - 100 Seconds total
+#ifdef __MG7095 
+// Custom Filament Settings for the MG7095
+#define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         24000                    // 24 Volts
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        25000                    // 25 Volts 
+#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         11000                    // 11 Amps
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        13000                    // 13 Amps 
+#define PS_FILAMENT_DEFAULT_CONFIG {11000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 4500, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
 
-#define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         15000                    // 13.5 Volts
+#else
+// Custom Filament Settings for the MG5193
+#define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         15000                    // 15 Volts
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        15500                    // 13.75 Volts 
+#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         95000                    // 9.5 Amps
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        10500                    // 10.5 Amps 
+#define PS_FILAMENT_DEFAULT_CONFIG {11000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 4500, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
+
+#endif
+
+
+#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              100                      // 100ms Units - 10 Seconds total
+
 
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         18339                    // 18.339 Volts
 #define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37500 Volts
 
-#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        15500                    // 13.75 Volts 
-#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.15
-#define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .85
-#define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         2000                     // 2 Volts
-#define FILAMENT_SUPPLY_VADC_MAX_OUT_OT_RANGE         200                       // 200 * 10ms = 2000mS out of range before a fault trips
 
-#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         10000                    // 10.0 Amps
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       2
+#define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .5
+#define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         4000                     // 4 Volts
+#define FILAMENT_SUPPLY_VADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
-#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         15283                    // 15.283 Amps
+
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         25488                    // 25.488 Amps
 #define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31250                    // 31.250 Amps
 
-#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        10500                    // 10.5 Amps 
-#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
-#define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .5
-#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         4000                     // 2 Amps
-#define FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE         200                       // 200 * 10ms = 2000mS out of range before a fault trips
 
-#define PS_FILAMENT_DEFAULT_CONFIG {13000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 8500, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
-
-
-/* 
-   The filament power supply will operate at full power when the magentron output power is less than MAGNETRON_FILAMENT_LOW_POWER_EDGE
-   The filmanet power supply output will be zero when the magnetron output power is greater than MAGNETRON_FILAMENT_HIGH_POWER_EDGE
-   When the magnetron output power is MAGNETRON_FILAMENT_LOW_POWER_EDGE to MAGNETRON_FILAMENT_HIGH_POWER_EDGE, the filament voltage will roll of linearly
-*/
-#define MAGNETRON_FILAMENT_LOW_POWER_EDGE            1800 // The rolloff starts at 1800W
-#define MAGNETRON_FILAMENT_HIGH_POWER_EDGE           3000 // The rolloff finished at 3000W
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       1.15
+#define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .85
+#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         2000                     // 2 Amps
+#define FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
 
 
