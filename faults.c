@@ -8,11 +8,9 @@
 
 TYPE_DEBUG_COUNTER global_debug_counter;
 
-unsigned int CalculatePulseEnergy(unsigned int voltage_adc, unsigned int current_adc);
+unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage);
 
 void StorePulseData(POWERSUPPLY* ptr);
-
-unsigned int CalculatePulseEnergyMilliJouleFromCurrent(unsigned int current_adc);
 
 // The status register used for debug purposes
 unsigned int debug_status_register;
@@ -636,6 +634,7 @@ void UpdatePulseData(unsigned char mode) {
 }
 
 void StorePulseData(POWERSUPPLY* ptr) {
+  unsigned int pulse_energy_milli_joules;
   
   ptr->i_adc_reading = RCFilter16Tau(ptr->i_adc_reading, pulse_magnetron_current_adc_reading);
   ptr->v_adc_reading = RCFilter16Tau(ptr->v_adc_reading, pulse_magnetron_voltage_adc_reading);
@@ -656,80 +655,43 @@ void StorePulseData(POWERSUPPLY* ptr) {
     ptr->v_adc_min_reading = pulse_magnetron_voltage_adc_reading;
   }
 
-  average_energy_per_pulse_centi_joules = RCFilter16Tau(average_energy_per_pulse_centi_joules, CalculatePulseEnergy(pulse_magnetron_voltage_adc_reading, pulse_magnetron_current_adc_reading));
-
-  average_energy_per_pulse_milli_joules_for_heater_foldback = RCFilter64Tau(average_energy_per_pulse_milli_joules_for_heater_foldback, CalculatePulseEnergyMilliJouleFromCurrent(pulse_magnetron_current_adc_reading));
+  pulse_energy_milli_joules = CalculatePulseEnergyMilliJoules(ptr->v_command_set_point);
+  
+  average_energy_per_pulse_milli_joules = RCFilter64Tau(average_energy_per_pulse_milli_joules, pulse_energy_milli_joules);
 }
 
-
-unsigned int CalculatePulseEnergy(unsigned int voltage_adc, unsigned int current_adc) {
-  unsigned long long temp64;
+unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
+  unsigned long power_milli_joule;
 
   /*
     The Pulse Energy is Calculated for Each Pulse
     The Pulse Energy is Filtered/Averaged with a 64 pulse/tau filter
     The Average Pulse Energy is then multiplied by the PRF to generate the power.
     The filament heater voltage is generated from the power.
-    
-    
-    Step 1 - Calculate pulse power
-    
-    Current ADC Scalling - 0xFFFF     = 166.7 Amps 
-    Voltage ADC Scalling - 0xFFFF     = -63.78 KV
-    
-    #define PFN_PULSE_WIDTH_NS               3500        
-    #define PULSE_VADC_OUTPUT_AT_0xFFFF       63780
-    #define PULSE_IADC_OUTPUT_AT_0xFFFF       166.7
-    (see config.h for configuration)
-    
-    
+
+    Power = 1/2 * C * V^2
+    C = 45nF
     In Floating Point Math
-    energy_per_pulse = v(magnetron) * I(magnetron) * T(PFN)
-    energy_per_pulse = I(adc) * V(adc) * (PFN_PULSE_WIDTH_NS/1e9) * (PULSE_VDAC_OUTPUT_AT_0xFFFF/0xFFFF) * (PULSE_IADC_OUTPUT_AT_0xFFFF/0xFFFF)
-                     = I(adc) * V(adc) * PFN_PULSE_WIDTH_NS * (PULSE_VDAC_OUTPUT_AT_0xFFFF) * (PULSE_IADC_OUTPUT_AT_0xFFFF) / (2^32 * 1e9)
-		     = I(adc) * V(adc) * PFN_PULSE_WIDTH_NS * (PULSE_VDAC_OUTPUT_AT_0xFFFF) * (PULSE_IADC_OUTPUT_AT_0xFFFF) * (2^32/1e9)/ (2^64)
+    power = .5 * 45e-9 * V^2
 
-		     
-		     
-    energy_per_pulse_mj = 1000 * energy_per_pulse
-    
-    
-    energy_per_pulse_mj = I(adc) * V(adc) * PFN_PULSE_WIDTH_NS * 1000 * SCALE / (2^64)
-    where PULSE_ENERGY_SCALE = (PULSE_VADC_OUTPUT_AT_0xFFFF * PULSE_IADC_OUTPUT_AT_0xFFFF * 4.294967) 
-    
-    Because PULSE_ENERGY_SCALE is calculated by the C pre-processor it will be calcualted in floating point then rounded to the nearest integer
-    
-    
-    temp64 = I(adc) * V(adc) * T(ns) // this number is up to 48 bits wide
-    temp64 >>= 16                    // this number is up to 32 bits wide
-    temp64 *= PULSE_ENERGY_SCALE     // this number is up to 64 bits wide
-    temp64 >>= 16                    // this number is up to 48 bits wide
-    temp64 *= 1000                   // this number is up to 64 bits wide
-    temp64 >>= 32                    // this number is up to 32 bits wide but we will not have a number greater than 16 bits wide
-    
-    energy_per_pulse_mj = temp
-    
+    power_milli_joule = .5 * 45e-6 * V^2
+                      = v^2/44444.44
+		      = v*v / 2^6 / 694.4444
+		      = v*v / 2^6 * 47 / 2^14 (.4% fixed point error)
+		      
   */
-  temp64 = 0;
-  temp64 = voltage_adc;
-  temp64 *= current_adc;
-  temp64 *= PFN_PULSE_WIDTH_NS;
-  temp64 >>= 16;
-  temp64 *= PULSE_ENERGY_SCALE;
-  temp64 >>= 16;
-  temp64 *= 100;
-  temp64 >>= 32;  // this is centi-J per pulse 
-  
-  // DPARKER consider error checking for overflow???
 
-  return (temp64 & 0xFFFF);
+  power_milli_joule = lambda_voltage;
+  power_milli_joule *= lambda_voltage;
+  power_milli_joule >>= 6;
+  power_milli_joule *= 47;
+  power_milli_joule >>= 14;
 
-}
+  if (power_milli_joule >= 0xFFFF) {
+    power_milli_joule = 0xFFFF;
+  }
 
-
-unsigned int CalculatePulseEnergyMilliJouleFromCurrent(unsigned int current_adc) {
-  // DPARKER WRITE THIS
-  return 0;
+  return (power_milli_joule & 0xFFFF);
 }
 
 

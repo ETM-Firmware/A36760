@@ -473,8 +473,7 @@ extern unsigned int pulse_magnetron_voltage_adc_reading;
 
 
 
-extern unsigned int average_energy_per_pulse_centi_joules;
-extern unsigned int average_energy_per_pulse_milli_joules_for_heater_foldback;
+extern unsigned int average_energy_per_pulse_milli_joules;
 extern unsigned int average_output_power_watts;
 extern unsigned int average_pulse_repetition_frequency_deci_herz;
 

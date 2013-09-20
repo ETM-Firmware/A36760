@@ -618,7 +618,7 @@ unsigned int ReadFromRam(unsigned int ram_location) {
 
       // Power information
     case RAM_READ_AVERAGE_PULSE_ENERGY:
-      data_return = average_energy_per_pulse_centi_joules;
+      data_return = average_energy_per_pulse_milli_joules;
       break;
 
     case RAM_READ_AVERAGE_PULSE_FREQUENCY:

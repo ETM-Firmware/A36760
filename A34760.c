@@ -53,10 +53,8 @@ void UpdateIOExpanderOutputs(void);
 unsigned char slow_down_thyratron_pid_counter;
 
 
-unsigned int average_energy_per_pulse_centi_joules;
-unsigned int average_energy_per_pulse_milli_joules_for_heater_foldback;
+unsigned int average_energy_per_pulse_milli_joules;
 unsigned int average_output_power_watts;
-unsigned int average_output_power_watts_for_heater_foldback;
 unsigned int average_pulse_repetition_frequency_deci_herz;
 unsigned int prf_pulse_counter;
 
@@ -1170,7 +1168,6 @@ void DoA34760StartUpNormalProcess(void) {
 void DoA34760StartUpFastProcess(void) {
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   unsigned int vtemp;
-  unsigned int itemp;
 #endif
   
   unsigned int vtemp_2;
@@ -1733,26 +1730,14 @@ void DoMagnetronFilamentAdjust(void) {
   unsigned long temp32;
   unsigned int look_up_position;
   unsigned int filament_scale;
-
-  temp32 = average_energy_per_pulse_centi_joules;
-  temp32 *= average_pulse_repetition_frequency_deci_herz;  
-  temp32 >>= 10;
-  if (temp32 >= 0xFFFF) {
-    average_output_power_watts = 0xFFFF;
-  } else {
-    average_output_power_watts = temp32 & 0xFFFF;
-  }
-  // This is used for readback functions
-
-
-  temp32 = average_energy_per_pulse_milli_joules_for_heater_foldback;
+  
+  temp32 = average_energy_per_pulse_milli_joules;
   temp32 *= average_pulse_repetition_frequency_deci_herz;
   temp32 >>= 6;
   temp32 *= 13;
   temp32 >>= 11;
-  average_output_power_watts_for_heater_foldback = temp32 & 0xFFFF;
-  look_up_position = average_output_power_watts_for_heater_foldback >> 8;
-
+  average_output_power_watts = temp32 & 0xFFFF;
+  look_up_position = average_output_power_watts >> 8;
   if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
     filament_scale = FilamentLookUpTable[look_up_position];
     ScalePowerSupply(&ps_filament,filament_scale,100);
@@ -1849,11 +1834,7 @@ void FilterADCs(void) {
   unsigned int adc_reading;
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   unsigned int vtemp;
-  unsigned int itemp;
 #endif
-
-  unsigned int vtemp_2;
-  unsigned int itemp_2;
 
   last_known_action = LAST_ACTION_FILTER_ADC;
 
