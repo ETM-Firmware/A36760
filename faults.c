@@ -461,6 +461,8 @@ void ResetAllFaults(void) {
 
 
 void UpdatePulseData(unsigned char mode) {
+  unsigned int pulse_energy_milli_joules;
+
   /*
     FAULT_PFN_TRIGGER_PERIOD_TOO_SHORT is evaluated by the TMR1 Interrupt
   */
@@ -535,10 +537,12 @@ void UpdatePulseData(unsigned char mode) {
     
     if (mode == PULSE_MODE_A) {
       StorePulseData(&ps_magnetron_mode_A);
+      pulse_energy_milli_joules = CalculatePulseEnergyMilliJoules(ps_hv_lambda_mode_A.v_command_set_point);
     } else {
       StorePulseData(&ps_magnetron_mode_B);
+      pulse_energy_milli_joules = CalculatePulseEnergyMilliJoules(ps_hv_lambda_mode_B.v_command_set_point);
     }
-    
+    average_energy_per_pulse_milli_joules = RCFilter64Tau(average_energy_per_pulse_milli_joules, pulse_energy_milli_joules);
   }
   
   ResetPulseLatches();  // This must be called to clear the over/under current latches.
@@ -634,7 +638,6 @@ void UpdatePulseData(unsigned char mode) {
 }
 
 void StorePulseData(POWERSUPPLY* ptr) {
-  unsigned int pulse_energy_milli_joules;
   
   ptr->i_adc_reading = RCFilter16Tau(ptr->i_adc_reading, pulse_magnetron_current_adc_reading);
   ptr->v_adc_reading = RCFilter16Tau(ptr->v_adc_reading, pulse_magnetron_voltage_adc_reading);
@@ -655,13 +658,11 @@ void StorePulseData(POWERSUPPLY* ptr) {
     ptr->v_adc_min_reading = pulse_magnetron_voltage_adc_reading;
   }
 
-  pulse_energy_milli_joules = CalculatePulseEnergyMilliJoules(ptr->v_command_set_point);
-  
-  average_energy_per_pulse_milli_joules = RCFilter64Tau(average_energy_per_pulse_milli_joules, pulse_energy_milli_joules);
 }
 
 unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
   unsigned long power_milli_joule;
+  unsigned int return_data;
 
   /*
     The Pulse Energy is Calculated for Each Pulse
@@ -670,13 +671,13 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
     The filament heater voltage is generated from the power.
 
     Power = 1/2 * C * V^2
-    C = 45nF
+    C = 90nF
     In Floating Point Math
-    power = .5 * 45e-9 * V^2
+    power(milli_joule) = .5 * 90e-9 * V^2 * 1000
 
-    power_milli_joule = .5 * 45e-6 * V^2
-                      = v^2/44444.44
-		      = v*v / 2^6 / 694.4444
+    power_milli_joule = .5 * 90e-9 * V^2 * 1000
+                      = v^2/22222.22
+		      = v*v / 2^6 / 347.22
 		      = v*v / 2^6 * 47 / 2^14 (.4% fixed point error)
 		      
   */
@@ -690,8 +691,11 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
   if (power_milli_joule >= 0xFFFF) {
     power_milli_joule = 0xFFFF;
   }
+  power_milli_joule &= 0xFFFF;
 
-  return (power_milli_joule & 0xFFFF);
+  return_data = power_milli_joule;
+
+  return return_data;
 }
 
 

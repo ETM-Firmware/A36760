@@ -12,8 +12,9 @@
 #include "Config.h"
 
 
-#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095 100,99,99,98,98,97,96,95,95,94,93,92,91,90,89,88,87,86,85,84,82,81,80,79,77,76,75,73,72,70,69,67,65,64,62,60,59,57,55,53,51,49,47,45,43,41,39,37,35,33,30,28,26,24,21,19,16,14,11,9,6,4,1,0
-#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193 100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,97,93,90,86,83,79,76,72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095 100,99,99,98,98,97,96,95,94,94,93,92,91,90,89,88,87,86,84,83,82,81,79,78,77,75,74,72,71,69,67,66,64,62,61,59,57,55,53,51,49,47,45,43,41,39,37,35,32,30,28,25,23,21,18,16,13,10,8,5,3,0,0,0
+
+#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193 100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,97,94,91,88,84,81,78,75,72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 #ifdef __MG7095
 const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095};
@@ -1736,8 +1737,16 @@ void DoMagnetronFilamentAdjust(void) {
   temp32 >>= 6;
   temp32 *= 13;
   temp32 >>= 11;
-  average_output_power_watts = temp32 & 0xFFFF;
-  look_up_position = average_output_power_watts >> 8;
+
+  // DPARKER this will not work at powers greater than 6.5KW because the apparent power will roll around.  This is very bad
+  // Need to truncate for (average output power watts) and properly handel look up position.
+  if (temp32 >= 0xFFFF) {
+    average_output_power_watts = 0xFFFF;
+  } else {
+    average_output_power_watts = (temp32 & 0xFFFF);
+  }
+  temp32 >>= 7;
+  look_up_position = (temp32 & 0b01111111);
   if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
     filament_scale = FilamentLookUpTable[look_up_position];
     ScalePowerSupply(&ps_filament,filament_scale,100);
