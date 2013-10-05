@@ -91,7 +91,7 @@
 #endif
 
 
-#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              100                      // 100ms Units - 10 Seconds total
+#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              200                      // 100ms Units - 10 Seconds total
 
 
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         18339                    // 18.339 Volts
