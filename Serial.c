@@ -393,9 +393,21 @@ void ExecuteCommand(void) {
 
 
 
-    case CMD_SET_MAGNETRON_FILAMENT_VOLTAGE:
+    case CMD_SET_MAGNETRON_FILAMENT_CURRENT:
       itemp = data_word;
       vtemp = GenerateFilamentVprog(itemp);
+      SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
+      ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
+      ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;
+      _wait_eedata();
+      _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
+      break;
+
+    case CMD_SET_MAGNETRON_FILAMENT_VOLTAGE:
+      vtemp = data_word;
+      itemp = GenerateFilamentIprog(vtemp);
       SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
       ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
       ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;

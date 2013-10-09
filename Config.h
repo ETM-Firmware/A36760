@@ -78,13 +78,13 @@
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        25000                    // 25 Volts 
 #define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         11000                    // 11 Amps
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        13000                    // 13 Amps 
-#define PS_FILAMENT_DEFAULT_CONFIG {22000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 10600, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
+#define PS_FILAMENT_DEFAULT_CONFIG {21000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 10600, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
 
 #else
 // Custom Filament Settings for the MG5193
 #define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         15000                    // 15 Volts
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        15500                    // 13.75 Volts 
-#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         95000                    // 9.5 Amps
+#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT          9500                    // 9.5 Amps
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        10500                    // 10.5 Amps 
 #define PS_FILAMENT_DEFAULT_CONFIG {17800, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 8700, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
 
@@ -94,23 +94,23 @@
 #define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              200                      // 100ms Units - 10 Seconds total
 
 
-#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         18339                    // 18.339 Volts
+#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         28229                    // 28.229 Volts
 #define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37500 Volts
 
 
-#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       2
-#define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .5
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
+#define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .75
 #define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         4000                     // 4 Volts
 #define FILAMENT_SUPPLY_VADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
 
-#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         25488                    // 25.488 Amps
-#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31250                    // 31.250 Amps
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // N/A
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          25912                    // 25.912 Amps
 
 
-#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       1.15
-#define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .85
-#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         2000                     // 2 Amps
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
+#define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .5
+#define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         4000                     // 4 Amps
 #define FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
 

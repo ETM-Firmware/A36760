@@ -13,6 +13,7 @@
 #define CMD_SET_LAMBDA_VOLTAGE_MODE_A                   0x2A
 #define CMD_SET_LAMBDA_VOLTAGE_MODE_B                   0x2D
 #define CMD_SET_MAGNETRON_FILAMENT_VOLTAGE              0x2C
+#define CMD_SET_MAGNETRON_FILAMENT_CURRENT              0x2E
 
 #define CMD_READ_RAM_VALUE                              0x30
 
