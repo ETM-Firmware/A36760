@@ -3,7 +3,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-//#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 
 /*
   Differences between code for MG7095 and MG5193
@@ -45,8 +45,8 @@
 
 #define MAX_MAGNET_SUPPLY_VOLTAGE_SET_POINT         32000                    // 32 Volts
 
-#define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         49001                    // 49.001 Volts
-#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          50000                    // 50.000 Volts
+#define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Volts
+#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
@@ -56,8 +56,8 @@
 
 #define MAX_MAGNET_SUPPLY_CURRENT_SET_POINT         25000                    // 25 Amps
 
-#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         25713                    // 25.713 Amps
-#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          26250                    // 26.250 Amps
+#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Amps
+#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD        26000                    // 26 Amps 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.10)
@@ -76,7 +76,7 @@
 // Custom Filament Settings for the MG7095
 #define MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT         24000                    // 24 Volts
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD        25000                    // 25 Volts 
-#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         11000                    // 11 Amps
+#define MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT         24000                    // N/A
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD        13000                    // 13 Amps 
 #define PS_FILAMENT_DEFAULT_CONFIG {21000, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 10600, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, EEPROM_CAL_GAIN_1, EEPROM_CAL_OFFSET_0, 0, 0, 0, 0, 0, EEPROM_DEFAULT_CRC}
 
@@ -91,11 +91,11 @@
 #endif
 
 
-#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              200                      // 100ms Units - 10 Seconds total
+#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              600                      // 100ms Units - 60 Seconds total
 
 
-#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         28229                    // 28.229 Volts
-#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37500 Volts
+#define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         28338                    // 28.338 Volts
+#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          43788                    // 43.788 Volts
 
 
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
