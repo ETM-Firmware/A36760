@@ -69,6 +69,8 @@
 #define RAM_READ_STATE                                          0x01
 #define RAM_READ_VERSION                                        0x02
 #define RAM_READ_LOCAL_REMOTE_MAGNET_CURRENT_CONTROL            0x03
+#define RAM_READ_MAGNETRON_TYPE                                 0x04
+
 
 #define RAM_READ_THYR_CATH_HTR_VOTAGE_SET_POINT                 0x11
 #define RAM_READ_THYR_CATH_HTR_VOTAGE_ADC                       0x10

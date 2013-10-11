@@ -3,7 +3,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+//#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 
 /*
   Differences between code for MG7095 and MG5193
@@ -105,7 +105,7 @@
 
 
 #define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // N/A
-#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          25912                    // 25.912 Amps
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          32844                    // 32.844 Amps
 
 
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2

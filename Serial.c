@@ -716,6 +716,14 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = ram_config_set_magnetron_magnet_current_from_GUI;
       break;
       
+    case RAM_READ_MAGNETRON_TYPE:
+#ifdef __MG7095
+      data_return = 7095;
+#else
+      data_return = 5193;
+#endif
+      break;
+
       
       
       // Read Bedug Counters
