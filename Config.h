@@ -3,7 +3,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-//#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 
 /*
   Differences between code for MG7095 and MG5193

@@ -524,15 +524,9 @@ void UpdatePulseData(unsigned char mode) {
     arc_counter_consecutive++;
     arc_counter_fast++;
     arc_counter_slow++;
-    
-  } else if ((pulse_magnetron_current_adc_reading > ADC_PULSE_CURRENT_OVER_GLITCH) || (pulse_magnetron_current_adc_reading < ADC_PULSE_CURRENT_UNDER_GLITCH)) {
-    // The current readback was outside of the "GLITCH" limits.  Assume it was an error with the ADC and record an ADC error
-    global_debug_counter.magnetron_current_adc_glitch++;
-  } else if ((pulse_magnetron_voltage_adc_reading > ADC_PULSE_VOLTAGE_OVER_GLITCH) || (pulse_magnetron_voltage_adc_reading < ADC_PULSE_VOLTAGE_UNDER_GLITCH)) {
-    global_debug_counter.magnetron_voltage_adc_glitch++;
   } else {
     // Hardware did not detect an arc.  Software appears to have read a valid pulse.  Update all data
-
+    
     arc_counter_consecutive = 0;
     
     if (mode == PULSE_MODE_A) {
@@ -543,6 +537,16 @@ void UpdatePulseData(unsigned char mode) {
       pulse_energy_milli_joules = CalculatePulseEnergyMilliJoules(ps_hv_lambda_mode_B.v_command_set_point);
     }
     average_energy_per_pulse_milli_joules = RCFilter64Tau(average_energy_per_pulse_milli_joules, pulse_energy_milli_joules);
+  }   
+  
+  
+  if ((pulse_magnetron_current_adc_reading > ADC_PULSE_CURRENT_OVER_GLITCH) || (pulse_magnetron_current_adc_reading < ADC_PULSE_CURRENT_UNDER_GLITCH)) {
+    // The current readback was outside of the "GLITCH" limits.  Assume it was an error with the ADC and record an ADC error
+    global_debug_counter.magnetron_current_adc_glitch++;
+  }
+
+  if ((pulse_magnetron_voltage_adc_reading > ADC_PULSE_VOLTAGE_OVER_GLITCH) || (pulse_magnetron_voltage_adc_reading < ADC_PULSE_VOLTAGE_UNDER_GLITCH)) {
+    global_debug_counter.magnetron_voltage_adc_glitch++;
   }
   
   ResetPulseLatches();  // This must be called to clear the over/under current latches.
