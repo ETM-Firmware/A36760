@@ -1034,11 +1034,16 @@ void DoA34760StartUpCommon(void) {
 
   // --------------- Initialize U44 - LTC2656 ------------------------- //
   U44_LTC2656.pin_cable_select = _PIN_RD15;
-  U44_LTC2656.pin_dac_clear = _PIN_RB15;
   U44_LTC2656.pin_load_dac = _PIN_RD14;
   U44_LTC2656.pin_por_select = _PIN_NOT_CONNECTED;
   U44_LTC2656.por_select_value = 0;
   U44_LTC2656.spi_port = SPI_PORT_1;
+#ifndef __A36760
+  U44_LTC2656.pin_dac_clear = _PIN_RB15;
+#else
+  U44_LTC2656.pin_dac_clear = _PIN_NOT_CONNECTED;
+#endif
+
 
   SetupLTC2656(&U44_LTC2656);
   
