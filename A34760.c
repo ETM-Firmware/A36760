@@ -908,6 +908,7 @@ void DoA34760StartUpCommon(void) {
   TRIS_FP_PIN_MODULATOR_HV_ON_INPUT = TRIS_INPUT_MODE;
   TRIS_FP_PIN_MODULATOR_RESET = TRIS_INPUT_MODE;
   TRIS_FP_PIN_FAST_RESTART = TRIS_INPUT_MODE;
+  TRIS_FP_PIN_SPARE_2_SAMPLE_VPROG_INPUT = TRIS_INPUT_MODE;
 
 
   // Analog Compartor/Latch Input Pins
@@ -1202,13 +1203,14 @@ void DoA34760StartUpFastProcess(void) {
   FastReadAndFilterPACInputs();
   PIN_UART2_TX = !PIN_UART2_TX;
 
-
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+    
+    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  }
 #endif
   
   if (!ram_config_set_magnetron_magnet_current_from_GUI) {
@@ -1863,11 +1865,13 @@ void FilterADCs(void) {
 
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   // DPARKER this needs to be tested
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+    
+    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  }
 #endif
   
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
