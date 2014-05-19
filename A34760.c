@@ -22,7 +22,7 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193};
 #endif
 
-
+unsigned int arc_detected;
 
 
 
@@ -2522,6 +2522,16 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   while(!_T1IF);                                                   // whait for the holdoff time to pass
 
 
+  arc_detected = 0;
+  if ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) || (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT)) {
+    arc_detected = 1;
+  }
+
+  // Clear the pulse latches so that we can detect if there is a false trigger
+  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;
+  __delay32(DELAY_PULSE_LATCH_RESET);
+  PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
+  
   // Read the state of the A_B select Optical input and adjust the system as nesseasry
   if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
     next_pulse_a_b_selected_mode = PULSE_MODE_A;

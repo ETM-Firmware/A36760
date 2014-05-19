@@ -515,9 +515,10 @@ void UpdatePulseData(unsigned char mode) {
     
   */
   
-  if ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) || (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT)) {
+  if (arc_detected == 1) {
     // The high voltage tank current was too high (indicating an arc) or was too low (indicating a short in the modulator)
     // Record and arc and throw away the data from the ADC
+    arc_detected = 0;
     arc_counter_persistent++;
     arc_counter_this_hv_on++;
     
