@@ -960,6 +960,14 @@ void DoA34760StartUpCommon(void) {
   _ADIP = 4;
 
 
+  // Configure Change Notification Interrupt
+  _CNIF = 0;
+  _CN16IE = 1;
+  _CNIE = 1;
+  _CNIP = 5;
+  
+
+
   // Configure UART Interrupts
   _U1RXIE = 0;
   _U1RXIP = 3;
@@ -2652,6 +2660,12 @@ void _ISRNOPSV _ADCInterrupt(void) {
   }
   _ASAM = 1; // Start Auto Sampling
 }
+
+
+void _ISRNOPSV _CNInterrupt(void) {
+
+}
+
 
 void _ISRNOPSV _LVDInterrupt(void) {
   last_known_action = LAST_ACTION_LVD_INT;
