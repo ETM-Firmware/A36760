@@ -962,7 +962,7 @@ void DoA34760StartUpCommon(void) {
 
   // Configure Change Notification Interrupt
   _CNIF = 0;
-  _CN16IE = 1;
+  _CN16IE = 1;  // Allow Change notification on CN16 (PULSE MINIMUM CURRENT LATCH)
   _CNIE = 1;
   _CNIP = 5;
   
@@ -2553,7 +2553,9 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
 
-
+  // Clear the Change Notification data used to detect a false trigger
+  if (PIN_PULSE_MIN_CUR_LATCH) {} // We need to read this port in order to clear CN data
+  _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
 
   
   // Set up Timer1 to produce interupt at end of charge period
@@ -2663,7 +2665,13 @@ void _ISRNOPSV _ADCInterrupt(void) {
 
 
 void _ISRNOPSV _CNInterrupt(void) {
-
+  if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+    __delay32(200); // 20uS
+    if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+      RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+    }
+  }
+  _CNIF = 0;
 }
 
 
