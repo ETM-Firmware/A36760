@@ -2,7 +2,7 @@
 #define __A34760_PINS_H
 
 #include <p30f6014a.h>
-
+#include "Config.h"
 
 #define TRIS_OUTPUT_MODE 0
 #define TRIS_INPUT_MODE  1
