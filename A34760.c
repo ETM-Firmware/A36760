@@ -22,7 +22,7 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193};
 #endif
 
-
+unsigned int arc_detected;
 
 
 
@@ -908,6 +908,7 @@ void DoA34760StartUpCommon(void) {
   TRIS_FP_PIN_MODULATOR_HV_ON_INPUT = TRIS_INPUT_MODE;
   TRIS_FP_PIN_MODULATOR_RESET = TRIS_INPUT_MODE;
   TRIS_FP_PIN_FAST_RESTART = TRIS_INPUT_MODE;
+  TRIS_FP_PIN_SPARE_2_SAMPLE_VPROG_INPUT = TRIS_INPUT_MODE;
 
 
   // Analog Compartor/Latch Input Pins
@@ -957,6 +958,14 @@ void DoA34760StartUpCommon(void) {
   _ADIE = 0;
   _ADIF = 0;
   _ADIP = 4;
+
+
+  // Configure Change Notification Interrupt
+  _CNIF = 0;
+  _CN16IE = 1;  // Allow Change notification on CN16 (PULSE MINIMUM CURRENT LATCH)
+  _CNIE = 1;
+  _CNIP = 5;
+  
 
 
   // Configure UART Interrupts
@@ -1207,13 +1216,14 @@ void DoA34760StartUpFastProcess(void) {
   FastReadAndFilterPACInputs();
   PIN_UART2_TX = !PIN_UART2_TX;
 
-
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+    
+    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  }
 #endif
   
   if (!ram_config_set_magnetron_magnet_current_from_GUI) {
@@ -1868,11 +1878,13 @@ void FilterADCs(void) {
 
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   // DPARKER this needs to be tested
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+    
+    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  }
 #endif
   
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
@@ -2523,6 +2535,16 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   while(!_T1IF);                                                   // whait for the holdoff time to pass
 
 
+  arc_detected = 0;
+  if ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) || (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT)) {
+    arc_detected = 1;
+  }
+
+  // Clear the pulse latches so that we can detect if there is a false trigger
+  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;
+  __delay32(DELAY_PULSE_LATCH_RESET);
+  PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
+  
   // Read the state of the A_B select Optical input and adjust the system as nesseasry
   if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
     next_pulse_a_b_selected_mode = PULSE_MODE_A;
@@ -2536,7 +2558,9 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
 
-
+  // Clear the Change Notification data used to detect a false trigger
+  if (PIN_PULSE_MIN_CUR_LATCH) {} // We need to read this port in order to clear CN data
+  _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
 
   
   // Set up Timer1 to produce interupt at end of charge period
@@ -2643,6 +2667,18 @@ void _ISRNOPSV _ADCInterrupt(void) {
   }
   _ASAM = 1; // Start Auto Sampling
 }
+
+
+void _ISRNOPSV _CNInterrupt(void) {
+  if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+    __delay32(200); // 20uS
+    if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+      RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+    }
+  }
+  _CNIF = 0;
+}
+
 
 void _ISRNOPSV _LVDInterrupt(void) {
   last_known_action = LAST_ACTION_LVD_INT;

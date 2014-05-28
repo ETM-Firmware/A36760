@@ -605,6 +605,8 @@ extern unsigned int _PERSISTENT processor_crash_count;
 
 extern unsigned int software_skip_warmup;
 
+extern unsigned int arc_detected;
+
 #define LAST_ACTION_DEFAULT_INT                        0xFABC
 #define LAST_ACTION_CLEAR_LAST_ACTION                  0x0000
 #define LAST_ACTION_ADC_INTERRUPT                      0x0001
