@@ -2482,6 +2482,7 @@ unsigned int RCFilter16Tau(unsigned int previous_value, unsigned int current_rea
 
 
 void _ISRFASTNOPSV _INT1Interrupt(void) {
+  unsigned int false_trigger;
   /*
     This interrupt does NOTHING TO CONTROL THE TYHRATRON TRIGGER
     By the time this interrupt is called, the trigger has already been routed to the thyratron
@@ -2518,7 +2519,6 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
 
 
   PIN_PULSE_ADC_TRIGGER = OLL_TRIGGER_PULSE_ADCS;                  // Trigger the conversion process on both ADCs
-
   _INT1IF = 0;
   _INT1IE = 0;
 
@@ -2531,6 +2531,18 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   _T1IE = 0;
   _T1IF = 0;
   T1CONbits.TON = 1;
+  
+  // Wait 15 us and check that the trigger signal is still high, If it was not then we had a false trigger
+  __asm__ ("Repeat #110");  // DPARKER this must be manually entered in code here :(. 
+  __asm__ ("Nop");
+
+  
+  if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
+    false_trigger = 1;
+  } else {
+    false_trigger = 0;
+  }
+
 
   while(!_T1IF);                                                   // whait for the holdoff time to pass
 
@@ -2540,11 +2552,7 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     arc_detected = 1;
   }
 
-  // Clear the pulse latches so that we can detect if there is a false trigger
-  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;
-  __delay32(DELAY_PULSE_LATCH_RESET);
-  PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
-  
+
   // Read the state of the A_B select Optical input and adjust the system as nesseasry
   if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
     next_pulse_a_b_selected_mode = PULSE_MODE_A;
@@ -2553,16 +2561,10 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     next_pulse_a_b_selected_mode = PULSE_MODE_B;
     PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
   }
-  
 
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
 
-  // Clear the Change Notification data used to detect a false trigger
-  if (PIN_PULSE_MIN_CUR_LATCH) {} // We need to read this port in order to clear CN data
-  _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
-
-  
   // Set up Timer1 to produce interupt at end of charge period
   T1CONbits.TON = 0;
   TMR1 = 0;
@@ -2571,6 +2573,18 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PR1 = (TMR1_LAMBDA_CHARGE_PERIOD - TMR1_DELAY_HOLDOFF);
   T1CONbits.TON = 1;
 
+  if (false_trigger == 0) {
+    // The trigger was valid
+    // Clear the pulse latches so that we can detect if there is a false trigger
+    PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;
+    __delay32(DELAY_PULSE_LATCH_RESET);
+    PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
+
+    // Clear the Change Notification data that is used to detect a false trigger
+    if (PIN_PULSE_MIN_CUR_LATCH) {} // We need to read this port in order to clear CN data
+    _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
+  }
+  
 
   if (global_run_post_pulse_process) {
     timing_error_int1_count++;

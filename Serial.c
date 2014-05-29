@@ -723,7 +723,14 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = 5193;
 #endif
       break;
-
+   
+    case RAM_READ_CONTROL_BOARD_TYPE:
+#ifndef __A36760
+      data_return = 34670;
+#else
+      data_return = 36760;
+#endif
+      break;
       
       
       // Read Bedug Counters

@@ -550,7 +550,7 @@ void UpdatePulseData(unsigned char mode) {
     global_debug_counter.magnetron_voltage_adc_glitch++;
   }
   
-  ResetPulseLatches();  // This must be called to clear the over/under current latches.
+  //ResetPulseLatches();  // This must be called to clear the over/under current latches.  //DPARKER the pulse latches are now reset in the pulse interrupt
   
   // Decrement the arc_counter_fast if we need to
   pulse_counter_fast++;
