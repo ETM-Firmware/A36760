@@ -957,23 +957,23 @@ void DoA34760StartUpCommon(void) {
   // Configure ADC Interrupt
   _ADIE = 0;
   _ADIF = 0;
-  _ADIP = 4;
+  _ADIP = 3;
 
 
   // Configure Change Notification Interrupt
   _CNIF = 0;
   _CN16IE = 1;  // Allow Change notification on CN16 (PULSE MINIMUM CURRENT LATCH)
   _CNIE = 1;
-  _CNIP = 5;
+  _CNIP = 4;
   
 
 
   // Configure UART Interrupts
   _U1RXIE = 0;
-  _U1RXIP = 3;
+  _U1RXIP = 5;
   
   _U1TXIE = 0;
-  _U1RXIP = 3;
+  _U1RXIP = 5;
 
 
   // Configure LVD Interrupt

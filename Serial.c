@@ -56,7 +56,10 @@ void DoSerialCommand(void) {
   /* 
      Look for a command and execute it.
   */
-  
+  if (_OERR) {
+    _OERR = 0;
+  }
+
   if (command_string.data_state != COMMAND_BUFFER_FULL) {
     LookForCommand();
   }
@@ -726,7 +729,7 @@ unsigned int ReadFromRam(unsigned int ram_location) {
    
     case RAM_READ_CONTROL_BOARD_TYPE:
 #ifndef __A36760
-      data_return = 34670;
+      data_return = 34760;
 #else
       data_return = 36760;
 #endif
