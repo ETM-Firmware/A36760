@@ -2500,8 +2500,15 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   // ((PFN_Sample_Point_US + 800ns (trigger delay) - 950ns (ADC Trigger Delay)) = Total Delay
   // Total Delay/Tcy = Total Clock Delay
   // Repeat Call = Total Clock Delay - 10 - 2
-  __asm__ ("Repeat #2");  // DPARKER this must be manually entered in code here :(. 
-  __asm__ ("Nop");
+
+
+  //__asm__ ("Repeat #2");  // DPARKER this must be manually entered in code here :(. 
+  //__asm__ ("Nop");
+  Nop();
+  Nop();
+  Nop();
+  Nop();
+
 
 
   PIN_PULSE_ADC_TRIGGER = OLL_TRIGGER_PULSE_ADCS;                  // Trigger the conversion process on both ADCs
