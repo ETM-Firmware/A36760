@@ -1854,7 +1854,7 @@ void FilterADCs(void) {
 
   //AN4 - pac_#1                     - 256 samples/tau - Analog Input Bandwidth = 200 Hz  
   adc_reading = AverageADC128(pac_1_array);
-  pac_1_adc_reading = RCFilter256Tau(pac_1_adc_reading, adc_reading);
+  pac_1_adc_reading = RCFilter16Tau(pac_1_adc_reading, adc_reading);
 
 
   //AN5 - pac_#2                     - 256 samples/tau - Analog Input Bandwidth = 200 Hz
@@ -1866,10 +1866,10 @@ void FilterADCs(void) {
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   // DPARKER this needs to be tested
   if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
-    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
   }
-    
+  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+  
   vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
   SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
 #endif
