@@ -402,6 +402,7 @@ void DoStateMachine(void) {
 	TMR2 = 0;
 	_T2IF = 0;          
 	global_run_post_pulse_process = 0;	
+	SendLoggingDataToUart();
       }
       
       // DPARKER need to write new timing diagram - should be simplier
@@ -1927,9 +1928,9 @@ void FilterADCs(void) {
       linac_high_energy_program_offset += LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
     }
     if (linac_high_energy_program_offset > LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_high_energy_program_offset = LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_high_energy_program_offset = LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
     } else if (linac_high_energy_program_offset < -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
     }
     
     
@@ -1942,9 +1943,9 @@ void FilterADCs(void) {
       linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
     }
     if (linac_low_energy_program_offset > LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
     } else if (linac_low_energy_program_offset < -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_low_energy_program_offset = -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_low_energy_program_offset = -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
     }
     
   } else {

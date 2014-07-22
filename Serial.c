@@ -44,6 +44,7 @@ unsigned int GenerateMagnetronVprog(unsigned int iprog);
 
 struct CommandStringStruct command_string;
 
+unsigned char data_logging_to_uart;
 
 unsigned int ReturnPowerSupplyADCScaledVoltage(POWERSUPPLY* ptr, unsigned int value);
 unsigned int ReturnPowerSupplyADCScaledCurrent(POWERSUPPLY* ptr, unsigned int value);
@@ -108,29 +109,82 @@ void LookForCommand(void) {
 }
 
 
-void SendCommand(unsigned char command_byte, unsigned char register_byte, unsigned int data_word) {
-  unsigned int crc;
-  crc = MakeCRC(command_byte, register_byte, data_word);
-  Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_1);
-  Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_2);
-  Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_3_SEND);
-  Buffer64WriteByte(&uart1_output_buffer, command_byte);
-  Buffer64WriteByte(&uart1_output_buffer, (data_word >> 8));
-  Buffer64WriteByte(&uart1_output_buffer, (data_word & 0x00FF));
-  Buffer64WriteByte(&uart1_output_buffer, register_byte);
-  Buffer64WriteByte(&uart1_output_buffer, (crc >> 8));
-  Buffer64WriteByte(&uart1_output_buffer, (crc & 0x00FF));
+void SendLoggingDataToUart() {
+  /* 
+     Data that we need to log with each pulse
+     byte 0      = 0xFE  - used to sync message
+     byte 1,2    = linac_high_energy_target_current_adc_reading
+     byte 2,3    = linac_low_energy_target_current_adc_reading
+     byte 3,4    = linac_high_energy_program_offset
+     byte 5,6    = linac_low_energy_program_offset
+     
 
-  if ((!U1STAbits.UTXBF) && (Buffer64IsNotEmpty(&uart1_output_buffer))) {
-    /*
-      There is at least one byte available for writing in the outputbuffer and the transmit buffer is not full.
-      Move a byte from the output buffer into the transmit buffer
-      All subsequent bytes will be moved from the output buffer to the transmit buffer by the U1 TX Interrupt
-    */
-    U1TXREG = Buffer64ReadByte(&uart1_output_buffer);
+     byte 7,8    = pulse_counter_this_run
+     byte 9,10   = pulse_magnetron_current_adc_reading
+     
+  */
+
+  if (data_logging_to_uart) {
+
+    Buffer64WriteByte(&uart1_output_buffer, 0xFE);
+
+    Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading & 0x00FF));
+
+    Buffer64WriteByte(&uart1_output_buffer, (linac_low_energy_target_current_adc_reading >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (linac_low_energy_target_current_adc_reading & 0x00FF));
+
+    Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_program_offset >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_program_offset & 0x00FF));
+
+    Buffer64WriteByte(&uart1_output_buffer, (linac_low_energy_program_offset >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (linac_low_energy_program_offset & 0x00FF));
+
+    Buffer64WriteByte(&uart1_output_buffer, (pulse_counter_this_run >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (pulse_counter_this_run & 0x00FF));
+
+    Buffer64WriteByte(&uart1_output_buffer, (pulse_magnetron_current_adc_reading >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (pulse_magnetron_current_adc_reading & 0x00FF));
+
+
+
+    if ((!U1STAbits.UTXBF) && (Buffer64IsNotEmpty(&uart1_output_buffer))) {
+      /*
+	There is at least one byte available for writing in the outputbuffer and the transmit buffer is not full.
+	Move a byte from the output buffer into the transmit buffer
+	All subsequent bytes will be moved from the output buffer to the transmit buffer by the U1 TX Interrupt
+      */
+      U1TXREG = Buffer64ReadByte(&uart1_output_buffer);
+    }
   }
 }
 
+
+
+void SendCommand(unsigned char command_byte, unsigned char register_byte, unsigned int data_word) {
+  unsigned int crc;
+  if (!data_logging_to_uart) {
+    crc = MakeCRC(command_byte, register_byte, data_word);
+    Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_1);
+    Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_2);
+    Buffer64WriteByte(&uart1_output_buffer, SYNC_BYTE_3_SEND);
+    Buffer64WriteByte(&uart1_output_buffer, command_byte);
+    Buffer64WriteByte(&uart1_output_buffer, (data_word >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (data_word & 0x00FF));
+    Buffer64WriteByte(&uart1_output_buffer, register_byte);
+    Buffer64WriteByte(&uart1_output_buffer, (crc >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (crc & 0x00FF));
+    
+    if ((!U1STAbits.UTXBF) && (Buffer64IsNotEmpty(&uart1_output_buffer))) {
+      /*
+	There is at least one byte available for writing in the outputbuffer and the transmit buffer is not full.
+	Move a byte from the output buffer into the transmit buffer
+	All subsequent bytes will be moved from the output buffer to the transmit buffer by the U1 TX Interrupt
+      */
+      U1TXREG = Buffer64ReadByte(&uart1_output_buffer);
+    }
+  }
+}
 
 void ExecuteCommand(void) {
   unsigned int itemp;
@@ -235,6 +289,25 @@ void ExecuteCommand(void) {
       
     case CMD_READ_RAM_VALUE:
       return_data_word = ReadFromRam(command_string.register_byte);
+      break;
+
+      
+    case CMD_DATA_LOGGING:
+      if (command_string.register_byte == 1) {
+	data_logging_to_uart = 1;
+      } else {
+      	data_logging_to_uart = 0;
+      }
+      break;
+
+
+    case CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT:
+      linac_high_energy_target_current_set_point = data_word;
+      break;
+      
+
+    case CMD_SET_LOW_ENERGY_TARGET_CURRENT_SETPOINT:
+      linac_low_energy_target_current_set_point = data_word;
       break;
 
 
@@ -788,6 +861,22 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = timing_error_int1_count;
       break;
 
+
+    case RAM_READ_HIGH_TARGET_CURRENT_SET_POINT:
+      data_return = linac_high_energy_target_current_set_point;
+      break;
+
+    case RAM_READ_LOW_TARGET_CURRENT_SET_POINT:
+      data_return = linac_high_energy_target_current_set_point;
+      break;
+
+    case RAM_READ_HIGH_TARGET_CURRENT_READING:
+      data_return = linac_high_energy_target_current_adc_reading;
+      break;
+
+    case RAM_READ_LOW_TARGET_CURRENT_READING:
+      data_return = linac_low_energy_target_current_adc_reading;
+      break;
 
       
     }

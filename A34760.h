@@ -625,5 +625,15 @@ extern unsigned int software_skip_warmup;
 #define LAST_ACTION_STACK_ERROR                        0x000F
 #define LAST_ACTION_MATH_ERROR                         0x0010
 
+extern unsigned int linac_high_energy_target_current_adc_reading;
+extern unsigned int linac_high_energy_target_current_set_point;
+
+extern unsigned int linac_low_energy_target_current_adc_reading;
+extern unsigned int linac_low_energy_target_current_set_point;
+
+extern signed int linac_high_energy_program_offset;
+extern signed int linac_low_energy_program_offset;
+
+extern unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
 
 #endif
