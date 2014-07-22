@@ -26,6 +26,20 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 
 
+unsigned int linac_high_energy_target_current_adc_reading;
+unsigned int linac_high_energy_target_current_set_point;
+
+unsigned int linac_low_energy_target_current_adc_reading;
+unsigned int linac_low_energy_target_current_set_point;
+
+signed int linac_high_energy_program_offset;
+signed int linac_low_energy_program_offset;
+
+unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
+
+  
+
+
 void ReadADCtoPACArray(void);
 
 volatile unsigned int timing_error_int1_count = 0;
@@ -368,6 +382,9 @@ void DoStateMachine(void) {
 	last_known_action = LAST_ACTION_POST_PULSE_PROC;
 	// The Pulse Interrupt sets this Flag - And this sequence runs only once
 	// Update all the pulse data
+	if (pulse_counter_this_run <= 0xFF00) {
+	  pulse_counter_this_run++;
+	}
 	pulse_counter_this_hv_on++;
 	pulse_counter_persistent++;
 	prf_pulse_counter++;
@@ -1640,6 +1657,7 @@ void Do10msTicToc(void) {
       // Do10msTicToc needs to be responsible for updating the DAC
       UpdateDacAll();
       UpdateIOExpanderOutputs();
+      pulse_counter_this_run = 0;
     } 
   } 
 }
@@ -1861,26 +1879,15 @@ void FilterADCs(void) {
   adc_reading = AverageADC128(pac_2_array);
   pac_2_adc_reading = RCFilter16Tau(pac_2_adc_reading, adc_reading);
   
-
-
-#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
-  // DPARKER this needs to be tested
-  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
-  }
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-  
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
-#endif
-  
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
-  adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
-  ps_thyr_cathode_htr.v_adc_reading = RCFilter16Tau(ps_thyr_cathode_htr.v_adc_reading, adc_reading);
+  //adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
+  //ps_thyr_cathode_htr.v_adc_reading = RCFilter16Tau(ps_thyr_cathode_htr.v_adc_reading, adc_reading);
+  linac_low_energy_target_current_adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
 
   //AN7 - Thyratron Reservoir Heater - 16 samples/tau - Analog Input Bandwidth = 10 Hz
-  adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
-  ps_thyr_reservoir_htr.v_adc_reading = RCFilter16Tau(ps_thyr_reservoir_htr.v_adc_reading, adc_reading);
+  //adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
+  //ps_thyr_reservoir_htr.v_adc_reading = RCFilter16Tau(ps_thyr_reservoir_htr.v_adc_reading, adc_reading);
+  linac_high_energy_target_current_adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
 
   //AN8  - magnet_current            - 16 samples/tau - Analog Input Bandwidth = 200 Hz  
   adc_reading = AverageADC128(magnetron_magnet_current_array);
@@ -1906,6 +1913,68 @@ void FilterADCs(void) {
   adc_reading = AverageADC128(lambda_vmon_array);
   ps_hv_lambda_mode_B.v_adc_reading = RCFilter16Tau(ps_hv_lambda_mode_B.v_adc_reading, adc_reading);
   // lambda_vmon is read at EOC
+
+
+  
+  // This will execute once every 10ms.  Data will have been average
+  if (pulse_counter_this_run >= 10) {
+    // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
+    // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
+    
+    if (linac_high_energy_target_current_adc_reading >= (linac_high_energy_target_current_set_point + LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+      linac_high_energy_program_offset -= LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
+    } else if (linac_high_energy_target_current_adc_reading <= (linac_high_energy_target_current_set_point - LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+      linac_high_energy_program_offset += LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
+    }
+    if (linac_high_energy_program_offset > LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_high_energy_program_offset = LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+    } else if (linac_high_energy_program_offset < -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+    }
+    
+    
+
+
+    
+    if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+      linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+    } else if (linac_low_energy_target_current_adc_reading <= (linac_low_energy_target_current_set_point - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+      linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+    }
+    if (linac_low_energy_program_offset > LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+    } else if (linac_low_energy_program_offset < -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+      linac_low_energy_program_offset = -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+    }
+    
+  } else {
+    linac_low_energy_program_offset = 0;
+    linac_high_energy_program_offset = 0;
+  }
+    
+#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+
+#if defined(__SERVO_TARGET_CURRENT)
+  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  vtemp += linac_high_energy_program_offset;
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
+  
+  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  vtemp += linac_low_energy_program_offset;
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  
+  
+#else
+  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+  
+  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+#endif
+
+#endif
+  
+
 }
 
 
