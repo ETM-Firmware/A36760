@@ -867,7 +867,7 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
 
     case RAM_READ_LOW_TARGET_CURRENT_SET_POINT:
-      data_return = linac_high_energy_target_current_set_point;
+      data_return = linac_low_energy_target_current_set_point;
       break;
 
     case RAM_READ_HIGH_TARGET_CURRENT_READING:

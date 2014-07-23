@@ -32,7 +32,7 @@
                                                // If this mode is not selected, the the set point is set over the analog interface
 #endif
 
-#define __SERVO_TARGET_CURRENT
+//#define __SERVO_TARGET_CURRENT
 
 
 /* 
