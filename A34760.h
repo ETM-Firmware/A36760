@@ -34,7 +34,7 @@
 
 #define __SERVO_TARGET_CURRENT
 
-
+#define __RATIO_CONTROL_MODE    
 /* 
    -------------- Resource Summary  -------------------
    TMR1 is used to time the Lambda Charge Time and the Lambda Inhibit Time 

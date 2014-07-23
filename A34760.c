@@ -1861,6 +1861,7 @@ void FilterADCs(void) {
     AN13 - lambda_vmon               - Only Sampled at EOC
   */
   
+  unsigned long low_energy_target_current_set_point_derived; 
   unsigned int adc_reading;
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   unsigned int vtemp;
@@ -1941,15 +1942,26 @@ void FilterADCs(void) {
       linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
     }
     
-    
 
 
+    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+    low_energy_target_current_set_point_derived *= linac_high_energy_target_current_adc_reading;
+    low_energy_target_current_set_point_derived /= 13700;
     
+#ifdef __RATIO_CONTROL_MODE    
+    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+      linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+      linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+    }
+#else
     if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
       linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
     } else if (linac_low_energy_target_current_adc_reading <= (linac_low_energy_target_current_set_point - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
       linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
     }
+#endif
+
     if (linac_low_energy_program_offset > LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
       linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
     } else if (linac_low_energy_program_offset < -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
