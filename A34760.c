@@ -1965,11 +1965,15 @@ void FilterADCs(void) {
 
 #if defined(__SERVO_TARGET_CURRENT)
   vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  vtemp += linac_high_energy_program_offset;
+  if (linac_high_energy_target_current_set_point >= 1000) {
+    vtemp += linac_high_energy_program_offset;
+  }
   SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
   
   vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  vtemp += linac_low_energy_program_offset;
+  if (linac_low_energy_target_current_set_point >= 1000) {
+    vtemp += linac_low_energy_program_offset;
+  }
   SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
   
   
