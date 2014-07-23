@@ -1922,9 +1922,17 @@ void FilterADCs(void) {
     // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
     // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
     
-    if (linac_high_energy_target_current_adc_reading >= (linac_high_energy_target_current_set_point + LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+    if (linac_high_energy_target_current_set_point < LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR) {
+      linac_high_energy_target_current_set_point = LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR;
+    }
+
+    if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+      linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+    }
+    
+    if (linac_high_energy_target_current_adc_reading > (linac_high_energy_target_current_set_point + LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
       linac_high_energy_program_offset -= LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
-    } else if (linac_high_energy_target_current_adc_reading <= (linac_high_energy_target_current_set_point - LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+    } else if (linac_high_energy_target_current_adc_reading < (linac_high_energy_target_current_set_point - LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
       linac_high_energy_program_offset += LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
     }
     if (linac_high_energy_program_offset > LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
