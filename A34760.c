@@ -394,6 +394,78 @@ void DoStateMachine(void) {
 	a_b_selected_mode = next_pulse_a_b_selected_mode;
 	
 	// DPARKER impliment and test a current control PID LOOP
+	linac_low_energy_target_current_adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
+	linac_high_energy_target_current_adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
+
+
+
+	if (pulse_counter_this_run < 20) {
+	  linac_low_energy_program_offset = 0;
+	  linac_high_energy_program_offset = 0;
+	} else {
+	  // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
+	  // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
+	
+  
+#ifdef __RATIO_CONTROL_MODE    
+	  
+	  low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	  low_energy_target_current_set_point_derived *= linac_high_energy_target_current_adc_reading;
+	  low_energy_target_current_set_point_derived /= linac_high_energy_target_current_set_point;
+	  
+	  if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	    linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	  } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	    linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	  }
+#else
+	  if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	    linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	  } else if (linac_low_energy_target_current_adc_reading <= (linac_low_energy_target_current_set_point - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	    linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	  }
+
+	  if (linac_high_energy_target_current_adc_reading > (linac_high_energy_target_current_set_point + LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+	    linac_high_energy_program_offset -= LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
+	  } else if (linac_high_energy_target_current_adc_reading < (linac_high_energy_target_current_set_point - LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
+	    linac_high_energy_program_offset += LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
+	  }
+	  
+#endif
+	  
+	  if (linac_low_energy_program_offset > LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+	    linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
+	  } else if (linac_low_energy_program_offset < -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
+	    linac_low_energy_program_offset = -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
+	  }
+
+	  if (linac_high_energy_program_offset > LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+	    linac_high_energy_program_offset = LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
+	  } else if (linac_high_energy_program_offset < -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
+	    linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
+	  }
+	  	  
+	} 
+	
+#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+	
+	vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+	if (linac_high_energy_target_current_set_point >= 1000) {
+	  vtemp += linac_high_energy_program_offset;
+	}
+	SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
+	
+	vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+	if (linac_low_energy_target_current_set_point >= 1000) {
+	  vtemp += linac_low_energy_program_offset;
+	}
+	SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+	
+#endif
+
+
+
+	
 	
 	UpdateDacAll();                          // We want to Execute DAC update after a pulse so that a pulse does not corrupt the SPI data
 	//UpdateIOExpanderOutputs();               // DPAKRER is this needed here?  The io expander outputs should never change in state HV on!!!!
@@ -1884,12 +1956,12 @@ void FilterADCs(void) {
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   //adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
   //ps_thyr_cathode_htr.v_adc_reading = RCFilter16Tau(ps_thyr_cathode_htr.v_adc_reading, adc_reading);
-  linac_low_energy_target_current_adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
+
 
   //AN7 - Thyratron Reservoir Heater - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   //adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
   //ps_thyr_reservoir_htr.v_adc_reading = RCFilter16Tau(ps_thyr_reservoir_htr.v_adc_reading, adc_reading);
-  linac_high_energy_target_current_adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
+
 
   //AN8  - magnet_current            - 16 samples/tau - Analog Input Bandwidth = 200 Hz  
   adc_reading = AverageADC128(magnetron_magnet_current_array);
@@ -1915,91 +1987,7 @@ void FilterADCs(void) {
   adc_reading = AverageADC128(lambda_vmon_array);
   ps_hv_lambda_mode_B.v_adc_reading = RCFilter16Tau(ps_hv_lambda_mode_B.v_adc_reading, adc_reading);
   // lambda_vmon is read at EOC
-
-
   
-  // This will execute once every 10ms.  Data will have been average
-  if (pulse_counter_this_run >= 10) {
-    // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
-    // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
-    
-    if (linac_high_energy_target_current_set_point < LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR) {
-      linac_high_energy_target_current_set_point = LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR;
-    }
-
-    if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
-      linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
-    }
-    
-    if (linac_high_energy_target_current_adc_reading > (linac_high_energy_target_current_set_point + LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
-      linac_high_energy_program_offset -= LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
-    } else if (linac_high_energy_target_current_adc_reading < (linac_high_energy_target_current_set_point - LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR)) {
-      linac_high_energy_program_offset += LINAC_TARGET_CURRENT_HIGH_ENERGY_STEP_SIZE;
-    }
-    if (linac_high_energy_program_offset > LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_high_energy_program_offset = LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
-    } else if (linac_high_energy_program_offset < -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_high_energy_program_offset = -LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET;
-    }
-    
-
-
-    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
-    low_energy_target_current_set_point_derived *= linac_high_energy_target_current_adc_reading;
-    low_energy_target_current_set_point_derived /= 13700;
-    
-#ifdef __RATIO_CONTROL_MODE    
-    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-      linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-      linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-    }
-#else
-    if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-      linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-    } else if (linac_low_energy_target_current_adc_reading <= (linac_low_energy_target_current_set_point - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-      linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-    }
-#endif
-
-    if (linac_low_energy_program_offset > LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_low_energy_program_offset = LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
-    } else if (linac_low_energy_program_offset < -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET) {
-      linac_low_energy_program_offset = -LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET;
-    }
-    
-  } else {
-    linac_low_energy_program_offset = 0;
-    linac_high_energy_program_offset = 0;
-  }
-    
-#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
-
-#if defined(__SERVO_TARGET_CURRENT)
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  if (linac_high_energy_target_current_set_point >= 1000) {
-    vtemp += linac_high_energy_program_offset;
-  }
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
-  
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  if (linac_low_energy_target_current_set_point >= 1000) {
-    vtemp += linac_low_energy_program_offset;
-  }
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
-  
-  
-#else
-  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-  
-  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
-#endif
-
-#endif
-  
-
 }
 
 

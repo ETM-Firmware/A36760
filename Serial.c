@@ -303,11 +303,17 @@ void ExecuteCommand(void) {
 
     case CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT:
       linac_high_energy_target_current_set_point = data_word;
+      if (linac_high_energy_target_current_set_point < LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR) {
+	linac_high_energy_target_current_set_point = LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR;
+      }
       break;
       
 
     case CMD_SET_LOW_ENERGY_TARGET_CURRENT_SETPOINT:
       linac_low_energy_target_current_set_point = data_word;
+      if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+	linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+      }
       break;
 
 
