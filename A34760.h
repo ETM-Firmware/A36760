@@ -72,7 +72,7 @@
 #define FCY_CLK                    10000000      // 29.495 MHz
 #define FCY_CLK_MHZ                10.000        // 29.495 MHz
 
-#define UART1_BAUDRATE             207000        // U1 Baud Rate
+#define UART1_BAUDRATE             124000        // U1 Baud Rate
 #define I2C_CLK                    100000        // Target I2C Clock frequency of 100KHz
 
 
