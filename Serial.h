@@ -240,4 +240,22 @@ unsigned int GenerateMagnetVprog(unsigned int iprog);
 
 void SendLoggingDataToUart();
 
+
+/*
+  RS422 Connector Specification
+  
+                                         J12091-000              J12091-000
+
+  A34760 Signal Name                     A34760 Pin              USB COM Pin
+  RX+                                      6                         2
+  RX-                                      4                         1
+
+  TX+                                      9                         3
+  TX-                                      3                         4
+
+  RS422_GND                                5                         5            
+
+
+*/
+
 #endif
