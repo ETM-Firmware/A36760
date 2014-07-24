@@ -341,6 +341,17 @@ void DoStateMachine(void) {
     
   case STATE_HV_STARTUP:
     // THIS STATE uses the same faults as STATE_SYSTEM_WARM_READY
+
+#if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
+    
+    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
+    
+    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+#endif
+
+
     lambda_supply_startup_counter = 0;
     PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
     while (control_state == STATE_HV_STARTUP) {

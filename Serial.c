@@ -127,6 +127,10 @@ void SendLoggingDataToUart() {
   if (data_logging_to_uart) {
 
     Buffer64WriteByte(&uart1_output_buffer, 0xFE);
+    Buffer64WriteByte(&uart1_output_buffer, 0xF1);
+    Buffer64WriteByte(&uart1_output_buffer, 0xFA);
+    Buffer64WriteByte(&uart1_output_buffer, 0xFB);
+    
 
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading >> 8));
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading & 0x00FF));
@@ -145,7 +149,6 @@ void SendLoggingDataToUart() {
 
     Buffer64WriteByte(&uart1_output_buffer, (pulse_magnetron_current_adc_reading >> 8));
     Buffer64WriteByte(&uart1_output_buffer, (pulse_magnetron_current_adc_reading & 0x00FF));
-
 
 
     if ((!U1STAbits.UTXBF) && (Buffer64IsNotEmpty(&uart1_output_buffer))) {
