@@ -219,6 +219,8 @@ unsigned int mode_B_pulse_magnetron_voltage_adc_reading_filtered;
 void DoStateMachine(void) {
   unsigned int warmup_counter;
   unsigned int lambda_supply_startup_counter;
+  unsigned long low_energy_target_current_set_point_derived; 
+  unsigned int vtemp;
 
   switch(control_state) {
     
@@ -1933,7 +1935,6 @@ void FilterADCs(void) {
     AN13 - lambda_vmon               - Only Sampled at EOC
   */
   
-  unsigned long low_energy_target_current_set_point_derived; 
   unsigned int adc_reading;
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   unsigned int vtemp;
