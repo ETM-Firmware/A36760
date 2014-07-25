@@ -6,6 +6,8 @@
 #define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 //#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
 
+#define __MK_POWER_SUPPLIES
+
 /*
   Differences between code for MG7095 and MG5193
 
@@ -57,8 +59,14 @@
 
 #define MAX_MAGNET_SUPPLY_CURRENT_SET_POINT         25000                    // 25 Amps
 
+#ifndef __MK_POWER_SUPPLIES
 #define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Amps
 #define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
+#else
+#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         29834                    // 29.834 Amps
+#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43773                    // 43.773 Amps
+#endif
+
 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD        26000                    // 26 Amps 
 #define MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE       (1.10)
@@ -104,10 +112,13 @@
 #define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         4000                     // 4 Volts
 #define FILAMENT_SUPPLY_VADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
-
+#ifndef __MK_POWER_SUPPLIES
 #define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // N/A
 #define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          32844                    // 32.844 Amps
-
+#else
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         24615                    // 24.615 Amps
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31250                    // 31.250 Amps
+#endif
 
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
 #define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .5
