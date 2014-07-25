@@ -2514,8 +2514,8 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   // ((PFN_Sample_Point_US + 800ns (trigger delay) - 950ns (ADC Trigger Delay)) = Total Delay
   // Total Delay/Tcy = Total Clock Delay
   // Repeat Call = Total Clock Delay - 10 - 2
-  __asm__ ("Repeat #2");  // DPARKER this must be manually entered in code here :(. 
-  __asm__ ("Nop");
+  Nop();
+  Nop();
 
 
   PIN_PULSE_ADC_TRIGGER = OLL_TRIGGER_PULSE_ADCS;                  // Trigger the conversion process on both ADCs
@@ -2532,25 +2532,36 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   _T1IF = 0;
   T1CONbits.TON = 1;
   
-  // Wait 15 us and check that the trigger signal is still high, If it was not then we had a false trigger
-  __asm__ ("Repeat #110");  // DPARKER this must be manually entered in code here :(. 
-  __asm__ ("Nop");
-
+  false_trigger = 0;
   
+  while (TMR1 < 1);  // 64 clock cycles, 6.4uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
     false_trigger = 1;
-  } else {
-    false_trigger = 0;
   }
 
+  while (TMR1 < 2);  // 128 clock cycles, 12.8uS
+  if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
+    false_trigger = 1;
+  }
 
-  while(!_T1IF);                                                   // whait for the holdoff time to pass
+  while (TMR1 < 3);  // 192 clock cycles, 19.2uS
+  if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
+    false_trigger = 1;
+  }
 
+  while (TMR1 < 3);  // 256 clock cycles, 25.6uS
+  if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
+    false_trigger = 1;
+  }
 
   arc_detected = 0;
   if ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) || (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT)) {
     arc_detected = 1;
   }
+
+  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;  // Clear the pulse latches so we can detect a false trigger
+
+  while(!_T1IF);                                                   // what for the holdoff time to pass
 
 
   // Read the state of the A_B select Optical input and adjust the system as nesseasry
@@ -2561,6 +2572,7 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     next_pulse_a_b_selected_mode = PULSE_MODE_B;
     PIN_LAMBDA_VOLTAGE_SELECT = !OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
   }
+
 
   PIN_THYRATRON_TRIGGER_ENABLE = !OLL_THYRATRON_TRIGGER_ENABLED;   // Disable the Pic trigger signal gate
   PIN_HV_LAMBDA_INHIBIT = !OLL_HV_LAMBDA_INHIBITED;                // Start the lambda charge process
@@ -2573,19 +2585,18 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PR1 = (TMR1_LAMBDA_CHARGE_PERIOD - TMR1_DELAY_HOLDOFF);
   T1CONbits.TON = 1;
 
-  if (false_trigger == 0) {
-    // The trigger was valid
-    // Clear the pulse latches so that we can detect if there is a false trigger
-    PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;
-    __delay32(DELAY_PULSE_LATCH_RESET);
-    PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
+  // Wait for the pulse latches to clear
+  while (PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT);
+  while (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT);
 
-    // Clear the Change Notification data that is used to detect a false trigger
-    if (PIN_PULSE_MIN_CUR_LATCH) {} // We need to read this port in order to clear CN data
-    _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
-  }
+  PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
   
-
+  // Clear the Change Notification data that is used to detect a false trigger
+  if (PIN_PULSE_MIN_CUR_LATCH); // We need to read this port in order to clear CN data
+  _CNIF = 0; // Clear the interrupt flag that gets set when we have a valid pulse
+  
+  
+  
   if (global_run_post_pulse_process) {
     timing_error_int1_count++;
   }
@@ -2685,9 +2696,12 @@ void _ISRNOPSV _ADCInterrupt(void) {
 
 void _ISRNOPSV _CNInterrupt(void) {
   if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
-    __delay32(200); // 20uS
+    __delay32(100); // 10uS
     if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
-      RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+      __delay32(100); // 10uS
+      if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+	RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+      }
     }
   }
   _CNIF = 0;
