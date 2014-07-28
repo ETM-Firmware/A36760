@@ -407,9 +407,10 @@ void DoStateMachine(void) {
 	a_b_selected_mode = next_pulse_a_b_selected_mode;
 	
 	// DPARKER impliment and test a current control PID LOOP
-	linac_low_energy_target_current_adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
-	linac_high_energy_target_current_adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
-	//linac_high_energy_target_current_adc_reading = RCFilter16Tau(linac_high_energy_target_current_adc_reading, AverageADC128(thyratron_reservoir_heater_voltage_array));
+	//linac_low_energy_target_current_adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
+	//linac_high_energy_target_current_adc_reading = AverageADC128(thyratron_reservoir_heater_voltage_array);
+	linac_low_energy_target_current_adc_reading = RCFilter64Tau(linac_low_energy_target_current_adc_reading, AverageADC128(thyratron_cathode_heater_voltage_array));
+	linac_high_energy_target_current_adc_reading = RCFilter64Tau(linac_high_energy_target_current_adc_reading, AverageADC128(thyratron_reservoir_heater_voltage_array));
 
 	if (pulse_counter_this_run < 20) {
 	  linac_low_energy_program_offset = 0;
