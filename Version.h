@@ -1,6 +1,6 @@
 #ifndef __VERSION_H
 #define __VERSION_H
 
-#define VERSION_NUMBER 0xDC07
+#define VERSION_NUMBER 0xDC08
 
 #endif
