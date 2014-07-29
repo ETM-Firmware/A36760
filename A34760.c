@@ -34,6 +34,7 @@ unsigned int linac_low_energy_target_current_set_point;
 
 signed int linac_high_energy_program_offset;
 signed int linac_low_energy_program_offset;
+unsigned char fast_ratio_mode;
 
 unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
 
@@ -415,6 +416,7 @@ void DoStateMachine(void) {
 	if (pulse_counter_this_run < 30) {
 	  linac_low_energy_program_offset = 0;
 	  linac_high_energy_program_offset = 0;
+	  fast_ratio_mode = 1;
 	} else {
 	  // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
 	  // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
@@ -426,10 +428,21 @@ void DoStateMachine(void) {
 	  low_energy_target_current_set_point_derived *= linac_high_energy_target_current_adc_reading;
 	  low_energy_target_current_set_point_derived /= linac_high_energy_target_current_set_point;
 	  
-	  if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	    linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-	  } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	    linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+
+	  if (fast_ratio_mode) {
+	    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	      linac_low_energy_program_offset -= 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	      linac_low_energy_program_offset += 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	    } else {
+	      fast_ratio_mode = 0;
+	    }
+	  } else {
+	    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	      linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	      linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	    }
 	  }
 #else
 	  if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
