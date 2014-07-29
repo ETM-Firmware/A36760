@@ -48,8 +48,13 @@
 
 #define MAX_MAGNET_SUPPLY_VOLTAGE_SET_POINT         32000                    // 32 Volts
 
+#ifndef __MK_POWER_SUPPLIES
 #define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Volts
 #define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
+#else
+#define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // DONT CARE
+#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37.500 Volts
+#endif
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
