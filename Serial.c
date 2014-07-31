@@ -309,6 +309,11 @@ void ExecuteCommand(void) {
       if (linac_high_energy_target_current_set_point < LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR) {
 	linac_high_energy_target_current_set_point = LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR;
       }
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET] = linac_high_energy_target_current_set_point;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
       
 
@@ -317,6 +322,11 @@ void ExecuteCommand(void) {
       if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
 	linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
       }
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET] = linac_low_energy_target_current_set_point;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
 

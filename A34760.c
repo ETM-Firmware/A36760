@@ -615,6 +615,8 @@ void DoA34760StartUpCommon(void) {
   global_debug_counter.reversescale16bit_saturation = 0;
 
 
+  linac_high_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
+  linac_low_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET];
 
 
   
