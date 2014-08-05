@@ -24,6 +24,9 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 
 
+unsigned int default_pac_2_adc_reading;
+
+
 
 
 unsigned int linac_high_energy_target_current_adc_reading;
@@ -445,9 +448,18 @@ void DoStateMachine(void) {
 	    }
 	  }
 #else
-	  if (linac_low_energy_target_current_adc_reading >= (linac_low_energy_target_current_set_point + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+		  
+	  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	  } else {
+	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	    low_energy_target_current_set_point_derived *= pac_2_adc_reading;
+	    low_energy_target_current_set_point_derived /= default_pac_2_adc_reading;
+	  }
+	  
+	  if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
 	    linac_low_energy_program_offset -= LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
-	  } else if (linac_low_energy_target_current_adc_reading <= (linac_low_energy_target_current_set_point - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
+	  } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
 	    linac_low_energy_program_offset += LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
 	  }
 
@@ -481,7 +493,7 @@ void DoStateMachine(void) {
 	}
 	SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp , 0);
 	
-	vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+	vtemp = Scale16Bit(default_pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
 	if (linac_low_energy_target_current_set_point >= 1000) {
 	  vtemp += linac_low_energy_program_offset;
 	}
@@ -1980,6 +1992,10 @@ void FilterADCs(void) {
   adc_reading = AverageADC128(pac_2_array);
   pac_2_adc_reading = RCFilter16Tau(pac_2_adc_reading, adc_reading);
   
+  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+    default_pac_2_adc_reading = pac_2_adc_reading;
+  }
+
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   //adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
   //ps_thyr_cathode_htr.v_adc_reading = RCFilter16Tau(ps_thyr_cathode_htr.v_adc_reading, adc_reading);
