@@ -14,6 +14,7 @@ typedef struct {
   unsigned int setpoint_not_valid;
   unsigned int scale16bit_saturation;
   unsigned int reversescale16bit_saturation;
+  unsigned int pulse_latch_reset_error;
 } TYPE_DEBUG_COUNTER;
 
 extern TYPE_DEBUG_COUNTER global_debug_counter;

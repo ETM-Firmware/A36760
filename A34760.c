@@ -2586,8 +2586,15 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
 
   // Wait for the pulse latches to clear
-  while (PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT);
-  while (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT);
+  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TRM1 < 20));
+  while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < 20));
+  
+  if (TMR1 >= 20) {
+    // there was an error with the pulse latch reset 
+    global_debug_counter.pulse_latch_reset_error++; 
+  }
+	 
+	 
 
   PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
   
