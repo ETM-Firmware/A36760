@@ -24,6 +24,8 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 unsigned int arc_detected;
 
+unsigned int false_trigger;
+
 
 
 void ReadADCtoPACArray(void);
@@ -365,6 +367,9 @@ void DoStateMachine(void) {
       Do10msTicToc();
       DoSerialCommand();
       if (global_run_post_pulse_process) {
+	if (false_trigger) {
+	  RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+	}
 	last_known_action = LAST_ACTION_POST_PULSE_PROC;
 	// The Pulse Interrupt sets this Flag - And this sequence runs only once
 	// Update all the pulse data
@@ -1878,13 +1883,13 @@ void FilterADCs(void) {
 
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   // DPARKER this needs to be tested
-  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
-    vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-    SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
-    
-    vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
-    SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
-  }
+  //if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+  vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
+  
+  vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
+  //}
 #endif
   
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
@@ -2482,7 +2487,6 @@ unsigned int RCFilter16Tau(unsigned int previous_value, unsigned int current_rea
 
 
 void _ISRFASTNOPSV _INT1Interrupt(void) {
-  unsigned int false_trigger;
   /*
     This interrupt does NOTHING TO CONTROL THE TYHRATRON TRIGGER
     By the time this interrupt is called, the trigger has already been routed to the thyratron
@@ -2586,7 +2590,7 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
 
   // Wait for the pulse latches to clear
-  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TRM1 < 20));
+  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TMR1 < 20));
   while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < 20));
   
   if (TMR1 >= 20) {
