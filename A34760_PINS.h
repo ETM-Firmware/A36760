@@ -65,7 +65,11 @@
 // Magnetron Magnet Output Pins
 #define PIN_MAGNETRON_MAGNET_ENABLE          _LATD9
 #define TRIS_PIN_MAGNETRON_MAGNET_ENABLE     _TRISD9
+#ifdef __MK_POWER_SUPPLIES
 #define OLL_MAGNETRON_MAGNET_ENABLED         1
+#else
+#define OLL_MAGNETRON_MAGNET_ENABLED         0
+#endif
 
 #define PIN_MAGNETRON_MAGNET_SO              _LATD10
 #define TRIS_PIN_MAGNETRON_MAGNET_SO         _TRISD10

@@ -1274,6 +1274,18 @@ void DoA34760StartUpCommon(void) {
 void DoA34760StartUpNormalProcess(void) {
   unsigned int i2c_test = 0;
 
+  // This was a not a reset from a fast crash so clear the reset data
+  debug_status_register = 0;
+  _POR = 0;
+  _EXTR = 0;
+  _SWR = 0;
+  _BOR = 0;
+  _TRAPR = 0;
+  _WDTO = 0;
+  _IOPUWR = 0;
+  last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
+  processor_crash_count = 0;
+  
   ClearOutputsLTC2656(&U44_LTC2656);
   
   // Test U64 - MCP23017
