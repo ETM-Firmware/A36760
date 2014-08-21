@@ -1878,13 +1878,13 @@ void FilterADCs(void) {
 
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
   // DPARKER this needs to be tested
-  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
+  //  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
     vtemp = Scale16Bit(pac_1_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
     SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, 0);
     
     vtemp = Scale16Bit(pac_2_adc_reading, DIRECT_LAMBDA_INPUT_SCALE);
     SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, 0);
-  }
+    //}
 #endif
   
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
