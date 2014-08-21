@@ -1,6 +1,6 @@
-
+## .gitignore file to use with MPLAB X
 #MICPRCHIP MPLAB X FILES
-*.CS_
+
 */build/*
 *.map
 *.elf
@@ -8,8 +8,5 @@
 
 
 # Emacs Files
-*.h~
-*.c~
-*.txt~
 *~
 *#

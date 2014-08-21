@@ -19,6 +19,11 @@
 
 #define CMD_CLEAR_PROCESSOR_RESET_DATA                  0x40
 
+#define CMD_DATA_LOGGING                                0x50
+#define CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT     0x51
+#define CMD_SET_LOW_ENERGY_TARGET_CURRENT_SETPOINT      0x52
+
+
 #define CMD_FORCE_SOFTWARE_RESTART                      0xA0
 #define CMD_SOFTWARE_SKIP_WARMUP                        0xA1
 
@@ -159,6 +164,11 @@
 #define RAM_READ_COUNT_LVD_INTERRUPT                            0xAD
 #define RAM_READ_LAST_OSCCON_BEFORE_CRASH                       0xAE
 
+#define RAM_READ_HIGH_TARGET_CURRENT_SET_POINT                  0xB0
+#define RAM_READ_LOW_TARGET_CURRENT_SET_POINT                   0xB1
+#define RAM_READ_HIGH_TARGET_CURRENT_READING                    0xB2
+#define RAM_READ_LOW_TARGET_CURRENT_READING                     0xB3
+
 /*
 
 
@@ -227,5 +237,25 @@ extern struct CommandStringStruct command_string;
 void DoSerialCommand(void);
 
 unsigned int GenerateMagnetVprog(unsigned int iprog);
+
+void SendLoggingDataToUart();
+
+
+/*
+  RS422 Connector Specification
+  
+                                         J12091-000              J12091-000
+
+  A34760 Signal Name                     A34760 Pin              USB COM Pin
+  RX+                                      6                         2
+  RX-                                      4                         1
+
+  TX+                                      9                         3
+  TX-                                      3                         4
+
+  RS422_GND                                5                         5            
+
+
+*/
 
 #endif

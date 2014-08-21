@@ -32,8 +32,9 @@
                                                // If this mode is not selected, the the set point is set over the analog interface
 #endif
 
+#define __SERVO_TARGET_CURRENT
 
-
+//#define __RATIO_CONTROL_MODE    
 /* 
    -------------- Resource Summary  -------------------
    TMR1 is used to time the Lambda Charge Time and the Lambda Inhibit Time 
@@ -626,5 +627,15 @@ extern unsigned int arc_detected;
 #define LAST_ACTION_STACK_ERROR                        0x000F
 #define LAST_ACTION_MATH_ERROR                         0x0010
 
+extern unsigned int linac_high_energy_target_current_adc_reading;
+extern unsigned int linac_high_energy_target_current_set_point;
+
+extern unsigned int linac_low_energy_target_current_adc_reading;
+extern unsigned int linac_low_energy_target_current_set_point;
+
+extern signed int linac_high_energy_program_offset;
+extern signed int linac_low_energy_program_offset;
+
+extern unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
 
 #endif
