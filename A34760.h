@@ -638,4 +638,8 @@ extern signed int linac_low_energy_program_offset;
 
 extern unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
 
+extern unsigned int default_pac_2_adc_reading;
+extern unsigned int pac_1_adc_reading;
+extern unsigned int pac_2_adc_reading;
+
 #endif

@@ -839,15 +839,15 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
       
     case RAM_READ_COUNT_I2C_BUS_ERROR:
-      data_return = global_debug_counter.i2c_bus_error;
+      data_return = pac_2_adc_reading;
       break;
       
     case RAM_READ_COUNT_SPI1_BUS_ERROR:
-      data_return = global_debug_counter.spi1_bus_error;
+      data_return = default_pac_2_adc_reading;
       break;
       
     case RAM_READ_COUNT_SPI2_BUS_ERROR:
-      data_return = global_debug_counter.spi2_bus_error;
+      data_return = pac_1_adc_reading;
       break;
       
     case RAM_READ_COUNT_EXTERNAL_ADC_FALSE_TRIGGER:
