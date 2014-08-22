@@ -870,6 +870,10 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = last_osccon;
       break;
 
+    case RAM_READ_PULSE_LATCH_RESET_ERROR:
+      data_return = global_debug_counter.pulse_latch_reset_error;
+      break;
+
     case RAM_READ_COUNT_REVERSESCALE16BIT_SATURATION:
       data_return = global_debug_counter.reversescale16bit_saturation;
       break;

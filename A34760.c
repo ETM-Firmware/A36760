@@ -24,9 +24,8 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 unsigned int arc_detected;
 
+
 unsigned int default_pac_2_adc_reading;
-
-
 
 
 unsigned int linac_high_energy_target_current_adc_reading;
@@ -42,6 +41,9 @@ unsigned char fast_ratio_mode;
 unsigned int pulse_counter_this_run;   // This counts the number of pulses in the current "run".  This will be reset to 0 if there are no triggers for 100mS or more.
 
   
+
+unsigned int false_trigger;
+
 
 
 void ReadADCtoPACArray(void);
@@ -396,6 +398,9 @@ void DoStateMachine(void) {
       Do10msTicToc();
       DoSerialCommand();
       if (global_run_post_pulse_process) {
+	if (false_trigger) {
+	  RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+	}
 	last_known_action = LAST_ACTION_POST_PULSE_PROC;
 	// The Pulse Interrupt sets this Flag - And this sequence runs only once
 	// Update all the pulse data
@@ -2017,9 +2022,11 @@ void FilterADCs(void) {
   adc_reading = AverageADC128(pac_2_array);
   pac_2_adc_reading = RCFilter16Tau(pac_2_adc_reading, adc_reading);
   
+
   if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
     default_pac_2_adc_reading = pac_2_adc_reading;
   }
+
 
   //AN6 - Thyratron Cathode Heater   - 16 samples/tau - Analog Input Bandwidth = 10 Hz
   //adc_reading = AverageADC128(thyratron_cathode_heater_voltage_array);
@@ -2619,7 +2626,6 @@ unsigned int RCFilter16Tau(unsigned int previous_value, unsigned int current_rea
 
 
 void _ISRFASTNOPSV _INT1Interrupt(void) {
-  unsigned int false_trigger;
   /*
     This interrupt does NOTHING TO CONTROL THE TYHRATRON TRIGGER
     By the time this interrupt is called, the trigger has already been routed to the thyratron
@@ -2726,8 +2732,15 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
 
   // Wait for the pulse latches to clear
-  while (PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT);
-  while (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT);
+  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TMR1 < 20));
+  while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < 20));
+  
+  if (TMR1 >= 20) {
+    // there was an error with the pulse latch reset 
+    global_debug_counter.pulse_latch_reset_error++; 
+  }
+	 
+	 
 
   PIN_PULSE_LATCH_RESET = !OLL_PULSE_LATCH_RESET;
   

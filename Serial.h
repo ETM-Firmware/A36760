@@ -163,6 +163,7 @@
 #define RAM_READ_LAST_ACTION_BEFORE_CRASH                       0xAC
 #define RAM_READ_COUNT_LVD_INTERRUPT                            0xAD
 #define RAM_READ_LAST_OSCCON_BEFORE_CRASH                       0xAE
+#define RAM_READ_PULSE_LATCH_RESET_ERROR                        0xAF
 
 #define RAM_READ_HIGH_TARGET_CURRENT_SET_POINT                  0xB0
 #define RAM_READ_LOW_TARGET_CURRENT_SET_POINT                   0xB1
