@@ -2679,11 +2679,6 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
   
   false_trigger = 0;
-  
-  while (TMR1 < 1);  // 64 clock cycles, 6.4uS
-  if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
-    false_trigger = 1;
-  }
 
   while (TMR1 < 2);  // 128 clock cycles, 12.8uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
