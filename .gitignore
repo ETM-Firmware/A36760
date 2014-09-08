@@ -1,12 +1,16 @@
-## .gitignore file to use with MPLAB X
-#MICPRCHIP MPLAB X FILES
+## .gitignore file to use with MPLAB X and Emacs
 
+#Microchip MPLAB X Files to Ignore
 */build/*
-*.map
-*.elf
-*.cof
+*/nbproject/Makefile*
+*/nbproject/Package*
+*/nbproject/private/*
+*/disassembly/*
+*/dist/default/debug/*
+*.production.cof
+*.production.map
 
 
-# Emacs Files
+# Emacs Files to Ignore
 *~
 *#
