@@ -1846,7 +1846,9 @@ void Do10msTicToc(void) {
       long_math_value *= pulse_off_time_10_ms_units;
       long_math_value /= low_energy_target_current_startup_max_cooldown;
       low_energy_target_current_startup_adjust_initital_value = long_math_value;
-     }
+    } else {
+      pulse_off_time_10_ms_units = 0;
+    }
   } 
 }
 
