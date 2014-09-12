@@ -28,6 +28,11 @@ unsigned int arc_detected;
 unsigned int default_pac_2_adc_reading;
 
 
+unsigned int low_energy_target_current_startup_adjust_initital_value = 1000;
+unsigned int low_energy_target_current_startup_adjust_decay_time_pulses = 100;
+unsigned int low_energy_target_current_startup_adjust_direction_positive = 1;
+
+
 unsigned int linac_high_energy_target_current_adc_reading;
 unsigned int linac_high_energy_target_current_set_point;
 
@@ -227,11 +232,15 @@ void DoStateMachine(void) {
   unsigned int lambda_supply_startup_counter;
   unsigned long low_energy_target_current_set_point_derived; 
   unsigned int vtemp;
+  
+  unsigned int low_energy_target_current_startup_adjust;
+  unsigned long temp_long;
+	  
+
 
   switch(control_state) {
     
   case STATE_START_UP:
-
     DoA34760StartUpCommon();
     DoA34760StartUpNormalProcess();
     DoA34760StartUpCommonPostProcess();
@@ -429,6 +438,18 @@ void DoStateMachine(void) {
 	  // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
 	  // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
 	
+
+	  low_energy_target_current_startup_adjust = 0;
+#ifdef __STARTUP_TARGET_CURRENT_ADJUST
+	  if (pulse_counter_this_run < low_energy_target_current_startup_adjust_decay_time_pulses) {
+	    temp_long = low_energy_target_current_startup_adjust_initital_value;
+	    temp_long *= (low_energy_target_current_startup_adjust_decay_time_pulses - pulse_counter_this_run);
+	    temp_long /= low_energy_target_current_startup_adjust_decay_time_pulses;
+	    low_energy_target_current_startup_adjust = temp_long;
+	  }
+#endif
+	  
+
   
 #ifdef __RATIO_CONTROL_MODE    
 	  
@@ -455,9 +476,17 @@ void DoStateMachine(void) {
 #else
 		  
 	  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
-	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	    if (low_energy_target_current_startup_adjust_direction_positive) {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point + low_energy_target_current_startup_adjust;
+	    } else {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point - low_energy_target_current_startup_adjust;
+	    }
 	  } else {
-	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	    if (low_energy_target_current_startup_adjust_direction_positive) {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point + low_energy_target_current_startup_adjust;
+	    } else {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point - low_energy_target_current_startup_adjust;
+	    }	    
 	    low_energy_target_current_set_point_derived *= pac_2_adc_reading;
 	    low_energy_target_current_set_point_derived /= default_pac_2_adc_reading;
 	  }

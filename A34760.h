@@ -34,6 +34,8 @@
 
 #define __SERVO_TARGET_CURRENT
 
+#define __STARTUP_TARGET_CURRENT_ADJUST
+
 //#define __RATIO_CONTROL_MODE    
 /* 
    -------------- Resource Summary  -------------------
@@ -641,5 +643,10 @@ extern unsigned int pulse_counter_this_run;   // This counts the number of pulse
 extern unsigned int default_pac_2_adc_reading;
 extern unsigned int pac_1_adc_reading;
 extern unsigned int pac_2_adc_reading;
+
+
+extern unsigned int low_energy_target_current_startup_adjust_initital_value;
+extern unsigned int low_energy_target_current_startup_adjust_decay_time_pulses;
+extern unsigned int low_energy_target_current_startup_adjust_direction_positive;
 
 #endif

@@ -332,6 +332,18 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
+    case CMD_SET_TARGET_CURRENT_STARTUP_PULSES:
+      low_energy_target_current_startup_adjust_decay_time_pulses = data_word;
+      break;
+
+    case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
+      low_energy_target_current_startup_adjust_initital_value = data_word;
+      break;
+
+    case CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION:
+      low_energy_target_current_startup_adjust_direction_positive = data_word;
+      break;
+
 
     case CMD_FORCE_SOFTWARE_RESTART:
       /*
