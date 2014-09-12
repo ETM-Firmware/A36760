@@ -339,16 +339,28 @@ void ExecuteCommand(void) {
     case CMD_SET_TARGET_CURRENT_STARTUP_PULSES:
       low_energy_target_current_startup_adjust_decay_time_pulses = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES] = low_energy_target_current_startup_adjust_decay_time_pulses;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
       max_low_energy_target_current_startup_adjust_initital_value = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
     case CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION:
       low_energy_target_current_startup_max_cooldown = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN] = low_energy_target_current_startup_max_cooldown;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
 
