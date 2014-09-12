@@ -338,14 +338,17 @@ void ExecuteCommand(void) {
 
     case CMD_SET_TARGET_CURRENT_STARTUP_PULSES:
       low_energy_target_current_startup_adjust_decay_time_pulses = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES] = low_energy_target_current_startup_adjust_decay_time_pulses;
       break;
 
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
-      low_energy_target_current_startup_adjust_initital_value = data_word;
+      max_low_energy_target_current_startup_adjust_initital_value = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
       break;
 
     case CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION:
-      low_energy_target_current_startup_adjust_direction_positive = data_word;
+      low_energy_target_current_startup_max_cooldown = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN] = low_energy_target_current_startup_max_cooldown;
       break;
 
 
@@ -927,7 +930,22 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = linac_low_energy_target_current_adc_reading;
       break;
 
+    case RAM_READ_TARGET_ADJUST_MAX_PULSES:
+      data_return = low_energy_target_current_startup_adjust_decay_time_pulses;
+      break;
       
+    case RAM_READ_TARGET_ADJUST_MAX_MAGNITUDE:
+      data_return = max_low_energy_target_current_startup_adjust_initital_value;
+      break;
+
+    case RAM_READ_TARGET_ADJUST_MAX_COOLDOWN:
+      data_return = low_energy_target_current_startup_max_cooldown;
+      break;
+
+    case RAM_READ_TARGET_ADJUST_INITIAL_MAGNITUDE:
+      data_return = low_energy_target_current_startup_adjust_initital_value;
+      break;
+
     }
   
   return data_return;

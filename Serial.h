@@ -171,6 +171,10 @@
 #define RAM_READ_LOW_TARGET_CURRENT_SET_POINT                   0xB1
 #define RAM_READ_HIGH_TARGET_CURRENT_READING                    0xB2
 #define RAM_READ_LOW_TARGET_CURRENT_READING                     0xB3
+#define RAM_READ_TARGET_ADJUST_MAX_PULSES                       0xB4
+#define RAM_READ_TARGET_ADJUST_MAX_MAGNITUDE                    0xB5
+#define RAM_READ_TARGET_ADJUST_MAX_COOLDOWN                     0xB6
+#define RAM_READ_TARGET_ADJUST_INITIAL_MAGNITUDE                0xB7
 
 /*
 

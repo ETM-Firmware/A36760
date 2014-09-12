@@ -27,12 +27,14 @@ unsigned int arc_detected;
 
 unsigned int default_pac_2_adc_reading;
 
-
-unsigned int low_energy_target_current_startup_adjust_initital_value = 1000;
-unsigned int low_energy_target_current_startup_adjust_decay_time_pulses = 100;
-unsigned int low_energy_target_current_startup_adjust_direction_positive = 1;
+unsigned int max_low_energy_target_current_startup_adjust_initital_value = 300;
+unsigned int low_energy_target_current_startup_max_cooldown = 12000;
+unsigned int low_energy_target_current_startup_adjust_initital_value = 0;
+unsigned int low_energy_target_current_startup_adjust_decay_time_pulses = 1200;
+unsigned int low_energy_target_current_startup_adjust_direction_positive = 0;
 unsigned int low_energy_target_current_startup_adjust;
 
+unsigned int pulse_off_time_10_ms_units;
 
 unsigned int linac_high_energy_target_current_adc_reading;
 unsigned int linac_high_energy_target_current_set_point;
@@ -663,9 +665,11 @@ void DoA34760StartUpCommon(void) {
 
   linac_high_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
   linac_low_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET];
-
-
+  low_energy_target_current_startup_adjust_decay_time_pulses =  control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES];
+  max_low_energy_target_current_startup_adjust_initital_value = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE];
+  low_energy_target_current_startup_max_cooldown = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
   
+
   /*
     Initialize the thyratron heater PID structure
     DPARKER add these values to H file
@@ -1710,6 +1714,7 @@ void Do10msTicToc(void) {
 
   unsigned int vtemp;
   unsigned int itemp;
+  unsigned long long_math_value;
 
 
   last_known_action = LAST_ACTION_DO_10MS;
@@ -1825,12 +1830,23 @@ void Do10msTicToc(void) {
     // The system is configured to adjust the filament power based on magnetron power.  Otherwise the filament power will be maxed at all times
     DoMagnetronFilamentAdjust();
 
+
+
     if ((control_state != STATE_HV_ON) || (_T2IF)) {
       // Do10msTicToc needs to be responsible for updating the DAC
       UpdateDacAll();
       UpdateIOExpanderOutputs();
       pulse_counter_this_run = 0;
     } 
+    if (pulse_counter_this_run == 0) {
+      if (pulse_off_time_10_ms_units < low_energy_target_current_startup_max_cooldown) {
+	pulse_off_time_10_ms_units++;
+      }
+      long_math_value = max_low_energy_target_current_startup_adjust_initital_value;
+      long_math_value *= pulse_off_time_10_ms_units;
+      long_math_value /= low_energy_target_current_startup_max_cooldown;
+      low_energy_target_current_startup_adjust_initital_value = long_math_value;
+     }
   } 
 }
 
