@@ -131,9 +131,13 @@ void SendLoggingDataToUart() {
 
     Buffer64WriteByte(&uart1_output_buffer, 0xFE);
     Buffer64WriteByte(&uart1_output_buffer, 0xF1);
-    Buffer64WriteByte(&uart1_output_buffer, 0xFA);
-    Buffer64WriteByte(&uart1_output_buffer, 0xFB);
-    
+
+    if (low_energy_target_current_startup_adjust_direction_positive) {
+      Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_startup_adjust >> 8));
+    } else {
+      Buffer64WriteByte(&uart1_output_buffer, ((low_energy_target_current_startup_adjust >> 8) | 0b10000000));
+    }
+    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_startup_adjust & 0x00FF));
 
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading >> 8));
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading & 0x00FF));

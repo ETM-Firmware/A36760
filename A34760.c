@@ -31,6 +31,7 @@ unsigned int default_pac_2_adc_reading;
 unsigned int low_energy_target_current_startup_adjust_initital_value = 1000;
 unsigned int low_energy_target_current_startup_adjust_decay_time_pulses = 100;
 unsigned int low_energy_target_current_startup_adjust_direction_positive = 1;
+unsigned int low_energy_target_current_startup_adjust;
 
 
 unsigned int linac_high_energy_target_current_adc_reading;
@@ -233,7 +234,6 @@ void DoStateMachine(void) {
   unsigned long low_energy_target_current_set_point_derived; 
   unsigned int vtemp;
   
-  unsigned int low_energy_target_current_startup_adjust;
   unsigned long temp_long;
 	  
 

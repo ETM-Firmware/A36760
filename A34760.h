@@ -648,5 +648,6 @@ extern unsigned int pac_2_adc_reading;
 extern unsigned int low_energy_target_current_startup_adjust_initital_value;
 extern unsigned int low_energy_target_current_startup_adjust_decay_time_pulses;
 extern unsigned int low_energy_target_current_startup_adjust_direction_positive;
+extern unsigned int low_energy_target_current_startup_adjust;
 
 #endif

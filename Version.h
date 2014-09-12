@@ -2,6 +2,6 @@
 #define __VERSION_H
 
 
-#define VERSION_NUMBER 0x4001
+#define VERSION_NUMBER 0x4002
 
 #endif
