@@ -24,6 +24,8 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 unsigned int arc_detected;
 
+unsigned long low_energy_target_current_set_point_derived; 
+
 
 unsigned int default_pac_2_adc_reading;
 
@@ -233,7 +235,6 @@ unsigned int mode_B_pulse_magnetron_voltage_adc_reading_filtered;
 void DoStateMachine(void) {
   unsigned int warmup_counter;
   unsigned int lambda_supply_startup_counter;
-  unsigned long low_energy_target_current_set_point_derived; 
   unsigned int vtemp;
   
   unsigned long temp_long;
@@ -462,9 +463,9 @@ void DoStateMachine(void) {
 
 	  if (fast_ratio_mode) {
 	    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	      linac_low_energy_program_offset -= 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	      linac_low_energy_program_offset -= 9*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
 	    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	      linac_low_energy_program_offset += 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	      linac_low_energy_program_offset += 9*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
 	    } else {
 	      fast_ratio_mode = 0;
 	    }

@@ -652,4 +652,6 @@ extern unsigned int low_energy_target_current_startup_adjust_decay_time_pulses;
 extern unsigned int low_energy_target_current_startup_adjust_direction_positive;
 extern unsigned int low_energy_target_current_startup_adjust;
 
+extern unsigned long low_energy_target_current_set_point_derived; 
+
 #endif

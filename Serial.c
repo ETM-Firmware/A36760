@@ -115,15 +115,16 @@ void LookForCommand(void) {
 void SendLoggingDataToUart() {
   /* 
      Data that we need to log with each pulse
-     byte 0      = 0xFE  - used to sync message
-     byte 1,2    = linac_high_energy_target_current_adc_reading
-     byte 2,3    = linac_low_energy_target_current_adc_reading
-     byte 3,4    = linac_high_energy_program_offset
-     byte 5,6    = linac_low_energy_program_offset
+     byte 0,1    = 0xFE, 0xF1 - used to sync message
+     byte 2,3    = low_energy_target_current_set_point_derived (low 16 bits)
+     byte 4,5    = linac_high_energy_target_current_adc_reading
+     byte 6,7    = linac_low_energy_target_current_adc_reading
+     byte 8,9    = linac_high_energy_program_offset
+     byte 10,11    = linac_low_energy_program_offset
      
 
-     byte 7,8    = pulse_counter_this_run
-     byte 9,10   = pulse_magnetron_current_adc_reading
+     byte 12,13    = pulse_counter_this_run
+     byte 14,15   = pulse_magnetron_current_adc_reading
      
   */
 
@@ -132,12 +133,8 @@ void SendLoggingDataToUart() {
     Buffer64WriteByte(&uart1_output_buffer, 0xFE);
     Buffer64WriteByte(&uart1_output_buffer, 0xF1);
 
-    if (low_energy_target_current_startup_adjust_direction_positive) {
-      Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_startup_adjust >> 8));
-    } else {
-      Buffer64WriteByte(&uart1_output_buffer, ((low_energy_target_current_startup_adjust >> 8) | 0b10000000));
-    }
-    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_startup_adjust & 0x00FF));
+    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_set_point_derived >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_set_point_derived & 0xFF));
 
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading >> 8));
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading & 0x00FF));
