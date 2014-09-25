@@ -321,12 +321,24 @@ void ExecuteCommand(void) {
       break;
       
 
-    case CMD_SET_LOW_ENERGY_TARGET_CURRENT_SETPOINT:
-      linac_low_energy_target_current_set_point = data_word;
-      if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
-	linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+    case CMD_SET_LOW_ENERGY_PORTAL_TARGET_CURRENT_SETPOINT:
+      linac_low_energy_target_current_set_point_portal_mode = data_word;
+      if (linac_low_energy_target_current_set_point_portal_mode < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+	linac_low_energy_target_current_set_point_portal_mode = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
       }
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET] = linac_low_energy_target_current_set_point;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET] = linac_low_energy_target_current_set_point_portal_mode;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
+      break;
+
+    case CMD_SET_LOW_ENERGY_GANTRY_TARGET_CURRENT_SETPOINT:
+      linac_low_energy_target_current_set_point_gantry_mode = data_word;
+      if (linac_low_energy_target_current_set_point_gantry_mode < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+	linac_low_energy_target_current_set_point_gantry_mode = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+      }
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET] = linac_low_energy_target_current_set_point_gantry_mode;
       _wait_eedata();
       _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
       _wait_eedata();
@@ -919,7 +931,13 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
       
     case RAM_READ_COUNT_TIMING_ERROR_INT1:
-      data_return = timing_error_int1_count;
+      //data_return = timing_error_int1_count;
+      if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
+	data_return = 1;
+      } else {
+	data_return = 0;
+      }
+
       break;
 
 

@@ -43,6 +43,10 @@ unsigned int linac_high_energy_target_current_set_point;
 
 unsigned int linac_low_energy_target_current_adc_reading;
 unsigned int linac_low_energy_target_current_set_point;
+unsigned int linac_low_energy_target_current_set_point_portal_mode;
+unsigned int linac_low_energy_target_current_set_point_gantry_mode;
+
+
 
 signed int linac_high_energy_program_offset;
 signed int linac_low_energy_program_offset;
@@ -409,6 +413,14 @@ void DoStateMachine(void) {
       last_known_action = LAST_ACTION_HV_ON_LOOP;
       Do10msTicToc();
       DoSerialCommand();
+
+      if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
+	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_gantry_mode;
+      } else {
+	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_portal_mode;
+      }
+
+
       if (global_run_post_pulse_process) {
 	if (false_trigger) {
 	  RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
@@ -665,7 +677,10 @@ void DoA34760StartUpCommon(void) {
 
 
   linac_high_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
-  linac_low_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET];
+
+  
+  linac_low_energy_target_current_set_point_gantry_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET];
+  linac_low_energy_target_current_set_point_portal_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET];
   low_energy_target_current_startup_adjust_decay_time_pulses =  control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES];
   max_low_energy_target_current_startup_adjust_initital_value = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE];
   low_energy_target_current_startup_max_cooldown = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
@@ -1078,6 +1093,7 @@ void DoA34760StartUpCommon(void) {
   TRIS_FP_PIN_MODULATOR_RESET = TRIS_INPUT_MODE;
   TRIS_FP_PIN_FAST_RESTART = TRIS_INPUT_MODE;
   TRIS_FP_PIN_SPARE_2_SAMPLE_VPROG_INPUT = TRIS_INPUT_MODE;
+  TRIS_PIN_GANTRY_PORTAL_SELECT = TRIS_INPUT_MODE;
 
 
   // Analog Compartor/Latch Input Pins

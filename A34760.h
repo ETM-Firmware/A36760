@@ -634,6 +634,8 @@ extern unsigned int linac_high_energy_target_current_set_point;
 
 extern unsigned int linac_low_energy_target_current_adc_reading;
 extern unsigned int linac_low_energy_target_current_set_point;
+extern unsigned int linac_low_energy_target_current_set_point_portal_mode;
+extern unsigned int linac_low_energy_target_current_set_point_gantry_mode;
 
 extern signed int linac_high_energy_program_offset;
 extern signed int linac_low_energy_program_offset;
@@ -653,5 +655,7 @@ extern unsigned int low_energy_target_current_startup_adjust_direction_positive;
 extern unsigned int low_energy_target_current_startup_adjust;
 
 extern unsigned long low_energy_target_current_set_point_derived; 
+
+
 
 #endif
