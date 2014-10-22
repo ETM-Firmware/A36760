@@ -66,6 +66,8 @@
             <linkerLibFileItem>../../../../../../Program Files (x86)/Microchip/mplabc30/v3.31/lib/libdsp-elf.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
+        <archiverTool>
+        </archiverTool>
         <loading>
           <useAlternateLoadableFile>false</useAlternateLoadableFile>
           <parseOnProdLoad>false</parseOnProdLoad>
