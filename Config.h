@@ -4,9 +4,9 @@
 #define __CONFIG_H
 
 #define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
-//#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
+#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
 
-//#define __MK_POWER_SUPPLIES
+#define __MK_POWER_SUPPLIES
 
 /*
   Differences between code for MG7095 and MG5193
@@ -53,7 +53,7 @@
 #define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
 #else
 #define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // DONT CARE
-#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37.500 Volts
+#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          37546                    // 37.546 Volts
 #endif
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
@@ -68,8 +68,8 @@
 #define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Amps
 #define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
 #else
-#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         54243                    // 54.243 Amps
-#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43993                    // 43.993 Amps
+#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         37347                    // 37.346 Amps
+#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43857                    // 43.857 Amps
 #endif
 
 
@@ -112,7 +112,7 @@
 #define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          43788                    // 43.788 Volts
 #else
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // DONT CARE
-#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37.500 Volts
+#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37546                    // 37.546 Volts
 #endif
 
 
@@ -130,8 +130,8 @@
 #define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // N/A
 #define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          32844                    // 32.844 Amps
 #else
-#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         45023                    // 45.203 Amps
-#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31407                    // 31.407 Amps
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         37346                    // 37.346 Amps
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          43857                    // 43.857 Amps
 #endif
 
 #ifndef __MK_POWER_SUPPLIES
