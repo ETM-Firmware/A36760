@@ -34,6 +34,8 @@
 
 #define __SERVO_TARGET_CURRENT
 
+#define __STARTUP_TARGET_CURRENT_ADJUST
+
 //#define __RATIO_CONTROL_MODE    
 /* 
    -------------- Resource Summary  -------------------
@@ -632,6 +634,8 @@ extern unsigned int linac_high_energy_target_current_set_point;
 
 extern unsigned int linac_low_energy_target_current_adc_reading;
 extern unsigned int linac_low_energy_target_current_set_point;
+extern unsigned int linac_low_energy_target_current_set_point_portal_mode;
+extern unsigned int linac_low_energy_target_current_set_point_gantry_mode;
 
 extern signed int linac_high_energy_program_offset;
 extern signed int linac_low_energy_program_offset;
@@ -641,5 +645,17 @@ extern unsigned int pulse_counter_this_run;   // This counts the number of pulse
 extern unsigned int default_pac_2_adc_reading;
 extern unsigned int pac_1_adc_reading;
 extern unsigned int pac_2_adc_reading;
+
+
+extern unsigned int max_low_energy_target_current_startup_adjust_initital_value;
+extern unsigned int low_energy_target_current_startup_max_cooldown;
+extern unsigned int low_energy_target_current_startup_adjust_initital_value;
+extern unsigned int low_energy_target_current_startup_adjust_decay_time_pulses;
+extern unsigned int low_energy_target_current_startup_adjust_direction_positive;
+extern unsigned int low_energy_target_current_startup_adjust;
+
+extern unsigned long low_energy_target_current_set_point_derived; 
+
+
 
 #endif

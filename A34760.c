@@ -24,15 +24,29 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 
 unsigned int arc_detected;
 
+unsigned long low_energy_target_current_set_point_derived; 
+
 
 unsigned int default_pac_2_adc_reading;
 
+unsigned int max_low_energy_target_current_startup_adjust_initital_value = 300;
+unsigned int low_energy_target_current_startup_max_cooldown = 12000;
+unsigned int low_energy_target_current_startup_adjust_initital_value = 0;
+unsigned int low_energy_target_current_startup_adjust_decay_time_pulses = 1200;
+unsigned int low_energy_target_current_startup_adjust_direction_positive = 0;
+unsigned int low_energy_target_current_startup_adjust;
+
+unsigned int pulse_off_time_10_ms_units;
 
 unsigned int linac_high_energy_target_current_adc_reading;
 unsigned int linac_high_energy_target_current_set_point;
 
 unsigned int linac_low_energy_target_current_adc_reading;
 unsigned int linac_low_energy_target_current_set_point;
+unsigned int linac_low_energy_target_current_set_point_portal_mode;
+unsigned int linac_low_energy_target_current_set_point_gantry_mode;
+
+
 
 signed int linac_high_energy_program_offset;
 signed int linac_low_energy_program_offset;
@@ -225,13 +239,15 @@ unsigned int mode_B_pulse_magnetron_voltage_adc_reading_filtered;
 void DoStateMachine(void) {
   unsigned int warmup_counter;
   unsigned int lambda_supply_startup_counter;
-  unsigned long low_energy_target_current_set_point_derived; 
   unsigned int vtemp;
+  
+  unsigned long temp_long;
+	  
+
 
   switch(control_state) {
     
   case STATE_START_UP:
-
     DoA34760StartUpCommon();
     DoA34760StartUpNormalProcess();
     DoA34760StartUpCommonPostProcess();
@@ -397,6 +413,14 @@ void DoStateMachine(void) {
       last_known_action = LAST_ACTION_HV_ON_LOOP;
       Do10msTicToc();
       DoSerialCommand();
+
+      if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
+	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_gantry_mode;
+      } else {
+	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_portal_mode;
+      }
+
+
       if (global_run_post_pulse_process) {
 	if (false_trigger) {
 	  RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
@@ -429,6 +453,18 @@ void DoStateMachine(void) {
 	  // There have been enough pulses for the sample and hold to return valid readins.  Start to close the loop around the measured target current
 	  // DPARKER - write the algorythim to take linac_target_current_high_energy_mode and linac_high_energy_target_current_set_point
 	
+
+	  low_energy_target_current_startup_adjust = 0;
+#ifdef __STARTUP_TARGET_CURRENT_ADJUST
+	  if (pulse_counter_this_run < low_energy_target_current_startup_adjust_decay_time_pulses) {
+	    temp_long = low_energy_target_current_startup_adjust_initital_value;
+	    temp_long *= (low_energy_target_current_startup_adjust_decay_time_pulses - pulse_counter_this_run);
+	    temp_long /= low_energy_target_current_startup_adjust_decay_time_pulses;
+	    low_energy_target_current_startup_adjust = temp_long;
+	  }
+#endif
+	  
+
   
 #ifdef __RATIO_CONTROL_MODE    
 	  
@@ -439,9 +475,9 @@ void DoStateMachine(void) {
 
 	  if (fast_ratio_mode) {
 	    if (linac_low_energy_target_current_adc_reading >= (low_energy_target_current_set_point_derived + LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	      linac_low_energy_program_offset -= 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	      linac_low_energy_program_offset -= 9*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
 	    } else if (linac_low_energy_target_current_adc_reading <= (low_energy_target_current_set_point_derived - LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR)) {
-	      linac_low_energy_program_offset += 3*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
+	      linac_low_energy_program_offset += 9*LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE;
 	    } else {
 	      fast_ratio_mode = 0;
 	    }
@@ -455,9 +491,17 @@ void DoStateMachine(void) {
 #else
 		  
 	  if (PIN_FP_SPARE_2_SAMPLE_VPROG_INPUT == ILL_SAMPLE_VPROG_INPUT) {
-	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	    if (low_energy_target_current_startup_adjust_direction_positive) {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point + low_energy_target_current_startup_adjust;
+	    } else {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point - low_energy_target_current_startup_adjust;
+	    }
 	  } else {
-	    low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point;
+	    if (low_energy_target_current_startup_adjust_direction_positive) {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point + low_energy_target_current_startup_adjust;
+	    } else {
+	      low_energy_target_current_set_point_derived = linac_low_energy_target_current_set_point - low_energy_target_current_startup_adjust;
+	    }	    
 	    low_energy_target_current_set_point_derived *= pac_2_adc_reading;
 	    low_energy_target_current_set_point_derived /= default_pac_2_adc_reading;
 	  }
@@ -633,10 +677,15 @@ void DoA34760StartUpCommon(void) {
 
 
   linac_high_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
-  linac_low_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET];
-
 
   
+  linac_low_energy_target_current_set_point_gantry_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET];
+  linac_low_energy_target_current_set_point_portal_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET];
+  low_energy_target_current_startup_adjust_decay_time_pulses =  control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES];
+  max_low_energy_target_current_startup_adjust_initital_value = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE];
+  low_energy_target_current_startup_max_cooldown = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
+  
+
   /*
     Initialize the thyratron heater PID structure
     DPARKER add these values to H file
@@ -1044,6 +1093,7 @@ void DoA34760StartUpCommon(void) {
   TRIS_FP_PIN_MODULATOR_RESET = TRIS_INPUT_MODE;
   TRIS_FP_PIN_FAST_RESTART = TRIS_INPUT_MODE;
   TRIS_FP_PIN_SPARE_2_SAMPLE_VPROG_INPUT = TRIS_INPUT_MODE;
+  TRIS_PIN_GANTRY_PORTAL_SELECT = TRIS_INPUT_MODE;
 
 
   // Analog Compartor/Latch Input Pins
@@ -1681,6 +1731,7 @@ void Do10msTicToc(void) {
 
   unsigned int vtemp;
   unsigned int itemp;
+  unsigned long long_math_value;
 
 
   last_known_action = LAST_ACTION_DO_10MS;
@@ -1796,12 +1847,25 @@ void Do10msTicToc(void) {
     // The system is configured to adjust the filament power based on magnetron power.  Otherwise the filament power will be maxed at all times
     DoMagnetronFilamentAdjust();
 
+
+
     if ((control_state != STATE_HV_ON) || (_T2IF)) {
       // Do10msTicToc needs to be responsible for updating the DAC
       UpdateDacAll();
       UpdateIOExpanderOutputs();
       pulse_counter_this_run = 0;
     } 
+    if (pulse_counter_this_run == 0) {
+      if (pulse_off_time_10_ms_units < low_energy_target_current_startup_max_cooldown) {
+	pulse_off_time_10_ms_units++;
+      }
+      long_math_value = max_low_energy_target_current_startup_adjust_initital_value;
+      long_math_value *= pulse_off_time_10_ms_units;
+      long_math_value /= low_energy_target_current_startup_max_cooldown;
+      low_energy_target_current_startup_adjust_initital_value = long_math_value;
+    } else {
+      pulse_off_time_10_ms_units = 0;
+    }
   } 
 }
 

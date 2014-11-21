@@ -115,15 +115,16 @@ void LookForCommand(void) {
 void SendLoggingDataToUart() {
   /* 
      Data that we need to log with each pulse
-     byte 0      = 0xFE  - used to sync message
-     byte 1,2    = linac_high_energy_target_current_adc_reading
-     byte 2,3    = linac_low_energy_target_current_adc_reading
-     byte 3,4    = linac_high_energy_program_offset
-     byte 5,6    = linac_low_energy_program_offset
+     byte 0,1    = 0xFE, 0xF1 - used to sync message
+     byte 2,3    = low_energy_target_current_set_point_derived (low 16 bits)
+     byte 4,5    = linac_high_energy_target_current_adc_reading
+     byte 6,7    = linac_low_energy_target_current_adc_reading
+     byte 8,9    = linac_high_energy_program_offset
+     byte 10,11    = linac_low_energy_program_offset
      
 
-     byte 7,8    = pulse_counter_this_run
-     byte 9,10   = pulse_magnetron_current_adc_reading
+     byte 12,13    = pulse_counter_this_run
+     byte 14,15   = pulse_magnetron_current_adc_reading
      
   */
 
@@ -131,9 +132,9 @@ void SendLoggingDataToUart() {
 
     Buffer64WriteByte(&uart1_output_buffer, 0xFE);
     Buffer64WriteByte(&uart1_output_buffer, 0xF1);
-    Buffer64WriteByte(&uart1_output_buffer, 0xFA);
-    Buffer64WriteByte(&uart1_output_buffer, 0xFB);
-    
+
+    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_set_point_derived >> 8));
+    Buffer64WriteByte(&uart1_output_buffer, (low_energy_target_current_set_point_derived & 0xFF));
 
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading >> 8));
     Buffer64WriteByte(&uart1_output_buffer, (linac_high_energy_target_current_adc_reading & 0x00FF));
@@ -320,12 +321,51 @@ void ExecuteCommand(void) {
       break;
       
 
-    case CMD_SET_LOW_ENERGY_TARGET_CURRENT_SETPOINT:
-      linac_low_energy_target_current_set_point = data_word;
-      if (linac_low_energy_target_current_set_point < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
-	linac_low_energy_target_current_set_point = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+    case CMD_SET_LOW_ENERGY_PORTAL_TARGET_CURRENT_SETPOINT:
+      linac_low_energy_target_current_set_point_portal_mode = data_word;
+      if (linac_low_energy_target_current_set_point_portal_mode < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+	linac_low_energy_target_current_set_point_portal_mode = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
       }
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_TARGET] = linac_low_energy_target_current_set_point;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET] = linac_low_energy_target_current_set_point_portal_mode;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
+      break;
+
+    case CMD_SET_LOW_ENERGY_GANTRY_TARGET_CURRENT_SETPOINT:
+      linac_low_energy_target_current_set_point_gantry_mode = data_word;
+      if (linac_low_energy_target_current_set_point_gantry_mode < LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR) {
+	linac_low_energy_target_current_set_point_gantry_mode = LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR;
+      }
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET] = linac_low_energy_target_current_set_point_gantry_mode;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
+      break;
+
+    case CMD_SET_TARGET_CURRENT_STARTUP_PULSES:
+      low_energy_target_current_startup_adjust_decay_time_pulses = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES] = low_energy_target_current_startup_adjust_decay_time_pulses;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
+      break;
+
+    case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
+      max_low_energy_target_current_startup_adjust_initital_value = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
+      break;
+
+    case CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION:
+      low_energy_target_current_startup_max_cooldown = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN] = low_energy_target_current_startup_max_cooldown;
       _wait_eedata();
       _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
       _wait_eedata();
@@ -891,7 +931,13 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
       
     case RAM_READ_COUNT_TIMING_ERROR_INT1:
-      data_return = timing_error_int1_count;
+      //data_return = timing_error_int1_count;
+      if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
+	data_return = 1;
+      } else {
+	data_return = 0;
+      }
+
       break;
 
 
@@ -911,7 +957,22 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = linac_low_energy_target_current_adc_reading;
       break;
 
+    case RAM_READ_TARGET_ADJUST_MAX_PULSES:
+      data_return = low_energy_target_current_startup_adjust_decay_time_pulses;
+      break;
       
+    case RAM_READ_TARGET_ADJUST_MAX_MAGNITUDE:
+      data_return = max_low_energy_target_current_startup_adjust_initital_value;
+      break;
+
+    case RAM_READ_TARGET_ADJUST_MAX_COOLDOWN:
+      data_return = low_energy_target_current_startup_max_cooldown;
+      break;
+
+    case RAM_READ_TARGET_ADJUST_INITIAL_MAGNITUDE:
+      data_return = low_energy_target_current_startup_adjust_initital_value;
+      break;
+
     }
   
   return data_return;

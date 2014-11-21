@@ -1,12 +1,43 @@
 // Magnet Supply Configuration
-
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
-//#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
+//#define __A34760_000
+//#define __A36760_000
+#define __A36760_003
 
-//#define __MK_POWER_SUPPLIES
+
+#ifdef __A36760_003
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
+#define __MK_POWER_SUPPLIES
+
+#ifdef  __BOARD_TYPE_SELECTED
+#error Multiple Board Type Compile Targets
+#endif
+#define __BOARD_TYPE_SELECTED
+#endif
+
+#ifdef __A36760_000
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
+
+#ifdef  __BOARD_TYPE_SELECTED
+#error Multiple Board Type Compile Targets
+#endif
+#define __BOARD_TYPE_SELECTED
+#endif
+
+#ifdef __A34760_000
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+
+#endif
+
+// Ensure that one and only one board has been selected
+#ifndef __BOARD_TYPE_SELECTED
+#error No Board Type Compile Target
+#endif
+
 
 /*
   Differences between code for MG7095 and MG5193
@@ -53,7 +84,7 @@
 #define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          43750                    // 43.750 Volts
 #else
 #define MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // DONT CARE
-#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37.500 Volts
+#define MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF          37546                    // 37.546 Volts
 #endif
 
 #define MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD        30000                    // 30 Volts 
@@ -68,8 +99,8 @@
 #define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         41767                    // 41.767 Amps
 #define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43750                    // 43.750 Amps
 #else
-#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         54243                    // 54.243 Amps
-#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43993                    // 43.993 Amps
+#define MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         37347                    // 37.346 Amps
+#define MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF          43857                    // 43.857 Amps
 #endif
 
 
@@ -112,13 +143,17 @@
 #define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          43788                    // 43.788 Volts
 #else
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // DONT CARE
-#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37500                    // 37.500 Volts
+#define FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF          37546                    // 37.546 Volts
 #endif
 
 
-
+#ifndef __MK_POWER_SUPPLIES
 #define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       1.25
 #define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .75
+#else
+#define FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE       2
+#define FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE      .5
+#endif
 #define FILAMENT_SUPPLY_VADC_MIN_OVER_VOLTAGE         4000                     // 4 Volts
 #define FILAMENT_SUPPLY_VADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
@@ -126,12 +161,18 @@
 #define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         0xFFFF                   // N/A
 #define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          32844                    // 32.844 Amps
 #else
-#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         45023                    // 45.203 Amps
-#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          31407                    // 31.407 Amps
+#define FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF         37346                    // 37.346 Amps
+#define FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF          43857                    // 43.857 Amps
 #endif
 
+#ifndef __MK_POWER_SUPPLIES
 #define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       2
 #define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .5
+#else
+#define FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE       1.25
+#define FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE      .75
+#endif
+
 #define FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT         4000                     // 4 Amps
 #define FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE         200                      // 200 * 10ms = 2000mS out of range before a fault trips
 
@@ -202,7 +243,7 @@
 
 #define HV_LAMBDA_MODE_A_WARMUP_RAMP_TIME              0                        // NIL
 
-#define MAX_HV_LAMBDA_MODE_A_VOLTAGE_SET_POINT         19000                    // 19 KV
+#define MAX_HV_LAMBDA_MODE_A_VOLTAGE_SET_POINT         19000                    // 20 KV
 
 #define HV_LAMBDA_MODE_A_VDAC_OUTPUT_AT_0xFFFF         22293                    // 22.293 KV
 #define HV_LAMBDA_MODE_A_VADC_INPUT_AT_0xFFFF          25000                    // 25 KV
@@ -236,7 +277,7 @@
 
 #define HV_LAMBDA_MODE_B_WARMUP_RAMP_TIME              0                        // NIL
 
-#define MAX_HV_LAMBDA_MODE_B_VOLTAGE_SET_POINT         19000                    // 19 KV
+#define MAX_HV_LAMBDA_MODE_B_VOLTAGE_SET_POINT         19000                    // 20 KV
 
 #define HV_LAMBDA_MODE_B_VDAC_OUTPUT_AT_0xFFFF         22293                    // 22.293 KV
 #define HV_LAMBDA_MODE_B_VADC_INPUT_AT_0xFFFF          25000                    // 25 KV
@@ -385,11 +426,11 @@
 #define EEPROM_CNTRL_MAGNET_FACTOR_LINEAR   1
 #define EEPROM_CNTRL_MAGNET_FACTOR_CONST    2
 #define EEPROM_CNTRL_HIGH_ENERGY_TARGET     3
-#define EEPROM_CNTRL_LOW_ENERGY_TARGET      4
-#define EEPROM_CNTRL_UNUSED_3               5
-#define EEPROM_CNTRL_UNUSED_4               6
-#define EEPROM_CNTRL_UNUSED_5               7
-#define EEPROM_CNTRL_UNUSED_6               8
+#define EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET   4
+#define EEPROM_CNTRL_TARGET_STARTUP_PULSES  5
+#define EEPROM_CNTRL_TARGET_MAX_MAGNITUDE   6
+#define EEPROM_CNTRL_TARGET_MAX_COOLDOWN    7
+#define EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET   8
 #define EEPROM_CNTRL_UNUSED_7               9
 #define EEPROM_CNTRL_UNUSED_8               10
 #define EEPROM_CNTRL_UNUSED_9               11
@@ -406,7 +447,7 @@
 #define LINAC_TARGET_CURRENT_HIGH_ENERGY_PROGRAM_MAX_OFFSET 600
 
 #define LINAC_TARGET_CURRENT_LOW_ENERGY_MINIMUM_ERROR       50
-#define LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE           3
+#define LINAC_TARGET_CURRENT_LOW_ENERGY_STEP_SIZE           1
 #define LINAC_TARGET_CURRENT_LOW_ENERGY_PROGRAM_MAX_OFFSET  1600
   
 
