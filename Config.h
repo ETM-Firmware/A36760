@@ -1,12 +1,43 @@
 // Magnet Supply Configuration
-
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+//#define __A34760_000
+//#define __A36760_000
+#define __A36760_003
+
+
+#ifdef __A36760_003
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+#define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
+#define __MK_POWER_SUPPLIES
+
+#ifdef  __BOARD_TYPE_SELECTED
+#error Multiple Board Type Compile Targets
+#endif
+#define __BOARD_TYPE_SELECTED
+#endif
+
+#ifdef __A36760_000
 #define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 #define __A36760      // IF this is set, compile for use with A36760, esle compile for use with A34760
 
-#define __MK_POWER_SUPPLIES
+#ifdef  __BOARD_TYPE_SELECTED
+#error Multiple Board Type Compile Targets
+#endif
+#define __BOARD_TYPE_SELECTED
+#endif
+
+#ifdef __A34760_000
+#define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
+
+#endif
+
+// Ensure that one and only one board has been selected
+#ifndef __BOARD_TYPE_SELECTED
+#error No Board Type Compile Target
+#endif
+
 
 /*
   Differences between code for MG7095 and MG5193
