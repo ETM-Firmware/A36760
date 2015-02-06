@@ -354,6 +354,10 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
+    case CMD_SET_FILAMENT_OFFSET:
+      look_up_offset = (signed int)data_word;
+      break;
+
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
       max_low_energy_target_current_startup_adjust_initital_value = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
@@ -782,6 +786,10 @@ unsigned int ReadFromRam(unsigned int ram_location) {
 
     case RAM_READ_HV_LAMBDA_VMON_ADC:
       data_return = ReturnPowerSupplyADCScaledVoltage(&ps_hv_lambda_mode_B, ps_hv_lambda_mode_B.v_adc_reading);
+      break;
+      
+    case RAM_READ_FILAMENT_OFFSET:
+      data_return = (unsigned int)look_up_offset;
       break;
 
       // Fault information

@@ -26,6 +26,7 @@
 #define CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE        0x54
 #define CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION        0x55
 #define CMD_SET_LOW_ENERGY_GANTRY_TARGET_CURRENT_SETPOINT      0x56
+#define CMD_SET_FILAMENT_OFFSET                         0x57
 
 #define CMD_FORCE_SOFTWARE_RESTART                      0xA0
 #define CMD_SOFTWARE_SKIP_WARMUP                        0xA1
@@ -119,7 +120,7 @@
 #define RAM_READ_AVERAGE_MAGNETRON_INPUT_POWER                  0x62
 #define RAM_READ_HV_LAMBDA_VPEAK_ADC                            0x63
 #define RAM_READ_HV_LAMBDA_VMON_ADC                             0x64
-
+#define RAM_READ_FILAMENT_OFFSET                                0x65
 
 #define RAM_READ_PULSE_MODE_A_FILTERED_CURRENT                  0x70
 #define RAM_READ_PULSE_MODE_A_FILTERED_VOLTAGE                  0x71

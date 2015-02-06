@@ -41,7 +41,7 @@
    -------------- Resource Summary  -------------------
    TMR1 is used to time the Lambda Charge Time and the Lambda Inhibit Time 
    TMR2 is used for 100ms timing.  DO NOT CHANGE PR2 after Initialization
-   TMR3 UNUSED
+   TMR3 is used to calculate PRF
    TMR4 is used for timeout faults on the SPI Bus and I2C BUS
    TMR5 is used for 10mSTicToc.  DO NOT CHANGE PR5 after Initialization
 
@@ -656,6 +656,6 @@ extern unsigned int low_energy_target_current_startup_adjust;
 
 extern unsigned long low_energy_target_current_set_point_derived; 
 
-
+extern signed int look_up_offset;
 
 #endif

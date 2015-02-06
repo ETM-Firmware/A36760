@@ -26,6 +26,7 @@ unsigned int arc_detected;
 
 unsigned long low_energy_target_current_set_point_derived; 
 
+signed int look_up_offset;
 
 unsigned int default_pac_2_adc_reading;
 
@@ -58,7 +59,8 @@ unsigned int pulse_counter_this_run;   // This counts the number of pulses in th
 
 unsigned int false_trigger;
 
-
+unsigned int last_period = 62501;
+unsigned int prf_deciherz = 0;
 
 void ReadADCtoPACArray(void);
 
@@ -1211,6 +1213,12 @@ void DoA34760StartUpCommon(void) {
   TMR2 = 0;
   _T2IF = 0;
 
+  
+  // Configure TMR3
+  // Setup Timer 3 to measure interpulse period.
+  T3CON = (T3_ON & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_64 & T3_SOURCE_INT);
+  PR3 = 62500;  // 400mS
+
 
   // Configure TMR4
   T4CON = A34760_T4CON_VALUE;
@@ -1732,7 +1740,7 @@ void Do10msTicToc(void) {
   unsigned int vtemp;
   unsigned int itemp;
   unsigned long long_math_value;
-
+  unsigned long temp32;
 
   last_known_action = LAST_ACTION_DO_10MS;
   
@@ -1783,6 +1791,18 @@ void Do10msTicToc(void) {
       
       average_pulse_repetition_frequency_deci_herz = RCFilter16Tau(average_pulse_repetition_frequency_deci_herz, ((prf_pulse_counter*125)>>1));
       prf_pulse_counter = 0;  
+    }
+    
+    temp32 = 1562500;
+    if (last_period < 345) {
+      last_period = 345;
+    }
+    temp32 /= last_period;
+    prf_deciherz = temp32;
+    if (_T3IF) {
+      // We are pulsing at less than 2.5Hz
+      // Set the rep rate to zero
+      prf_deciherz = 0;
     }
     
     
@@ -1958,9 +1978,11 @@ void DoMagnetronFilamentAdjust(void) {
   unsigned long temp32;
   unsigned int look_up_position;
   unsigned int filament_scale;
+  signed int new_position;
   
   temp32 = average_energy_per_pulse_milli_joules;
-  temp32 *= average_pulse_repetition_frequency_deci_herz;
+  //temp32 *= average_pulse_repetition_frequency_deci_herz;
+  temp32 *= prf_deciherz;
   temp32 >>= 6;
   temp32 *= 13;
   temp32 >>= 11;
@@ -1973,7 +1995,18 @@ void DoMagnetronFilamentAdjust(void) {
     average_output_power_watts = (temp32 & 0xFFFF);
   }
   temp32 >>= 7;
-  look_up_position = (temp32 & 0b01111111);
+  look_up_position = (temp32 & 0b00111111);
+  new_position = (signed int)look_up_position;
+  new_position += look_up_offset;
+  if (new_position <= 0) {
+    new_position = 0;
+  }
+  if (new_position >= 63) {
+    new_position = 63;
+  }
+  look_up_position = new_position;
+  look_up_position &= 0b00111111;
+
   if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
     filament_scale = FilamentLookUpTable[look_up_position];
     ScalePowerSupply(&ps_filament,filament_scale,100);
@@ -2765,6 +2798,15 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   }
 
   PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;  // Clear the pulse latches so we can detect a false trigger
+
+  // Calculate the PRF
+  last_period = TMR3;
+  TMR3 = 0;
+  if (_T3IF) {
+    // The timer exceed it's period of 400ms - Will happen if the PRF is less than 2.5 Hz
+    last_period = 62501;  // This will indicate that the PRF is less than 2,5 Hz
+  }
+  _T3IF = 0;
 
   while(!_T1IF);                                                   // what for the holdoff time to pass
 
