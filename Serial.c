@@ -358,6 +358,14 @@ void ExecuteCommand(void) {
       look_up_offset = (signed int)data_word;
       break;
 
+    case CMD_SET_SCALE_INTERLEAVED:
+      scale_interleaved = data_word;
+      break;
+      
+    case CMD_SET_SCALE_LOW_ENERGY:
+      scale_low_energy = data_word;
+      break;
+
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
       max_low_energy_target_current_startup_adjust_initital_value = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
@@ -791,6 +799,18 @@ unsigned int ReadFromRam(unsigned int ram_location) {
     case RAM_READ_FILAMENT_OFFSET:
       data_return = (unsigned int)look_up_offset;
       break;
+
+    case RAM_READ_OPERATION_MODE:
+      data_return = operation_mode;
+      break;
+
+    case RAM_READ_SCALE_INTERLEAVED:
+      data_return = scale_interleaved;
+      break;
+
+    case RAM_READ_SCALE_LOW_ENERGY:
+      data_return = scale_low_energy;
+	break;
 
       // Fault information
     case RAM_READ_DEBUG_STATUS_REG:

@@ -658,4 +658,7 @@ extern unsigned long low_energy_target_current_set_point_derived;
 
 extern signed int look_up_offset;
 
+extern unsigned int operation_mode;
+extern unsigned int scale_interleaved;
+extern unsigned int scale_low_energy;
 #endif
