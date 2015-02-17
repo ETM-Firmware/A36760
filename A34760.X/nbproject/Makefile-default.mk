@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c
+SOURCEFILES_QUOTED_IF_SPACED=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1472/Main.o.d ${OBJECTDIR}/_ext/1472/LTC2656.o.d ${OBJECTDIR}/_ext/1472/ETMI2C.o.d ${OBJECTDIR}/_ext/1472/ETMSPI.o.d ${OBJECTDIR}/_ext/1472/MCP23017.o.d ${OBJECTDIR}/_ext/1472/IOPorts.o.d ${OBJECTDIR}/_ext/1472/ETMdsp.o.d ${OBJECTDIR}/_ext/1472/A34760.o.d ${OBJECTDIR}/_ext/1472/faults.o.d ${OBJECTDIR}/_ext/1472/Serial.o.d ${OBJECTDIR}/_ext/1472/Buffer64.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1472/Main.o.d ${OBJECTDIR}/_ext/1472/LTC2656.o.d ${OBJECTDIR}/_ext/1472/ETMI2C.o.d ${OBJECTDIR}/_ext/1472/ETMSPI.o.d ${OBJECTDIR}/_ext/1472/MCP23017.o.d ${OBJECTDIR}/_ext/1472/IOPorts.o.d ${OBJECTDIR}/_ext/1472/ETMdsp.o.d ${OBJECTDIR}/_ext/1472/A34760.o.d ${OBJECTDIR}/_ext/1472/faults.o.d ${OBJECTDIR}/_ext/1472/Serial.o.d ${OBJECTDIR}/_ext/1472/Buffer64.o.d ${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o
+OBJECTFILES=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o
 
 # Source Files
-SOURCEFILES=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c
+SOURCEFILES=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s
 
 
 CFLAGS=
@@ -235,6 +235,13 @@ ${OBJECTDIR}/_ext/1472/ETMdsp.o: ../ETMdsp.s  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_AS_PRE)  ../ETMdsp.s  -o ${OBJECTDIR}/_ext/1472/ETMdsp.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1  -omf=elf -I".." -I"." -Wa,-MD,"${OBJECTDIR}/_ext/1472/ETMdsp.o.d",--defsym=__MPLAB_BUILD=1,--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_ICD3=1,-g,--no-relax,-g$(MP_EXTRA_AS_POST)
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETMdsp.o.d"  $(SILENT)  -rsi ${MP_CC_DIR}../  
 	
+${OBJECTDIR}/_ext/1472/ETM_SCALE.o: ../ETM_SCALE.s  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/_ext/1472 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_SCALE.o 
+	${MP_CC} $(MP_EXTRA_AS_PRE)  ../ETM_SCALE.s  -o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1  -omf=elf -I".." -I"." -Wa,-MD,"${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d",--defsym=__MPLAB_BUILD=1,--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_ICD3=1,-g,--no-relax,-g$(MP_EXTRA_AS_POST)
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d"  $(SILENT)  -rsi ${MP_CC_DIR}../  
+	
 else
 ${OBJECTDIR}/_ext/1472/ETMdsp.o: ../ETMdsp.s  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/1472 
@@ -242,6 +249,13 @@ ${OBJECTDIR}/_ext/1472/ETMdsp.o: ../ETMdsp.s  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/1472/ETMdsp.o 
 	${MP_CC} $(MP_EXTRA_AS_PRE)  ../ETMdsp.s  -o ${OBJECTDIR}/_ext/1472/ETMdsp.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -omf=elf -I".." -I"." -Wa,-MD,"${OBJECTDIR}/_ext/1472/ETMdsp.o.d",--defsym=__MPLAB_BUILD=1,-g,--no-relax,-g$(MP_EXTRA_AS_POST)
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETMdsp.o.d"  $(SILENT)  -rsi ${MP_CC_DIR}../  
+	
+${OBJECTDIR}/_ext/1472/ETM_SCALE.o: ../ETM_SCALE.s  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/_ext/1472 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_SCALE.o 
+	${MP_CC} $(MP_EXTRA_AS_PRE)  ../ETM_SCALE.s  -o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -omf=elf -I".." -I"." -Wa,-MD,"${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d",--defsym=__MPLAB_BUILD=1,-g,--no-relax,-g$(MP_EXTRA_AS_POST)
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d"  $(SILENT)  -rsi ${MP_CC_DIR}../  
 	
 endif
 

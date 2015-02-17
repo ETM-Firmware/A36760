@@ -661,4 +661,9 @@ extern signed int look_up_offset;
 extern unsigned int operation_mode;
 extern unsigned int scale_interleaved;
 extern unsigned int scale_low_energy;
+#define MODE_LOW_ENERGY                20
+#define MODE_INTERLEAVED               30
+#define MODE_HIGH_ENERGY               40
+
+
 #endif

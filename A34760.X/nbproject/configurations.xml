@@ -17,6 +17,7 @@
       <itemPath>../A34760.h</itemPath>
       <itemPath>../A34760_PINS.h</itemPath>
       <itemPath>../Buffer64.h</itemPath>
+      <itemPath>../ETM_SCALE.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -36,6 +37,7 @@
       <itemPath>../faults.c</itemPath>
       <itemPath>../Serial.c</itemPath>
       <itemPath>../Buffer64.c</itemPath>
+      <itemPath>../ETM_SCALE.s</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

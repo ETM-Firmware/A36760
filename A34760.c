@@ -180,6 +180,10 @@ unsigned char a_b_selected_mode;
 volatile unsigned char next_pulse_a_b_selected_mode;
 
 
+unsigned int operation_mode;
+unsigned int scale_interleaved;
+unsigned int scale_low_energy;
+
 
 
 void DoA34760StartUpCommon(void);
@@ -439,6 +443,17 @@ void DoStateMachine(void) {
 
 	ReadIsolatedAdcToRam(); // Durring the pulse interrupt, the magnetron voltage and current was sampled.  Read back that data here
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
+	if (next_pulse_a_b_selected_mode != a_b_selected_mode) {
+	  operation_mode = MODE_INTERLEAVED;
+	} else {
+	  if (next_pulse_a_b_selected_mode == PULSE_MODE_A) {
+	    operation_mode = MODE_HIGH_ENERGY;
+	  } else {
+	    operation_mode = MODE_LOW_ENERGY;
+	  }
+	}
+
+
 	a_b_selected_mode = next_pulse_a_b_selected_mode;
 	
 	// DPARKER impliment and test a current control PID LOOP
@@ -1973,7 +1988,6 @@ void DoThyratronPIDs(void) {
   CalcPowerSupplySettings(&ps_thyr_reservoir_htr);
 }
 
-
 void DoMagnetronFilamentAdjust(void) {
   unsigned long temp32;
   unsigned int look_up_position;
@@ -1994,10 +2008,20 @@ void DoMagnetronFilamentAdjust(void) {
   } else {
     average_output_power_watts = (temp32 & 0xFFFF);
   }
+
+  if (operation_mode == MODE_LOW_ENERGY) {
+    average_output_power_watts = ETMScaleFactor2(average_output_power_watts, scale_low_energy, 0);
+  } else if (operation_mode == MODE_INTERLEAVED) {
+    average_output_power_watts = ETMScaleFactor2(average_output_power_watts, scale_interleaved, 0);
+  }
+  
+  temp32 = average_output_power_watts;
+
+
   temp32 >>= 7;
   look_up_position = (temp32 & 0b00111111);
   new_position = (signed int)look_up_position;
-  new_position += look_up_offset;
+  //new_position += look_up_offset;
   if (new_position <= 0) {
     new_position = 0;
   }
@@ -2012,7 +2036,6 @@ void DoMagnetronFilamentAdjust(void) {
     ScalePowerSupply(&ps_filament,filament_scale,100);
   }  
 }
-
 
 
 void ReadIsolatedAdcToRam(void) {
