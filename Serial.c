@@ -360,10 +360,20 @@ void ExecuteCommand(void) {
 
     case CMD_SET_SCALE_INTERLEAVED:
       scale_interleaved = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE] = data_word;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);   
       break;
       
     case CMD_SET_SCALE_LOW_ENERGY:
       scale_low_energy = data_word;
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE] = data_word;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);   
       break;
 
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:

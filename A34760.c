@@ -703,6 +703,11 @@ void DoA34760StartUpCommon(void) {
   low_energy_target_current_startup_max_cooldown = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
   
 
+  scale_interleaved = control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE];
+  scale_low_energy  = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE];
+
+
+
   /*
     Initialize the thyratron heater PID structure
     DPARKER add these values to H file
