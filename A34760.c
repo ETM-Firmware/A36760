@@ -10,14 +10,16 @@
 #include <libpic30.h>
 #include "ETMdsp.h"
 #include "Config.h"
+#include "ETM_Scale.h"
 
+#define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095_NEW_ROLLOFF 100,100,99,99,99,98,98,97,97,96,96,95,95,94,94,93,93,92,91,91,90,89,89,88,87,87,86,85,84,84,83,82,81,80,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,60,59,58,57,56,54,53,52,51,49,48
 
 #define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095 100,99,99,98,98,97,96,95,94,94,93,92,91,90,89,88,87,86,84,83,82,81,79,78,77,75,74,72,71,69,67,66,64,62,61,59,57,55,53,51,49,47,45,43,41,39,37,35,32,30,28,25,23,21,18,16,13,10,8,5,3,0,0,0
 
 #define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193 100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,97,94,91,88,84,81,78,75,72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 #ifdef __MG7095
-const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095};
+const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095_NEW_ROLLOFF};
 #else
 const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193};
 #endif
@@ -444,12 +446,24 @@ void DoStateMachine(void) {
 	ReadIsolatedAdcToRam(); // Durring the pulse interrupt, the magnetron voltage and current was sampled.  Read back that data here
 	UpdatePulseData(a_b_selected_mode);      // Run filtering/error detection on pulse data
 	if (next_pulse_a_b_selected_mode != a_b_selected_mode) {
-	  operation_mode = MODE_INTERLEAVED;
+	  if (ps_hv_lambda_mode_A.v_command_set_point < 17500) {
+	    operation_mode = MODE_ULTRA_LOW_DOSE_INTERLEAVED;
+	  } else {
+	    operation_mode = MODE_PORTAL_GANTRY_INTERLEAVED;
+	  }
 	} else {
 	  if (next_pulse_a_b_selected_mode == PULSE_MODE_A) {
-	    operation_mode = MODE_HIGH_ENERGY;
+	    if (ps_hv_lambda_mode_A.v_command_set_point < 17500) {
+	      operation_mode = MODE_ULTRA_LOW_DOSE_HIGH_ENERGY;
+	    } else {
+	      operation_mode = MODE_PORTAL_GANTRY_HIGH_ENERGY;
+	    }
 	  } else {
-	    operation_mode = MODE_LOW_ENERGY;
+	    if (ps_hv_lambda_mode_A.v_command_set_point < 17500) {
+	      operation_mode = MODE_ULTRA_LOW_DOSE_LOW_ENERGY;
+	    } else {
+	      operation_mode = MODE_PORTAL_GANTRY_LOW_ENERGY;
+	    }
 	  }
 	}
 
@@ -2014,14 +2028,37 @@ void DoMagnetronFilamentAdjust(void) {
     average_output_power_watts = (temp32 & 0xFFFF);
   }
 
-  if (operation_mode == MODE_LOW_ENERGY) {
-    average_output_power_watts = ETMScaleFactor2(average_output_power_watts, scale_low_energy, 0);
-  } else if (operation_mode == MODE_INTERLEAVED) {
-    average_output_power_watts = ETMScaleFactor2(average_output_power_watts, scale_interleaved, 0);
-  }
-  
-  temp32 = average_output_power_watts;
+  switch (operation_mode) 
+    {
+    case MODE_PORTAL_GANTRY_HIGH_ENERGY:
+      temp32 = average_output_power_watts;
+      break;
+    
+    case MODE_PORTAL_GANTRY_INTERLEAVED:
+      temp32 = ETMScaleFactor2(average_output_power_watts, scale_interleaved, 0);
+      break;
 
+    case MODE_PORTAL_GANTRY_LOW_ENERGY:
+      temp32 = average_output_power_watts;
+      break;
+      
+    case MODE_ULTRA_LOW_DOSE_HIGH_ENERGY:
+      temp32 = average_output_power_watts;
+      break;
+
+    case MODE_ULTRA_LOW_DOSE_INTERLEAVED:
+      temp32 = ETMScaleFactor2(average_output_power_watts, scale_low_energy, 0);
+      break;
+
+    case MODE_ULTRA_LOW_DOSE_LOW_ENERGY:
+      temp32 = average_output_power_watts;
+      break;
+      
+    default:
+      temp32 = average_output_power_watts;
+      break;
+    }
+  
 
   temp32 >>= 7;
   look_up_position = (temp32 & 0b00111111);

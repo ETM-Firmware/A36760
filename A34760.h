@@ -661,9 +661,14 @@ extern signed int look_up_offset;
 extern unsigned int operation_mode;
 extern unsigned int scale_interleaved;
 extern unsigned int scale_low_energy;
-#define MODE_LOW_ENERGY                20
-#define MODE_INTERLEAVED               30
-#define MODE_HIGH_ENERGY               40
+
+#define MODE_PORTAL_GANTRY_HIGH_ENERGY    0x0040
+#define MODE_PORTAL_GANTRY_INTERLEAVED    0x0030
+#define MODE_PORTAL_GANTRY_LOW_ENERGY     0x0020
+
+#define MODE_ULTRA_LOW_DOSE_HIGH_ENERGY   0x1040
+#define MODE_ULTRA_LOW_DOSE_INTERLEAVED   0x1030
+#define MODE_ULTRA_LOW_DOSE_LOW_ENERGY    0x1020
 
 
 #endif
