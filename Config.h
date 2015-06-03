@@ -31,6 +31,11 @@
 #ifdef __A34760_000
 #define __MG7095      // IF this is set, compile for use with MG7095, else compile for use with MG5193
 
+#ifdef  __BOARD_TYPE_SELECTED
+#error Multiple Board Type Compile Targets
+#endif
+#define __BOARD_TYPE_SELECTED
+
 #endif
 
 // Ensure that one and only one board has been selected
