@@ -240,14 +240,14 @@ extern unsigned int faults_control_board_warning_reg;
 // This is not exactly true.  Every arc increments a counter.  The counter is decremented every 400/25 pulses.
 // In order to trip in N pulses you need 25 + N/16 arcs
 
-#define ARC_COUNTER_FAST_PERIOD                   400   
-#define ARC_COUNTER_FAST_MAX_ARCS                 25   
+#define ARC_COUNTER_FAST_PERIOD                   10000   
+#define ARC_COUNTER_FAST_MAX_ARCS                 400   
 #define ARC_COUNTER_FAST_DECREMENT_INTERVAL       (ARC_COUNTER_FAST_PERIOD / ARC_COUNTER_FAST_MAX_ARCS)
 
 
 // The slow arc counter will shutdown with more than 100 arcs in 24000 pulses
-#define ARC_COUNTER_SLOW_PERIOD                   24000
-#define ARC_COUNTER_SLOW_MAX_ARCS                 100 // The system 
+#define ARC_COUNTER_SLOW_PERIOD                   10000
+#define ARC_COUNTER_SLOW_MAX_ARCS                 500 // The system 
 #define ARC_COUNTER_SLOW_DECREMENT_INTERVAL       (ARC_COUNTER_SLOW_PERIOD / ARC_COUNTER_SLOW_MAX_ARCS)
     
 // The consecutive arc counter will shut down with more than 5 consecutive arcs

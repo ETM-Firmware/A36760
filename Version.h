@@ -3,6 +3,6 @@
 
 
 
-#define VERSION_NUMBER 0x0204
+#define VERSION_NUMBER 0x0206
 
 #endif
