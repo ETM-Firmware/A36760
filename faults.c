@@ -684,13 +684,19 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
                       = v^2/22222.22
 		      = v*v / 2^6 / 347.22
 		      = v*v / 2^6 * 47 / 2^14 (.4% fixed point error)
+
 		      
+    C = 60nF for 800Hz
+    power_milli_joule = .5 * 60e-9 * V^2 * 1000
+                      = v^2/33333.33
+		      = v*v / 2^6 / 520.83
+		      = v*v / 2^6 * 31 / 2^14 (.4% fixed point error)		      
   */
 
   power_milli_joule = lambda_voltage;
   power_milli_joule *= lambda_voltage;
   power_milli_joule >>= 6;
-  power_milli_joule *= 47;
+  power_milli_joule *= 31;
   power_milli_joule >>= 14;
 
   if (power_milli_joule >= 0xFFFF) {

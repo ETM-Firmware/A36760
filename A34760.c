@@ -1828,8 +1828,8 @@ void Do10msTicToc(void) {
     }
     
     temp32 = 1562500;
-    if (last_period < 345) {
-      last_period = 345;
+    if (last_period < 100) {
+      last_period = 100;
     }
     temp32 /= last_period;
     prf_deciherz = temp32;

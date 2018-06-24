@@ -158,7 +158,7 @@
 */
 #define A34760_T1CON_VALUE             (T1_OFF & T1_IDLE_CON & T1_GATE_OFF & T1_PS_1_64 & T1_SOURCE_INT)
 #define TMR1_DELAY_HOLDOFF_US          52        // 50uS
-#define TMR1_LAMBDA_CHARGE_TIME_US     2400      // 2.400ms
+#define TMR1_LAMBDA_CHARGE_TIME_US     1150      // 1.150ms
 #define TMR1_DELAY_HOLDOFF             (FCY_CLK_MHZ*TMR1_DELAY_HOLDOFF_US/64)    
 #define TMR1_LAMBDA_CHARGE_PERIOD      (FCY_CLK_MHZ*TMR1_LAMBDA_CHARGE_TIME_US/64)
 //#define TMR1_DELAY_HOLDOFF             24        //52.1uS
@@ -431,6 +431,7 @@ void SetPowerSupplyTarget(POWERSUPPLY* ptr_ps, unsigned int v_command, unsigned 
   --- Gobal Variales ---
 */
 extern unsigned char control_state;
+extern unsigned int prf_deciherz;
 
 
 extern POWERSUPPLY ps_hv_lambda_mode_A;
