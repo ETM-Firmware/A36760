@@ -32,6 +32,8 @@
                                                // If this mode is not selected, the the set point is set over the analog interface
 #endif
 
+#define __SET_MAGNETRON_OVER_SERIAL_INTERFACE
+
 #define __SERVO_TARGET_CURRENT
 
 #define __STARTUP_TARGET_CURRENT_ADJUST
