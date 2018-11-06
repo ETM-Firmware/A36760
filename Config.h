@@ -248,12 +248,12 @@
 
 #define HV_LAMBDA_MODE_A_WARMUP_RAMP_TIME              0                        // NIL
 
-#define MAX_HV_LAMBDA_MODE_A_VOLTAGE_SET_POINT         20000                    // 20 KV
+#define MAX_HV_LAMBDA_MODE_A_VOLTAGE_SET_POINT         22000                    // 20 KV
 
 #define HV_LAMBDA_MODE_A_VDAC_OUTPUT_AT_0xFFFF         22293                    // 22.293 KV
 #define HV_LAMBDA_MODE_A_VADC_INPUT_AT_0xFFFF          25000                    // 25 KV
 
-#define HV_LAMBDA_MODE_A_VADC_OVER_VOLTAGE_HARD        19500                    // 19.5 KV
+#define HV_LAMBDA_MODE_A_VADC_OVER_VOLTAGE_HARD        22000                    // 19.5 KV
 #define HV_LAMBDA_MODE_A_VADC_OVER_VOLTAGE_SCALE       0                        // NIL
 #define HV_LAMBDA_MODE_A_VADC_UNDER_VOLTAGE_SCALE      0                        // NIL
 #define HV_LAMBDA_MODE_A_VADC_MIN_OVER_VOLTAGE         0                        // NIL
