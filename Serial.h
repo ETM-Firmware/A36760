@@ -5,6 +5,7 @@
 
 #define CMD_SET_MAGNETRON_CURRENT_REMOTE_MODE           0x10
 #define CMD_SET_MAGNETRON_CURRENT_LOCAL_MODE            0x11
+#define CMD_SET_PRF_REQUESTED_FREQ                      0x12
 
 #define CMD_PAC_SET_MODE_A                              0x20
 #define CMD_PAC_SET_MODE_B                              0x21

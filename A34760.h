@@ -74,7 +74,7 @@
 #define FCY_CLK                    10000000      // 29.495 MHz
 #define FCY_CLK_MHZ                10.000        // 29.495 MHz
 
-#define UART1_BAUDRATE             124000        // U1 Baud Rate
+#define UART1_BAUDRATE             9600        // U1 Baud Rate
 #define I2C_CLK                    100000        // Target I2C Clock frequency of 100KHz
 
 
@@ -432,6 +432,8 @@ void SetPowerSupplyTarget(POWERSUPPLY* ptr_ps, unsigned int v_command, unsigned 
 */
 extern unsigned char control_state;
 
+extern unsigned int prf_mult;
+extern unsigned int prf_divider;
 
 extern POWERSUPPLY ps_hv_lambda_mode_A;
 extern POWERSUPPLY ps_magnetron_mode_A;
@@ -511,7 +513,7 @@ extern tPID thyratron_cathode_heater_PID;
 #define PULSE_MODE_B      1
 
 
-#define SYSTEM_WARM_UP_TIME      1800 //100ms Units  //DPARKER this is way to short
+#define SYSTEM_WARM_UP_TIME      100 //100ms Units  //DPARKER this is way to short
 #define LAMBDA_SUPPLY_STARTUP_DELAY  50 // 100ms Units
 
 

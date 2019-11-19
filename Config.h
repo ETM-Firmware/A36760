@@ -141,7 +141,7 @@
 #endif
 
 
-#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              600                      // 100ms Units - 60 Seconds total
+#define FILAMENT_SUPPLY_WARMUP_RAMP_TIME              50                      // 100ms Units - 5 Seconds total
 
 #ifndef __MK_POWER_SUPPLIES
 #define FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF         28338                    // 28.338 Volts

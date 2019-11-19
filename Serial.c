@@ -53,6 +53,12 @@ unsigned int ReturnPowerSupplyADCScaledCurrent(POWERSUPPLY* ptr, unsigned int va
 unsigned int ReverseScale16Bit(unsigned int value, unsigned int scale);
 
 
+unsigned int prf_mult = 1;
+unsigned int prf_divider = 1;
+
+
+void CalculatePRFDivider(unsigned int requested_prf);
+
 void DoSerialCommand(void) {
   /* 
      Look for a command and execute it.
@@ -275,7 +281,11 @@ void ExecuteCommand(void) {
       ram_config_set_magnetron_magnet_current_from_GUI = 1;
       break;
 
+    case CMD_SET_PRF_REQUESTED_FREQ:
+      CalculatePRFDivider(data_word);
+      break;
 
+      
       //#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
     case CMD_SET_MAGNETRON_MAGNET_CURRENT:
       if (ram_config_set_magnetron_magnet_current_from_GUI) {
@@ -1157,4 +1167,77 @@ unsigned int ReverseScale16Bit(unsigned int value, unsigned int scale) {
   }
   temp = temp & 0xFFFF;
   return temp;
+}
+
+void CalculatePRFDivider(unsigned int requested_prf) {
+  if (requested_prf == 0) {
+    prf_mult = 1;
+    prf_divider = 1;
+  } else if (requested_prf >= 400) {
+    prf_mult = 1;
+    prf_divider = 1;
+  } else if (requested_prf >= 350) {
+    prf_mult = 7;
+    prf_divider = 8;
+  } else if (requested_prf >= 320) {
+    prf_mult = 4;
+    prf_divider = 5;
+  } else if (requested_prf >= 300) {
+    prf_mult = 3;
+    prf_divider = 4;
+  } else if (requested_prf >= 266) {
+    prf_mult = 2;
+    prf_divider = 3;
+  } else if (requested_prf >= 200) {
+    prf_mult = 1;
+    prf_divider = 2;
+  } else if (requested_prf >= 160) {
+    prf_mult = 2;
+    prf_divider = 5;
+  } else if (requested_prf >= 133) {
+    prf_mult = 1;
+    prf_divider = 3;
+  } else if (requested_prf >= 100) {
+    prf_mult = 1;
+    prf_divider = 4;
+  } else if (requested_prf >= 80) {
+    prf_mult = 1;
+    prf_divider = 5;
+  } else if (requested_prf >= 66) {
+    prf_mult = 1;
+    prf_divider = 6;
+  } else if (requested_prf >= 50) {
+    prf_mult = 1;
+    prf_divider = 8;
+  } else if (requested_prf >= 40) {
+    prf_mult = 1;
+    prf_divider = 10;
+  } else if (requested_prf >= 33) {
+    prf_mult = 1;
+    prf_divider = 12;
+  } else if (requested_prf >= 25) {
+    prf_mult = 1;
+    prf_divider = 16;
+  } else if (requested_prf >= 20) {
+    prf_mult = 1;
+    prf_divider = 20;
+  } else if (requested_prf >= 16) {
+    prf_mult = 1;
+    prf_divider = 25;
+  } else if (requested_prf >= 10) {
+    prf_mult = 1;
+    prf_divider = 40;    
+  } else if (requested_prf >= 5) {
+    prf_mult = 1;
+    prf_divider = 80;    
+  } else if (requested_prf >= 4) {
+    prf_mult = 1;
+    prf_divider = 100;    
+  } else if (requested_prf >= 2) {
+    prf_mult = 1;
+    prf_divider = 200;    
+  } else {
+    prf_mult = 1;
+    prf_divider = 400;    
+  }
 }

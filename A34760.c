@@ -89,6 +89,9 @@ void SavePulseCountersToEEPROM(void);
 
 void UpdateIOExpanderOutputs(void);
 
+unsigned int CheckSkipNextPulse(void);
+unsigned int this_pulse_skipped;
+
 unsigned char slow_down_thyratron_pid_counter;
 
 
@@ -592,7 +595,7 @@ void DoStateMachine(void) {
 	TMR2 = 0;
 	_T2IF = 0;          
 	global_run_post_pulse_process = 0;	
-	SendLoggingDataToUart();
+	//SendLoggingDataToUart();
       }
       
       // DPARKER need to write new timing diagram - should be simplier
@@ -658,6 +661,9 @@ void DoStateMachine(void) {
 void DoA34760StartUpCommon(void) {
   unsigned int *unsigned_int_ptr;  
 
+  prf_mult = 1;
+  prf_divider = 1;
+  
   // This is debugging info info  If the processor reset, a code that indicates the last major point that the processor entered should be held in RAM at last_known_action
   previous_last_action = last_known_action;
   last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
@@ -2920,7 +2926,13 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     timing_error_int1_count++;
   }
 
-  global_run_post_pulse_process = 1; // This tells the main control loop that a pulse has occured and that it should run the post pulse process once (and only once) 
+
+  if (this_pulse_skipped) {
+    arc_detected = 0;
+  } else {
+    global_run_post_pulse_process = 1; // This tells the main control loop that a pulse has occured and that it should run the post pulse process once (and only once) 
+  }
+
   global_adc_ignore_this_sample = 1;  // This allows the internal ADC ISR to know that there was a pulse and to discard all the data from the sequence where the pulse occured
 }
 
@@ -2961,12 +2973,49 @@ void _ISRNOPSV _T1Interrupt(void) {
     }
   }
 
-  // Enable the the thyratron trigger and Enable the Trigger Interrupt 
-  PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+  // Enable the the thyratron trigger and Enable the Trigger Interrupt
+
+
+  //DPARER CHECK FOR REQUENCY MODULATION HERE
+  if (CheckSkipNextPulse()) {
+    this_pulse_skipped = 1;
+  } else {
+    this_pulse_skipped = 0;
+    PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+  }
+
   _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
   _INT1IE = 1;
 
 }  
+
+
+unsigned int loop_counter;
+
+unsigned int CheckSkipNextPulse(void) {
+
+
+  if ((prf_mult == 0) || (prf_divider == 0)) {
+    return 0;
+  }
+  
+  if ((prf_mult == 1) && (prf_divider == 1)) {
+    return 0;
+  }
+  
+  loop_counter++;
+
+  if (loop_counter >= prf_divider) {
+    loop_counter = 0;
+  }
+
+  
+  if (loop_counter < prf_mult) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
 
 
 void _ISRNOPSV _ADCInterrupt(void) {
