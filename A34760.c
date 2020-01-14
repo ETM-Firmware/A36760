@@ -121,6 +121,7 @@ unsigned int pulse_counter_slow;
 unsigned int led_pulse_count;
 
 
+unsigned int time_since_last_trigger;
 
 unsigned int pulse_magnetron_current_adc_reading;
 unsigned int pulse_magnetron_voltage_adc_reading;
@@ -425,6 +426,16 @@ void DoStateMachine(void) {
       Do10msTicToc();
       DoSerialCommand();
 
+      // If we are not currently pulsing
+      // DPARKER how to check this?
+      if (time_since_last_trigger > 100) {
+	if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {
+	  next_pulse_a_b_selected_mode = PULSE_MODE_A;
+	  PIN_LAMBDA_VOLTAGE_SELECT = OLL_SELECT_LAMBDA_MODE_A_VOLTAGE;
+	}
+      }
+
+      
       if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
 	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_gantry_mode;
       } else {
@@ -433,6 +444,7 @@ void DoStateMachine(void) {
 
 
       if (global_run_post_pulse_process) {
+	time_since_last_trigger = 0;
 	if (false_trigger) {
 	  RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
 	}
@@ -1818,6 +1830,8 @@ void Do10msTicToc(void) {
   if (_T5IF) {
     _T5IF = 0;
     //10ms roll has occured
+
+    time_since_last_trigger++;
     
     led_pulse_count = ((led_pulse_count + 1) & 0b00001111);
     if (led_pulse_count == 0) {
