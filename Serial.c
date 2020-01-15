@@ -285,6 +285,22 @@ void ExecuteCommand(void) {
       CalculatePRFDivider(data_word);
       break;
 
+    case CMD_SET_MAGNETRON_FILAMENT_CONTROL_MODE:
+      magnetron_filament_control_mode = data_word;
+      break;
+
+    case CMD_SET_MAGNETRON_FILAMENT_OFF_RESISTANCE:
+      if (data_word > 10000) {
+	magnetron_filament_off_resistance = data_word;
+      }
+      break;
+
+    case CMD_SET_MAGNETRON_FILAMENT_ON_RESISTANCE:
+      if (data_word > 10000) {
+	magnetron_filament_on_resistance = data_word;
+      }
+      break;
+	
       
       //#if defined(__SET_MAGNET_CURRENT_OVER_SERIAL_INTERFACE)
     case CMD_SET_MAGNETRON_MAGNET_CURRENT:
@@ -647,6 +663,21 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = ps_filament.i_command_set_point;
       break;
 
+    case RAM_READ_MAGNETRON_FILAMENT_CONTROL_MODE:
+      data_return = magnetron_filament_control_mode;
+      break;
+
+    case RAM_READ_MAGNETRON_FILAMENT_OFF_RESISTANCE:
+      data_return = magnetron_filament_off_resistance;
+      break;
+
+    case RAM_READ_MAGNETRON_FILAMENT_ON_RESISTANCE:
+      data_return = magnetron_filament_on_resistance;
+      break;
+
+    case RAM_READ_MAGNETRON_FILAMENT_MEASURED_RESISTANCE:
+      data_return = magnetron_filament_resistance_measurement;
+      break;
 
       // Lambda Mode A Data
     case RAM_READ_HV_LAMBDA_SET_POINT_MODE_A:

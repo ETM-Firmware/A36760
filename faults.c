@@ -666,7 +666,7 @@ void StorePulseData(POWERSUPPLY* ptr) {
 }
 
 unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
-  unsigned long power_milli_joule;
+  unsigned long long power_milli_joule;
   unsigned int return_data;
 
   /*
@@ -685,14 +685,22 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
 		      = v*v / 2^6 / 347.22
 		      = v*v / 2^6 * 47 / 2^14 (.4% fixed point error)
 		      
+
+    Based on MagneTX changing it to  = v^2/27275
+                                     = v*v * 4920 / 2^27
+
   */
 
   power_milli_joule = lambda_voltage;
   power_milli_joule *= lambda_voltage;
-  power_milli_joule >>= 6;
-  power_milli_joule *= 47;
-  power_milli_joule >>= 14;
-
+  /*
+    power_milli_joule >>= 6;
+    power_milli_joule *= 47;
+    power_milli_joule >>= 14;
+  */
+  power_milli_joule *= 4920;
+  power_milli_joule >>= 27;
+  
   if (power_milli_joule >= 0xFFFF) {
     power_milli_joule = 0xFFFF;
   }

@@ -509,6 +509,12 @@ extern tPID thyratron_reservoir_heater_PID;
 extern tPID thyratron_cathode_heater_PID;
 
 
+extern unsigned int magnetron_filament_control_mode;
+extern unsigned int magnetron_filament_off_resistance;
+extern unsigned int magnetron_filament_on_resistance;
+extern unsigned int magnetron_filament_resistance_measurement;
+
+
 #define PULSE_MODE_A      0
 #define PULSE_MODE_B      1
 

@@ -122,6 +122,11 @@ unsigned int led_pulse_count;
 
 
 unsigned int time_since_last_trigger;
+unsigned int magnetron_filament_control_mode;
+unsigned int magnetron_filament_off_resistance;
+unsigned int magnetron_filament_on_resistance;
+unsigned int magnetron_filament_resistance_measurement;
+
 
 unsigned int pulse_magnetron_current_adc_reading;
 unsigned int pulse_magnetron_voltage_adc_reading;
@@ -260,6 +265,7 @@ void DoStateMachine(void) {
   switch(control_state) {
     
   case STATE_START_UP:
+    
     DoA34760StartUpCommon();
     DoA34760StartUpNormalProcess();
     DoA34760StartUpCommonPostProcess();
@@ -2032,71 +2038,120 @@ void DoMagnetronFilamentAdjust(void) {
   unsigned int look_up_position;
   unsigned int filament_scale;
   signed int new_position;
+  static unsigned int second_counter;
+  static unsigned int heater_scale_factor;
+  unsigned int resistance_set_point;
+
+  temp32  = ReturnPowerSupplyADCScaledVoltage(&ps_filament, ps_filament.v_adc_reading);
+  temp32 *= 10000;
+  temp32 /= ReturnPowerSupplyADCScaledCurrent(&ps_filament, ps_filament.i_adc_reading);
+  magnetron_filament_resistance_measurement = temp32;
+
+
   
-  temp32 = average_energy_per_pulse_milli_joules;
-  //temp32 *= average_pulse_repetition_frequency_deci_herz;
-  temp32 *= prf_deciherz;
-  temp32 >>= 6;
-  temp32 *= 13;
-  temp32 >>= 11;
-
-  // DPARKER this will not work at powers greater than 6.5KW because the apparent power will roll around.  This is very bad
-  // Need to truncate for (average output power watts) and properly handel look up position.
-  if (temp32 >= 0xFFFF) {
-    average_output_power_watts = 0xFFFF;
-  } else {
-    average_output_power_watts = (temp32 & 0xFFFF);
-  }
-
-  switch (operation_mode) 
-    {
-    case MODE_PORTAL_GANTRY_HIGH_ENERGY:
-      temp32 = average_output_power_watts;
-      break;
+  if (magnetron_filament_control_mode == 0) {
+    // run the old routine
+    temp32 = average_energy_per_pulse_milli_joules;
+    //temp32 *= average_pulse_repetition_frequency_deci_herz;
+    temp32 *= prf_deciherz;
+    temp32 >>= 6;
+    temp32 *= 13;
+    temp32 >>= 11;
     
-    case MODE_PORTAL_GANTRY_INTERLEAVED:
-      temp32 = ETMScaleFactor2(average_output_power_watts, scale_interleaved, 0);
-      break;
-
-    case MODE_PORTAL_GANTRY_LOW_ENERGY:
-      temp32 = average_output_power_watts;
-      break;
-      
-    case MODE_ULTRA_LOW_DOSE_HIGH_ENERGY:
-      temp32 = average_output_power_watts;
-      break;
-
-    case MODE_ULTRA_LOW_DOSE_INTERLEAVED:
-      temp32 = ETMScaleFactor2(average_output_power_watts, scale_low_energy, 0);
-      break;
-
-    case MODE_ULTRA_LOW_DOSE_LOW_ENERGY:
-      temp32 = average_output_power_watts;
-      break;
-      
-    default:
-      temp32 = average_output_power_watts;
-      break;
+    // DPARKER this will not work at powers greater than 6.5KW because the apparent power will roll around.  This is very bad
+    // Need to truncate for (average output power watts) and properly handel look up position.
+    if (temp32 >= 0xFFFF) {
+      average_output_power_watts = 0xFFFF;
+    } else {
+      average_output_power_watts = (temp32 & 0xFFFF);
     }
-  
+    
+    switch (operation_mode) 
+      {
+      case MODE_PORTAL_GANTRY_HIGH_ENERGY:
+	temp32 = average_output_power_watts;
+	break;
+	
+      case MODE_PORTAL_GANTRY_INTERLEAVED:
+	temp32 = ETMScaleFactor2(average_output_power_watts, scale_interleaved, 0);
+	break;
+	
+      case MODE_PORTAL_GANTRY_LOW_ENERGY:
+	temp32 = average_output_power_watts;
+	break;
+	
+      case MODE_ULTRA_LOW_DOSE_HIGH_ENERGY:
+	temp32 = average_output_power_watts;
+	break;
+	
+      case MODE_ULTRA_LOW_DOSE_INTERLEAVED:
+	temp32 = ETMScaleFactor2(average_output_power_watts, scale_low_energy, 0);
+	break;
+	
+      case MODE_ULTRA_LOW_DOSE_LOW_ENERGY:
+	temp32 = average_output_power_watts;
+	break;
+	
+      default:
+	temp32 = average_output_power_watts;
+	break;
+      }
+    
+    
+    temp32 >>= 7;
+    look_up_position = (temp32 & 0b00111111);
+    new_position = (signed int)look_up_position;
+    //new_position += look_up_offset;
+    if (new_position <= 0) {
+      new_position = 0;
+    }
+    if (new_position >= 63) {
+      new_position = 63;
+    }
+    look_up_position = new_position;
+    look_up_position &= 0b00111111;
+    
+    if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
+      filament_scale = FilamentLookUpTable[look_up_position];
+      ScalePowerSupply(&ps_filament,filament_scale,100);
+      heater_scale_factor = filament_scale;
+    }
+  } else {
+    // Manage the current based on healter resistance
+    if (time_since_last_trigger > 100) {
+      resistance_set_point = magnetron_filament_off_resistance;
+    } else {
+      resistance_set_point = magnetron_filament_on_resistance;
+    }
+    
 
-  temp32 >>= 7;
-  look_up_position = (temp32 & 0b00111111);
-  new_position = (signed int)look_up_position;
-  //new_position += look_up_offset;
-  if (new_position <= 0) {
-    new_position = 0;
-  }
-  if (new_position >= 63) {
-    new_position = 63;
-  }
-  look_up_position = new_position;
-  look_up_position &= 0b00111111;
+#define RESISTANCE_HYSTERESIS 50
+    
+    // Only update heater once per second
+    second_counter++;
+    if (second_counter >= 100) {
+      second_counter = 0;
+      if (magnetron_filament_resistance_measurement < (resistance_set_point - RESISTANCE_HYSTERESIS)) {
+	// current is too low, incease it
+	heater_scale_factor++;
+	if (heater_scale_factor > 100) {
+	  heater_scale_factor = 100;
+	}
+      }
 
-  if ((control_state == STATE_HV_ON) || (control_state == STATE_SYSTEM_WARM_READY)  || (control_state == STATE_HV_STARTUP) || (control_state == STATE_FAULT_WARM_FAULT)) {
-    filament_scale = FilamentLookUpTable[look_up_position];
-    ScalePowerSupply(&ps_filament,filament_scale,100);
-  }  
+      if (magnetron_filament_resistance_measurement > (resistance_set_point + RESISTANCE_HYSTERESIS)) {
+	// current is too high, decrease it
+	if (heater_scale_factor) {
+	  heater_scale_factor--;
+	}
+      }
+
+      if (heater_scale_factor < 30) {
+	heater_scale_factor = 30;
+      }
+      ScalePowerSupply(&ps_filament,heater_scale_factor,100);
+    }
+  }
 }
 
 

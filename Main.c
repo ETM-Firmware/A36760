@@ -119,6 +119,10 @@ int main(void) {
   PIN_MCU_CLOCK_OUT_TEST_POINT = 1;
   TRIS_PIN_MCU_CLOCK_OUT_TEST_POINT = TRIS_OUTPUT_MODE;
 
+  magnetron_filament_control_mode = 0;
+  magnetron_filament_off_resistance = 22001;
+  magnetron_filament_on_resistance = 22002;
+
 
   control_state = STATE_START_UP;
   if ((PIN_FP_MODULATOR_ENABLE_INPUT == ILL_MODULATOR_ENABLED) && (PIN_FP_MODULATOR_HV_ON_INPUT == ILL_MODULATOR_HV_ON) && (PIN_FAST_RESTART_STORAGE_CAP_INPUT == ILL_DO_FAST_RESTART)) {
