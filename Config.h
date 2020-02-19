@@ -2,6 +2,32 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+
+
+
+#define PAGE_PS_MAGNET_CONFIG             0
+#define PAGE_PS_FILAMENT_CONFIG           1
+#define PAGE_PS_THYR_CATHODE_HTR          2
+#define PAGE_PS_THYR_RESERVOIR_HTR        3
+#define PAGE_PS_HVPS_MODE_A               4
+#define PAGE_PS_HVPS_MODE_B               5
+#define PAGE_PS_MAGNETRON_MODE_A          6
+#define PAGE_PS_MAGNETRON_MODE_B          7
+#define PAGE_PULSE_COUNTER                8
+#define PAGE_CONTROL_LOOP_CAL             9
+#define PAGE_EEPROM_CHECK                 10
+
+
+
+
+
+
+
+
+
+
+
+
 //#define __A34760_000
 //#define __A36760_000
 #define __A36760_003

@@ -1,6 +1,9 @@
 #ifndef __SERIAL_H
 #define __SERIAL_H
 
+unsigned int GenerateFilamentVprog(unsigned int iprog);
+
+
 // Command List
 
 #define CMD_SET_MAGNETRON_CURRENT_REMOTE_MODE           0x10
@@ -12,7 +15,7 @@
 #define CMD_SET_MAGNETRON_MAGNET_CURRENT                0x2B
 #define CMD_SET_LAMBDA_VOLTAGE_MODE_A                   0x2A
 #define CMD_SET_LAMBDA_VOLTAGE_MODE_B                   0x2D
-#define CMD_SET_MAGNETRON_FILAMENT_VOLTAGE              0x2C
+//#define CMD_SET_MAGNETRON_FILAMENT_VOLTAGE              0x2C
 #define CMD_SET_MAGNETRON_FILAMENT_CURRENT              0x2E
 
 #define CMD_READ_RAM_VALUE                              0x30
@@ -20,11 +23,11 @@
 #define CMD_CLEAR_PROCESSOR_RESET_DATA                  0x40
 
 #define CMD_DATA_LOGGING                                0x50
-#define CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT     0x51
-#define CMD_SET_LOW_ENERGY_PORTAL_TARGET_CURRENT_SETPOINT      0x52
-#define CMD_SET_TARGET_CURRENT_STARTUP_PULSES           0x53
-#define CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE        0x54
-#define CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION        0x55
+//#define CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT     0x51
+//#define CMD_SET_LOW_ENERGY_PORTAL_TARGET_CURRENT_SETPOINT      0x52
+//#define CMD_SET_TARGET_CURRENT_STARTUP_PULSES           0x53
+//#define CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE        0x54
+//#define CMD_SET_TARGET_CURRENT_STARTUP_DIRECTION        0x55
 #define CMD_SET_LOW_ENERGY_GANTRY_TARGET_CURRENT_SETPOINT      0x56
 #define CMD_SET_FILAMENT_OFFSET                         0x57
 #define CMD_SET_SCALE_INTERLEAVED                       0x58
@@ -34,37 +37,37 @@
 #define CMD_FORCE_SOFTWARE_RESTART                      0xA0
 #define CMD_SOFTWARE_SKIP_WARMUP                        0xA1
 
-#define CMD_SET_MAGNET_PS_CAL_DATA                      0xD0
-#define CMD_READ_MAGNET_PS_CAL_DATA                     0xD1
-#define CMD_SAVE_MAGNET_PS_CAL_DATA_TO_EEPROM           0xD2
+//#define CMD_SET_MAGNET_PS_CAL_DATA                      0xD0
+//#define CMD_READ_MAGNET_PS_CAL_DATA                     0xD1
+//#define CMD_SAVE_MAGNET_PS_CAL_DATA_TO_EEPROM           0xD2
 
-#define CMD_SET_FILAMENT_PS_CAL_DATA                    0xD3
-#define CMD_READ_FILAMENT_PS_CAL_DATA                   0xD4
-#define CMD_SAVE_FILAMENT_PS_CAL_DATA_TO_EEPROM         0xD5
+//#define CMD_SET_FILAMENT_PS_CAL_DATA                    0xD3
+//#define CMD_READ_FILAMENT_PS_CAL_DATA                   0xD4
+//#define CMD_SAVE_FILAMENT_PS_CAL_DATA_TO_EEPROM         0xD5
 
-#define CMD_SET_THYR_CATHODE_PS_CAL_DATA                0xD6
-#define CMD_READ_THYR_CATHODE_PS_CAL_DATA               0xD7
-#define CMD_SAVE_THYR_CATHODE_PS_CAL_DATA_TO_EEPROM     0xD8
+//#define CMD_SET_THYR_CATHODE_PS_CAL_DATA                0xD6
+//#define CMD_READ_THYR_CATHODE_PS_CAL_DATA               0xD7
+//#define CMD_SAVE_THYR_CATHODE_PS_CAL_DATA_TO_EEPROM     0xD8
 
-#define CMD_SET_THYR_RESERVOIR_PS_CAL_DATA              0xD9
-#define CMD_READ_THYR_RESERVOIR_PS_CAL_DATA             0xDA
-#define CMD_SAVE_THYR_RESERVOIR_PS_CAL_DATA_TO_EEPROM   0xDB
+//#define CMD_SET_THYR_RESERVOIR_PS_CAL_DATA              0xD9
+//#define CMD_READ_THYR_RESERVOIR_PS_CAL_DATA             0xDA
+//#define CMD_SAVE_THYR_RESERVOIR_PS_CAL_DATA_TO_EEPROM   0xDB
 
-#define CMD_SET_HV_LAMBDA_MODE_A_CAL_DATA               0xDC
-#define CMD_READ_HV_LAMBDA_MODE_A_CAL_DATA              0xDD
-#define CMD_SAVE_HV_LAMBDA_MODE_A_CAL_DATA_TO_EEPROM    0xDE
+//#define CMD_SET_HV_LAMBDA_MODE_A_CAL_DATA               0xDC
+//#define CMD_READ_HV_LAMBDA_MODE_A_CAL_DATA              0xDD
+//#define CMD_SAVE_HV_LAMBDA_MODE_A_CAL_DATA_TO_EEPROM    0xDE
 
-#define CMD_SET_HV_LAMBDA_MODE_B_CAL_DATA               0xDF
-#define CMD_READ_HV_LAMBDA_MODE_B_CAL_DATA              0xE0
-#define CMD_SAVE_HV_LAMBDA_MODE_B_CAL_DATA_TO_EEPROM    0xE1               
+//#define CMD_SET_HV_LAMBDA_MODE_B_CAL_DATA               0xDF
+//#define CMD_READ_HV_LAMBDA_MODE_B_CAL_DATA              0xE0
+//#define CMD_SAVE_HV_LAMBDA_MODE_B_CAL_DATA_TO_EEPROM    0xE1               
 
-#define CMD_SET_MAGNETRON_MODE_A_CAL_DATA               0xE2
-#define CMD_READ_MAGNETRON_MODE_A_CAL_DATA              0xE3
-#define CMD_SAVE_MAGNETRON_MODE_A_CAL_DATA_TO_EEPROM    0xE4
+//#define CMD_SET_MAGNETRON_MODE_A_CAL_DATA               0xE2
+//#define CMD_READ_MAGNETRON_MODE_A_CAL_DATA              0xE3
+//#define CMD_SAVE_MAGNETRON_MODE_A_CAL_DATA_TO_EEPROM    0xE4
 
-#define CMD_SET_MAGNETRON_MODE_B_CAL_DATA               0xE5
-#define CMD_READ_MAGNETRON_MODE_B_CAL_DATA              0xE6
-#define CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA_TO_EEPROM    0xE7
+//#define CMD_SET_MAGNETRON_MODE_B_CAL_DATA               0xE5
+//#define CMD_READ_MAGNETRON_MODE_B_CAL_DATA              0xE6
+//#define CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA_TO_EEPROM    0xE7
 
 #define CMD_SET_CNTRL_CAL_DATA                          0xE8
 #define CMD_READ_CNTRL_CAL_DATA                         0xE9
@@ -273,5 +276,7 @@ void SendLoggingDataToUart();
 
 
 */
+
+
 
 #endif

@@ -6,7 +6,7 @@
 #include "faults.h"
 #include "Version.h"
 #include <libpic30.h>
-
+#include "eeprom.h"
 /*
   Serial Commands
 
@@ -37,7 +37,6 @@ unsigned int ReadFromRam(unsigned int ram_location);
 void SendCommand(unsigned char command_byte, unsigned char register_byte, unsigned int data_word);
 
 unsigned int GenerateFilamentIprog(unsigned int vprog);
-unsigned int GenerateFilamentVprog(unsigned int iprog);
 unsigned int GenerateLambdaIprog(unsigned int vprog);
 
 unsigned int GenerateMagnetronVprog(unsigned int iprog);
@@ -200,6 +199,10 @@ void ExecuteCommand(void) {
   unsigned int return_data_word;
   unsigned int return_command_byte;
   
+  unsigned int eeprom_write_complete;
+  unsigned int eeprom_write_attempt;
+
+  
   data_word = command_string.data_high_byte;
   data_word = data_word << 8;
   data_word = data_word + command_string.data_low_byte;
@@ -217,24 +220,28 @@ void ExecuteCommand(void) {
       itemp = data_word;
       vtemp = GenerateMagnetronVprog(itemp);
       SetPowerSupplyTarget(&ps_magnetron_mode_A, vtemp, itemp);
+      /*
       ps_magnetron_mode_A_config_ram_copy[EEPROM_V_SET_POINT] = ps_magnetron_mode_A.v_command_set_point;
       ps_magnetron_mode_A_config_ram_copy[EEPROM_I_SET_POINT] = ps_magnetron_mode_A.i_command_set_point;
       _wait_eedata();
       _erase_eedata(EE_address_ps_magnetron_mode_A_config_in_EEPROM, _EE_ROW);
       _wait_eedata();
       _write_eedata_row(EE_address_ps_magnetron_mode_A_config_in_EEPROM, ps_magnet_config_ram_copy);
+      */
       break;
 
     case CMD_PAC_SET_MODE_B:
       itemp = data_word;
       vtemp = GenerateMagnetronVprog(itemp);
       SetPowerSupplyTarget(&ps_magnetron_mode_B, vtemp, itemp);
+      /*
       ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT] = ps_magnetron_mode_B.v_command_set_point;
       ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT] = ps_magnetron_mode_B.i_command_set_point;
       _wait_eedata();
       _erase_eedata(EE_address_ps_magnetron_mode_B_config_in_EEPROM, _EE_ROW);
       _wait_eedata();
       _write_eedata_row(EE_address_ps_magnetron_mode_B_config_in_EEPROM, ps_magnet_config_ram_copy);
+      */
       break;
 #endif
 
@@ -246,24 +253,28 @@ void ExecuteCommand(void) {
       vtemp = data_word;
       itemp = GenerateLambdaIprog(vtemp);
       SetPowerSupplyTarget(&ps_hv_lambda_mode_A, vtemp, itemp);
+      /*
       ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_SET_POINT] = ps_hv_lambda_mode_A.v_command_set_point;
       ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_SET_POINT] = ps_hv_lambda_mode_A.i_command_set_point;
       _wait_eedata();
       _erase_eedata(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, _EE_ROW);
       _wait_eedata();
       _write_eedata_row(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, ps_hv_lambda_mode_A_config_ram_copy);
+      */
       break;
 
     case CMD_SET_LAMBDA_VOLTAGE_MODE_B:
       vtemp = data_word;
       itemp = GenerateLambdaIprog(vtemp);
       SetPowerSupplyTarget(&ps_hv_lambda_mode_B, vtemp, itemp);
+      /*
       ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_SET_POINT] = ps_hv_lambda_mode_B.v_command_set_point;
       ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_SET_POINT] = ps_hv_lambda_mode_B.i_command_set_point;
       _wait_eedata();
       _erase_eedata(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, _EE_ROW);
       _wait_eedata();
       _write_eedata_row(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, ps_hv_lambda_mode_B_config_ram_copy);
+      */
       break;
 
 #endif // #if defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
@@ -282,12 +293,14 @@ void ExecuteCommand(void) {
 	itemp = data_word;
 	vtemp = GenerateMagnetVprog(itemp);
 	SetPowerSupplyTarget(&ps_magnet, vtemp, itemp);
+	/*
 	ps_magnet_config_ram_copy[EEPROM_V_SET_POINT] = ps_magnet.v_command_set_point;
 	ps_magnet_config_ram_copy[EEPROM_I_SET_POINT] = ps_magnet.i_command_set_point;
 	_wait_eedata();
 	_erase_eedata(EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
 	_wait_eedata();
 	_write_eedata_row(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_ram_copy);
+	*/
       }
       break;
 
@@ -307,7 +320,7 @@ void ExecuteCommand(void) {
       }
       break;
 
-
+      /*
     case CMD_SET_HIGH_ENERGY_TARGET_CURRENT_SETPOINT:
       linac_high_energy_target_current_set_point = data_word;
       if (linac_high_energy_target_current_set_point < LINAC_TARGET_CURRENT_HIGH_ENERGY_MINIMUM_ERROR) {
@@ -354,28 +367,6 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
-    case CMD_SET_FILAMENT_OFFSET:
-      look_up_offset = (signed int)data_word;
-      break;
-
-    case CMD_SET_SCALE_INTERLEAVED:
-      scale_interleaved = data_word;
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE] = data_word;
-      _wait_eedata();
-      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);   
-      break;
-      
-    case CMD_SET_SCALE_LOW_ENERGY:
-      scale_low_energy = data_word;
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE] = data_word;
-      _wait_eedata();
-      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);   
-      break;
-
     case CMD_SET_TARGET_CURRENT_STARTUP_MAGNITUDE:
       max_low_energy_target_current_startup_adjust_initital_value = data_word;
       control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE] = max_low_energy_target_current_startup_adjust_initital_value;
@@ -394,6 +385,119 @@ void ExecuteCommand(void) {
       _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);      
       break;
 
+      */
+
+
+    case CMD_SET_CNTRL_CAL_DATA:
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_LINEAR) {
+	eeprom_write_complete = 0;
+	eeprom_write_attempt = 0;
+	while (eeprom_write_complete == 0) {
+	  eeprom_write_complete = ETMEEPromWriteWordWithConfirmation(EEPROM_REGISTER_MAGNET_SCALING_LINEAR, data_word);
+	  eeprom_write_attempt++;
+	  if (eeprom_write_attempt >= 10) {
+	    eeprom_write_failure_count++;
+	    break;
+	  }
+	}
+	if (eeprom_write_complete) {
+	  magnet_scaling_linear_factor = data_word;
+	}
+      }
+
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_CONST) {
+	eeprom_write_complete = 0;
+	eeprom_write_attempt = 0;
+	while (eeprom_write_complete == 0) {
+	  eeprom_write_complete = ETMEEPromWriteWordWithConfirmation(EEPROM_REGISTER_MAGNET_SCALING_CONST, data_word);
+	  eeprom_write_attempt++;
+	  if (eeprom_write_attempt >= 10) {
+	    eeprom_write_failure_count++;
+	    break;
+	  }
+	}
+	if (eeprom_write_complete) {
+	  magnet_scaling_constant_factor = data_word;
+	}
+      }
+      break;
+
+    case CMD_READ_CNTRL_CAL_DATA:
+      return_data_word = 0;
+
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_LINEAR) {
+	return_data_word = magnet_scaling_linear_factor;
+      }
+
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_CONST) {
+	return_data_word = magnet_scaling_constant_factor;
+      }
+      break;
+
+      /*
+    case CMD_SAVE_CNTRL_CAL_DATA_TO_EEPROM:
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
+      break;
+      */
+
+
+      
+    case CMD_SET_FILAMENT_OFFSET:
+      look_up_offset = (signed int)data_word;
+      break;
+
+    case CMD_SET_SCALE_INTERLEAVED:
+      eeprom_write_complete = 0;
+      eeprom_write_attempt = 0;
+      while (eeprom_write_complete == 0) {
+	eeprom_write_complete = ETMEEPromWriteWordWithConfirmation(EEPROM_REGISTER_SCALE_INTERLEAVED, data_word);
+	eeprom_write_attempt++;
+	if (eeprom_write_attempt >= 10) {
+	  eeprom_write_failure_count++;
+	  break;
+	}
+      }
+      if (eeprom_write_complete) {
+	scale_interleaved = data_word;
+      }
+
+      
+      /*
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE] = data_word;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
+      */ 
+      break;
+      
+    case CMD_SET_SCALE_LOW_ENERGY:
+      eeprom_write_complete = 0;
+      eeprom_write_attempt = 0;
+      while (eeprom_write_complete == 0) {
+	eeprom_write_complete = ETMEEPromWriteWordWithConfirmation(EEPROM_REGISTER_SCALE_LOW_ENERGY, data_word);
+	eeprom_write_attempt++;
+	if (eeprom_write_attempt >= 10) {
+	  eeprom_write_failure_count++;
+	  break;
+	}
+      }
+      if (eeprom_write_complete) {
+	scale_low_energy = data_word;
+      }
+
+
+      /*
+      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE] = data_word;
+      _wait_eedata();
+      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
+      _wait_eedata();
+      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
+      */   
+      break;
 
     case CMD_FORCE_SOFTWARE_RESTART:
       /*
@@ -413,165 +517,32 @@ void ExecuteCommand(void) {
       }
       break;
 
-    case CMD_SET_MAGNET_PS_CAL_DATA:
-      ps_magnet_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_MAGNET_PS_CAL_DATA:
-      return_data_word = ps_magnet_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_MAGNET_PS_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_magnet_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_magnet_config_in_EEPROM, ps_magnet_config_ram_copy);
-      break;
-
-    case CMD_SET_FILAMENT_PS_CAL_DATA:
-      ps_filament_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_FILAMENT_PS_CAL_DATA:
-      return_data_word = ps_filament_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_FILAMENT_PS_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
-      break;
-
-    case CMD_SET_THYR_CATHODE_PS_CAL_DATA:
-      ps_thyr_cathode_htr_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_THYR_CATHODE_PS_CAL_DATA:
-      return_data_word = ps_thyr_cathode_htr_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_THYR_CATHODE_PS_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_thyr_cathode_htr_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_thyr_cathode_htr_config_in_EEPROM, ps_thyr_cathode_htr_config_ram_copy);
-      break;
-
-    case CMD_SET_THYR_RESERVOIR_PS_CAL_DATA:
-      ps_thyr_reservoir_htr_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_THYR_RESERVOIR_PS_CAL_DATA:
-      return_data_word = ps_thyr_reservoir_htr_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_THYR_RESERVOIR_PS_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_thyr_reservoir_htr_config_in_EEPROM, ps_thyr_reservoir_htr_config_ram_copy);
-      break;
-
-    case CMD_SET_HV_LAMBDA_MODE_A_CAL_DATA:
-      ps_hv_lambda_mode_A_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_HV_LAMBDA_MODE_A_CAL_DATA:
-      return_data_word = ps_hv_lambda_mode_A_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_HV_LAMBDA_MODE_A_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_hv_lambda_mode_A_config_in_EEPROM, ps_hv_lambda_mode_A_config_ram_copy);
-      break;
-
-    case CMD_SET_HV_LAMBDA_MODE_B_CAL_DATA:
-      ps_hv_lambda_mode_B_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_HV_LAMBDA_MODE_B_CAL_DATA:
-      return_data_word = ps_hv_lambda_mode_B_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_HV_LAMBDA_MODE_B_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_hv_lambda_mode_B_config_in_EEPROM, ps_hv_lambda_mode_B_config_ram_copy);
-      break;
-
-    case CMD_SET_MAGNETRON_MODE_A_CAL_DATA:
-      ps_magnetron_mode_A_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_MAGNETRON_MODE_A_CAL_DATA:
-      return_data_word = ps_magnetron_mode_A_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_MAGNETRON_MODE_A_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_magnetron_mode_A_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_magnetron_mode_A_config_in_EEPROM, ps_magnetron_mode_A_config_ram_copy);
-      break;
-
-    case CMD_SET_MAGNETRON_MODE_B_CAL_DATA:
-      ps_magnetron_mode_B_config_ram_copy[command_string.register_byte] = data_word;
-      break;
-      
-    case CMD_READ_MAGNETRON_MODE_B_CAL_DATA:
-      return_data_word = ps_magnetron_mode_B_config_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_MAGNETRON_MODE_B_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_magnetron_mode_B_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_magnetron_mode_B_config_in_EEPROM, ps_magnetron_mode_B_config_ram_copy);
-      break;
-
-    case CMD_SET_CNTRL_CAL_DATA:
-      control_loop_cal_data_ram_copy[command_string.register_byte] = data_word;
-      break;
-
-    case CMD_READ_CNTRL_CAL_DATA:
-      return_data_word = control_loop_cal_data_ram_copy[command_string.register_byte];
-      break;
-      
-    case CMD_SAVE_CNTRL_CAL_DATA_TO_EEPROM:
-      _wait_eedata();
-      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
-      break;
-
-
-
     case CMD_SET_MAGNETRON_FILAMENT_CURRENT:
-      itemp = data_word;
-      vtemp = GenerateFilamentVprog(itemp);
-      SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
-      ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
-      ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
-      break;
+      eeprom_write_complete = 0;
+      eeprom_write_attempt = 0;
+      while (eeprom_write_complete == 0) {
+	eeprom_write_complete = ETMEEPromWriteWordWithConfirmation(EEPROM_REGISTER_MAGNETRON_FILAMENT_CURRENT, data_word);
+	eeprom_write_attempt++;
+	if (eeprom_write_attempt >= 10) {
+	  eeprom_write_failure_count++;
+	  break;
+	}
+      }
+      if (eeprom_write_complete) {
+	itemp = data_word;
+	vtemp = GenerateFilamentVprog(itemp);
+	SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
+      }
 
-    case CMD_SET_MAGNETRON_FILAMENT_VOLTAGE:
-      vtemp = data_word;
-      itemp = GenerateFilamentIprog(vtemp);
-      SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
+      
+      /*
       ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
       ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;
       _wait_eedata();
       _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
       _wait_eedata();
       _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
+      */
       break;
 
     case CMD_CLEAR_PROCESSOR_RESET_DATA:
@@ -909,11 +880,11 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       // Read Bedug Counters
       
     case RAM_READ_COUNT_MAGNETRON_CURRENT_ADC_GLITCH:
-      data_return = global_debug_counter.magnetron_current_adc_glitch;
+      data_return = eeprom_write_failure_count;
       break;
       
     case RAM_READ_COUNT_MAGNETRON_VOLTAGE_ADC_GLITCH:
-      data_return = global_debug_counter.magnetron_voltage_adc_glitch;
+      data_return = eeprom_read_failure_count;
       break;
       
     case RAM_READ_COUNT_I2C_BUS_ERROR:
@@ -1011,6 +982,10 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       data_return = low_energy_target_current_startup_adjust_initital_value;
       break;
 
+    default:
+      data_return = 0;
+      break;
+      
     }
   
   return data_return;

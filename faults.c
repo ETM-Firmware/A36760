@@ -897,6 +897,10 @@ unsigned int CheckStartupFailed(void) {
 }
 
 unsigned int CheckFaultActive(void) {
+  if (eeprom_write_failure_count > 0) {
+    return 1;
+  }
+  
   return (faults_control_board_fault_reg | faults_thyratron_fault_reg | faults_magnetron_fault_reg | faults_high_voltage_fault_reg);
 }
 

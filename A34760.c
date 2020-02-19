@@ -11,6 +11,7 @@
 #include "ETMdsp.h"
 #include "Config.h"
 #include "ETM_Scale.h"
+#include "eeprom.h"
 
 #define FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG7095_NEW_ROLLOFF 100,100,99,99,99,98,98,97,97,96,96,95,95,94,94,93,93,92,91,91,90,89,89,88,87,87,86,85,84,84,83,82,81,80,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,60,59,58,57,56,54,53,52,51,49,48
 
@@ -23,6 +24,15 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 #else
 const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_MG5193};
 #endif
+
+
+unsigned int magnet_scaling_linear_factor;
+unsigned int magnet_scaling_constant_factor;
+unsigned int eeprom_write_failure_count;
+unsigned int filament_iprog;
+unsigned int eeprom_read_failure_count;
+
+
 
 unsigned int arc_detected;
 
@@ -657,11 +667,17 @@ void DoStateMachine(void) {
 
 void DoA34760StartUpCommon(void) {
   unsigned int *unsigned_int_ptr;  
-
+  unsigned int eeprom_data[16];
+  unsigned int eeprom_write[16];
+  unsigned int read_attempt;
+  
   // This is debugging info info  If the processor reset, a code that indicates the last major point that the processor entered should be held in RAM at last_known_action
   previous_last_action = last_known_action;
   last_known_action = LAST_ACTION_CLEAR_LAST_ACTION;
 
+  eeprom_write_failure_count = 0;
+  eeprom_read_failure_count = 0;
+  
   // Figure out why the processor restarted and save to the debug status register
   debug_status_register = 0;
   if (_POR) {
@@ -707,18 +723,116 @@ void DoA34760StartUpCommon(void) {
   global_debug_counter.reversescale16bit_saturation = 0;
 
 
-  linac_high_energy_target_current_set_point = control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
+  linac_high_energy_target_current_set_point = 0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_HIGH_ENERGY_TARGET];
 
   
-  linac_low_energy_target_current_set_point_gantry_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET];
-  linac_low_energy_target_current_set_point_portal_mode = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET];
-  low_energy_target_current_startup_adjust_decay_time_pulses =  control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES];
-  max_low_energy_target_current_startup_adjust_initital_value = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE];
-  low_energy_target_current_startup_max_cooldown = control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
-  
+  linac_low_energy_target_current_set_point_gantry_mode = 0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_GANTRY_TARGET];
+  linac_low_energy_target_current_set_point_portal_mode = 0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_PORTAL_TARGET];
+  low_energy_target_current_startup_adjust_decay_time_pulses =  0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_STARTUP_PULSES];
+  max_low_energy_target_current_startup_adjust_initital_value = 0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_MAGNITUDE];
+  low_energy_target_current_startup_max_cooldown = 0;//control_loop_cal_data_ram_copy[EEPROM_CNTRL_TARGET_MAX_COOLDOWN];
 
-  scale_interleaved = control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE];
-  scale_low_energy  = control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE];
+
+  read_attempt = 0;
+  while (ETMEEPromReadPage(PAGE_0_SETTINGS, eeprom_data) == 0) {
+    read_attempt++;
+    ClrWdt();
+    eeprom_read_failure_count++;
+    if (read_attempt > 10) {
+      // There was a problem reading from the EEPROM
+      // Write the default calibration data
+      eeprom_write[0] = 850;
+      eeprom_write[1] = 750;
+      eeprom_write[2] = 0x7FFF;
+      eeprom_write[3] = 0x7FFF;
+      eeprom_write[4] = 10600;
+      ETMEEPromWritePage(PAGE_0_SETTINGS,eeprom_write);
+    }
+    if (read_attempt > 15) {
+      // The EEPROM is not working, signal a massive fault
+      // DPARKER HOW TO SIGNAL THIS FAULT???
+      eeprom_data[0] = 950;
+      eeprom_data[1] = 750;
+      eeprom_data[2] = 0x7FFF;
+      eeprom_data[3] = 0x7FFF;
+      eeprom_data[4] = 10600;
+      break;
+    }
+  }
+  magnet_scaling_linear_factor   = eeprom_data[0];
+  magnet_scaling_constant_factor = eeprom_data[1];
+  scale_interleaved              = eeprom_data[2];
+  scale_low_energy               = eeprom_data[3];
+  filament_iprog                 = eeprom_data[4];
+
+
+
+
+  read_attempt = 0;
+  while (ETMEEPromReadPage(PAGE_1_PULSE_COUNTERS, eeprom_data) == 0) {
+    ClrWdt();
+    read_attempt++;
+    if (read_attempt > 10) {
+      // There was a problem reading from the EEPROM
+      // Write the default calibration data
+      eeprom_write[0] = 0;
+      eeprom_write[1] = 0;
+      eeprom_write[2] = 0;
+      eeprom_write[3] = 0;
+      eeprom_write[4] = 0;
+      eeprom_write[5] = 0;
+      eeprom_write[6] = 0;
+      eeprom_write[7] = 0;
+      eeprom_write[8] = 0;
+      eeprom_write[9] = 0;
+      eeprom_write[10] = 0;
+      eeprom_write[11] = 0;
+      eeprom_write[12] = 0;
+      eeprom_write[13] = 0;
+      eeprom_write[14] = 0;
+    }
+    if (read_attempt > 15) {
+      // If we can't read this register, set everything to zero and keep going.  We don't NEED pulse count
+      eeprom_data[0] = 0;
+      eeprom_data[1] = 0;
+      eeprom_data[2] = 0;
+      eeprom_data[3] = 0;
+      eeprom_data[4] = 0;
+      eeprom_data[5] = 0;
+      eeprom_data[6] = 0;
+      eeprom_data[7] = 0;
+      eeprom_data[8] = 0;
+      eeprom_data[9] = 0;
+      eeprom_data[10] = 0;
+      eeprom_data[11] = 0;
+      eeprom_data[12] = 0;
+      eeprom_data[13] = 0;
+      eeprom_data[14] = 0;
+      break;
+    }
+  }
+  
+  // DPARKER - At some point want to recover the pulse and arc counter from RAM
+  // ------------ Load the pulse and arc counters ---------------- //
+  unsigned_int_ptr = (unsigned int*)&pulse_counter_persistent;              //unsigned_int_ptr now points to the Least Significant word of pulse_counter_persistent
+  *unsigned_int_ptr = eeprom_data[3];
+  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
+  *unsigned_int_ptr = eeprom_data[2];
+  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
+  *unsigned_int_ptr = eeprom_data[1];
+  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of pulse_counter_persistent
+  *unsigned_int_ptr = eeprom_data[0];
+
+
+  unsigned_int_ptr = (unsigned int*)&arc_counter_persistent;                //unsigned_int_ptr now points to the Least Significant word of arc_counter_persistent
+  *unsigned_int_ptr = eeprom_data[5];
+  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of arc_counter_persistent
+  *unsigned_int_ptr = eeprom_data[4];
+  
+  arc_counter_this_hv_on = 0;
+  pulse_counter_this_hv_on = 0;
+ 
+  fast_reset_counter_persistent = eeprom_data[6];
 
 
 
@@ -753,12 +867,12 @@ void DoA34760StartUpCommon(void) {
   ps_magnet.v_max_set_point      = MAX_MAGNET_SUPPLY_VOLTAGE_SET_POINT;
   
   ps_magnet.v_dac_scale          = MakeScale(0xFFFF, MAGNET_SUPPLY_VDAC_OUTPUT_AT_0xFFFF);
-  ps_magnet.v_dac_cal_gain       = ps_magnet_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_magnet.v_dac_cal_offset     = ps_magnet_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_magnet.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnet.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0; 
   
   ps_magnet.v_adc_scale          = MakeScale(0xFFFF, MAGNET_SUPPLY_VADC_INPUT_AT_0xFFFF);
-  ps_magnet.v_adc_cal_gain       = ps_magnet_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_magnet.v_adc_cal_offset     = ps_magnet_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_magnet.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnet.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnet.v_adc_over_abs       = Scale16Bit(MAGNET_SUPPLY_VADC_OVER_VOLTAGE_HARD, ps_magnet.v_adc_scale);
   ps_magnet.v_adc_over_scale     = MakeScale(MAGNET_SUPPLY_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_magnet.v_adc_under_scale    = MakeScale(MAGNET_SUPPLY_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -768,19 +882,19 @@ void DoA34760StartUpCommon(void) {
   ps_magnet.i_max_set_point      = MAX_MAGNET_SUPPLY_CURRENT_SET_POINT;
   
   ps_magnet.i_dac_scale          = MakeScale(0xFFFF, MAGNET_SUPPLY_IDAC_OUTPUT_AT_0xFFFF);
-  ps_magnet.i_dac_cal_gain       = ps_magnet_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_magnet.i_dac_cal_offset     = ps_magnet_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_magnet.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnet.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_magnet.i_adc_scale          = MakeScale(0xFFFF, MAGNET_SUPPLY_IADC_INPUT_AT_0xFFFF);
-  ps_magnet.i_adc_cal_gain       = ps_magnet_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_magnet.i_adc_cal_offset     = ps_magnet_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_magnet.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnet.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnet.i_adc_over_abs       = Scale16Bit(MAGNET_SUPPLY_IADC_OVER_CURRENT_HARD, ps_magnet.i_adc_scale);
   ps_magnet.i_adc_over_scale     = MakeScale(MAGNET_SUPPLY_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_magnet.i_adc_under_scale    = MakeScale(MAGNET_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_magnet.i_adc_over_min_value = MAGNET_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_magnet.i_adc_max_oor        = MAGNET_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-  SetPowerSupplyTarget(&ps_magnet, ps_magnet_config_ram_copy[EEPROM_V_SET_POINT], ps_magnet_config_ram_copy[EEPROM_I_SET_POINT]);
+  //SetPowerSupplyTarget(&ps_magnet, ps_magnet_config_ram_copy[EEPROM_V_SET_POINT], ps_magnet_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
 
@@ -791,12 +905,12 @@ void DoA34760StartUpCommon(void) {
   ps_filament.v_max_set_point      = MAX_FILAMENT_SUPPLY_VOLTAGE_SET_POINT;
   
   ps_filament.v_dac_scale          = MakeScale(0xFFFF, FILAMENT_SUPPLY_VDAC_OUTPUT_AT_0xFFFF);
-  ps_filament.v_dac_cal_gain       = ps_filament_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_filament.v_dac_cal_offset     = ps_filament_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_filament.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_filament.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_filament.v_adc_scale          = MakeScale(0xFFFF, FILAMENT_SUPPLY_VADC_INPUT_AT_0xFFFF);
-  ps_filament.v_adc_cal_gain       = ps_filament_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_filament.v_adc_cal_offset     = ps_filament_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_filament.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_filament.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_filament.v_adc_over_abs       = Scale16Bit(FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_HARD, ps_filament.v_adc_scale);
   ps_filament.v_adc_over_scale     = MakeScale(FILAMENT_SUPPLY_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_filament.v_adc_under_scale    = MakeScale(FILAMENT_SUPPLY_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -806,19 +920,19 @@ void DoA34760StartUpCommon(void) {
   ps_filament.i_max_set_point      = MAX_FILAMENT_SUPPLY_CURRENT_SET_POINT;
   
   ps_filament.i_dac_scale          = MakeScale(0xFFFF, FILAMENT_SUPPLY_IDAC_OUTPUT_AT_0xFFFF);
-  ps_filament.i_dac_cal_gain       = ps_filament_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_filament.i_dac_cal_offset     = ps_filament_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_filament.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_filament.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_filament.i_adc_scale          = MakeScale(0xFFFF, FILAMENT_SUPPLY_IADC_INPUT_AT_0xFFFF);
-  ps_filament.i_adc_cal_gain       = ps_filament_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_filament.i_adc_cal_offset     = ps_filament_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_filament.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_filament.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_filament.i_adc_over_abs       = Scale16Bit(FILAMENT_SUPPLY_IADC_OVER_CURRENT_HARD, ps_filament.i_adc_scale);
   ps_filament.i_adc_over_scale     = MakeScale(FILAMENT_SUPPLY_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_filament.i_adc_under_scale    = MakeScale(FILAMENT_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_filament.i_adc_over_min_value = FILAMENT_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_filament.i_adc_max_oor        = FILAMENT_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-  SetPowerSupplyTarget(&ps_filament, ps_filament_config_ram_copy[EEPROM_V_SET_POINT], ps_filament_config_ram_copy[EEPROM_I_SET_POINT]);
+  SetPowerSupplyTarget(&ps_filament, GenerateFilamentVprog(filament_iprog), filament_iprog);
   
 
 
@@ -829,12 +943,12 @@ void DoA34760StartUpCommon(void) {
   ps_thyr_cathode_htr.v_max_set_point      = MAX_THYR_CATH_HTR_SUPPLY_VOLTAGE_SET_POINT;
   
   ps_thyr_cathode_htr.v_dac_scale          = MakeScale(0xFFFF, THYR_CATH_HTR_SUPPLY_VDAC_OUTPUT_AT_0xFFFF);
-  ps_thyr_cathode_htr.v_dac_cal_gain       = ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_thyr_cathode_htr.v_dac_cal_offset     = ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_thyr_cathode_htr.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_cathode_htr.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_thyr_cathode_htr.v_adc_scale          = MakeScale(0xFFFF, THYR_CATH_HTR_SUPPLY_VADC_INPUT_AT_0xFFFF);
-  ps_thyr_cathode_htr.v_adc_cal_gain       = ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_thyr_cathode_htr.v_adc_cal_offset     = ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_thyr_cathode_htr.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_cathode_htr.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_thyr_cathode_htr.v_adc_over_abs       = Scale16Bit(THYR_CATH_HTR_SUPPLY_VADC_OVER_VOLTAGE_HARD, ps_thyr_cathode_htr.v_adc_scale);
   ps_thyr_cathode_htr.v_adc_over_scale     = MakeScale(THYR_CATH_HTR_SUPPLY_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_thyr_cathode_htr.v_adc_under_scale    = MakeScale(THYR_CATH_HTR_SUPPLY_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -844,19 +958,19 @@ void DoA34760StartUpCommon(void) {
   ps_thyr_cathode_htr.i_max_set_point      = MAX_THYR_CATH_HTR_SUPPLY_CURRENT_SET_POINT;
   
   ps_thyr_cathode_htr.i_dac_scale          = MakeScale(0xFFFF, THYR_CATH_HTR_SUPPLY_IDAC_OUTPUT_AT_0xFFFF);
-  ps_thyr_cathode_htr.i_dac_cal_gain       = ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_thyr_cathode_htr.i_dac_cal_offset     = ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_thyr_cathode_htr.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_cathode_htr.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_thyr_cathode_htr.i_adc_scale          = MakeScale(0xFFFF, THYR_CATH_HTR_SUPPLY_IADC_INPUT_AT_0xFFFF);
-  ps_thyr_cathode_htr.i_adc_cal_gain       = ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_thyr_cathode_htr.i_adc_cal_offset     = ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_thyr_cathode_htr.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_cathode_htr.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_thyr_cathode_htr.i_adc_over_abs       = Scale16Bit(THYR_CATH_HTR_SUPPLY_IADC_OVER_CURRENT_HARD, ps_thyr_cathode_htr.i_adc_scale);
   ps_thyr_cathode_htr.i_adc_over_scale     = MakeScale(THYR_CATH_HTR_SUPPLY_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_thyr_cathode_htr.i_adc_under_scale    = MakeScale(THYR_CATH_HTR_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_thyr_cathode_htr.i_adc_over_min_value = THYR_CATH_HTR_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_thyr_cathode_htr.i_adc_max_oor        = THYR_CATH_HTR_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-  SetPowerSupplyTarget(&ps_thyr_cathode_htr, ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_SET_POINT]);
+  //SetPowerSupplyTarget(&ps_thyr_cathode_htr, ps_thyr_cathode_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_cathode_htr_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
 
@@ -867,12 +981,12 @@ void DoA34760StartUpCommon(void) {
   ps_thyr_reservoir_htr.v_max_set_point      = MAX_THYR_RESER_HTR_SUPPLY_VOLTAGE_SET_POINT;
   
   ps_thyr_reservoir_htr.v_dac_scale          = MakeScale(0xFFFF, THYR_RESER_HTR_SUPPLY_VDAC_OUTPUT_AT_0xFFFF);
-  ps_thyr_reservoir_htr.v_dac_cal_gain       = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_thyr_reservoir_htr.v_dac_cal_offset     = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_thyr_reservoir_htr.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_reservoir_htr.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_thyr_reservoir_htr.v_adc_scale          = MakeScale(0xFFFF, THYR_RESER_HTR_SUPPLY_VADC_INPUT_AT_0xFFFF);
-  ps_thyr_reservoir_htr.v_adc_cal_gain       = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_thyr_reservoir_htr.v_adc_cal_offset     = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_thyr_reservoir_htr.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_reservoir_htr.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_thyr_reservoir_htr.v_adc_over_abs       = Scale16Bit(THYR_RESER_HTR_SUPPLY_VADC_OVER_VOLTAGE_HARD, ps_thyr_reservoir_htr.v_adc_scale);
   ps_thyr_reservoir_htr.v_adc_over_scale     = MakeScale(THYR_RESER_HTR_SUPPLY_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_thyr_reservoir_htr.v_adc_under_scale    = MakeScale(THYR_RESER_HTR_SUPPLY_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -882,19 +996,19 @@ void DoA34760StartUpCommon(void) {
   ps_thyr_reservoir_htr.i_max_set_point      = MAX_THYR_RESER_HTR_SUPPLY_CURRENT_SET_POINT;
   
   ps_thyr_reservoir_htr.i_dac_scale          = MakeScale(0xFFFF, THYR_RESER_HTR_SUPPLY_IDAC_OUTPUT_AT_0xFFFF);
-  ps_thyr_reservoir_htr.i_dac_cal_gain       = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_thyr_reservoir_htr.i_dac_cal_offset     = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_thyr_reservoir_htr.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_reservoir_htr.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_thyr_reservoir_htr.i_adc_scale          = MakeScale(0xFFFF, THYR_RESER_HTR_SUPPLY_IADC_INPUT_AT_0xFFFF);
-  ps_thyr_reservoir_htr.i_adc_cal_gain       = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_thyr_reservoir_htr.i_adc_cal_offset     = ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_thyr_reservoir_htr.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_thyr_reservoir_htr.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_thyr_reservoir_htr.i_adc_over_abs       = Scale16Bit(THYR_RESER_HTR_SUPPLY_IADC_OVER_CURRENT_HARD, ps_thyr_reservoir_htr.i_adc_scale);
   ps_thyr_reservoir_htr.i_adc_over_scale     = MakeScale(THYR_RESER_HTR_SUPPLY_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_thyr_reservoir_htr.i_adc_under_scale    = MakeScale(THYR_RESER_HTR_SUPPLY_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_thyr_reservoir_htr.i_adc_over_min_value = THYR_RESER_HTR_SUPPLY_IADC_MIN_OVER_CURRENT;
   ps_thyr_reservoir_htr.i_adc_max_oor        = THYR_RESER_HTR_SUPPLY_IADC_MAX_OUT_OT_RANGE;
 
-  SetPowerSupplyTarget(&ps_thyr_reservoir_htr, ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_SET_POINT]);
+  //SetPowerSupplyTarget(&ps_thyr_reservoir_htr, ps_thyr_reservoir_htr_config_ram_copy[EEPROM_V_SET_POINT], ps_thyr_reservoir_htr_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
 
@@ -905,12 +1019,12 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_A.v_max_set_point      = MAX_HV_LAMBDA_MODE_A_VOLTAGE_SET_POINT;
   
   ps_hv_lambda_mode_A.v_dac_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_A_VDAC_OUTPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_A.v_dac_cal_gain       = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_hv_lambda_mode_A.v_dac_cal_offset     = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_hv_lambda_mode_A.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_A.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_hv_lambda_mode_A.v_adc_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_A_VADC_INPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_A.v_adc_cal_gain       = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_hv_lambda_mode_A.v_adc_cal_offset     = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_hv_lambda_mode_A.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_A.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_hv_lambda_mode_A.v_adc_over_abs       = Scale16Bit(HV_LAMBDA_MODE_A_VADC_OVER_VOLTAGE_HARD, ps_hv_lambda_mode_A.v_adc_scale);
   ps_hv_lambda_mode_A.v_adc_over_scale     = MakeScale(HV_LAMBDA_MODE_A_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_hv_lambda_mode_A.v_adc_under_scale    = MakeScale(HV_LAMBDA_MODE_A_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -920,19 +1034,19 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_A.i_max_set_point      = MAX_HV_LAMBDA_MODE_A_CURRENT_SET_POINT;
   
   ps_hv_lambda_mode_A.i_dac_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_A_IDAC_OUTPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_A.i_dac_cal_gain       = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_hv_lambda_mode_A.i_dac_cal_offset     = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_hv_lambda_mode_A.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_A.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_hv_lambda_mode_A.i_adc_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_A_IADC_INPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_A.i_adc_cal_gain       = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_hv_lambda_mode_A.i_adc_cal_offset     = ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_hv_lambda_mode_A.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_A.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_hv_lambda_mode_A.i_adc_over_abs       = Scale16Bit(HV_LAMBDA_MODE_A_IADC_OVER_CURRENT_HARD, ps_hv_lambda_mode_A.i_adc_scale);
   ps_hv_lambda_mode_A.i_adc_over_scale     = MakeScale(HV_LAMBDA_MODE_A_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_hv_lambda_mode_A.i_adc_under_scale    = MakeScale(HV_LAMBDA_MODE_A_IADC_UNDER_CURRENT_SCALE*8192, 8192);
   ps_hv_lambda_mode_A.i_adc_over_min_value = HV_LAMBDA_MODE_A_IADC_MIN_OVER_CURRENT;
   ps_hv_lambda_mode_A.i_adc_max_oor        = HV_LAMBDA_MODE_A_IADC_MAX_OUT_OT_RANGE;
 
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, ps_hv_lambda_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_hv_lambda_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_A, 18000, 10000);
   
 
 
@@ -943,12 +1057,12 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_B.v_max_set_point      = MAX_HV_LAMBDA_MODE_B_VOLTAGE_SET_POINT;
   
   ps_hv_lambda_mode_B.v_dac_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_B_VDAC_OUTPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_B.v_dac_cal_gain       = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_hv_lambda_mode_B.v_dac_cal_offset     = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_hv_lambda_mode_B.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_B.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_hv_lambda_mode_B.v_adc_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_B_VADC_INPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_B.v_adc_cal_gain       = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_hv_lambda_mode_B.v_adc_cal_offset     = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_hv_lambda_mode_B.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_B.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_hv_lambda_mode_B.v_adc_over_abs       = Scale16Bit(HV_LAMBDA_MODE_B_VADC_OVER_VOLTAGE_HARD, ps_hv_lambda_mode_B.v_adc_scale);
   ps_hv_lambda_mode_B.v_adc_over_scale     = MakeScale(HV_LAMBDA_MODE_B_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_hv_lambda_mode_B.v_adc_under_scale    = MakeScale(HV_LAMBDA_MODE_B_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -958,12 +1072,12 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_B.i_max_set_point      = MAX_HV_LAMBDA_MODE_B_CURRENT_SET_POINT;
   
   ps_hv_lambda_mode_B.i_dac_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_B_IDAC_OUTPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_B.i_dac_cal_gain       = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_hv_lambda_mode_B.i_dac_cal_offset     = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_hv_lambda_mode_B.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_B.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_hv_lambda_mode_B.i_adc_scale          = MakeScale(0xFFFF, HV_LAMBDA_MODE_B_IADC_INPUT_AT_0xFFFF);
-  ps_hv_lambda_mode_B.i_adc_cal_gain       = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_hv_lambda_mode_B.i_adc_cal_offset     = ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_hv_lambda_mode_B.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_hv_lambda_mode_B.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_hv_lambda_mode_B.i_adc_over_abs       = Scale16Bit(HV_LAMBDA_MODE_B_IADC_OVER_CURRENT_HARD, ps_hv_lambda_mode_B.i_adc_scale);
   ps_hv_lambda_mode_B.i_adc_over_scale     = MakeScale(HV_LAMBDA_MODE_B_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_hv_lambda_mode_B.i_adc_under_scale    = MakeScale(HV_LAMBDA_MODE_B_IADC_UNDER_CURRENT_SCALE*8192, 8192);
@@ -971,7 +1085,7 @@ void DoA34760StartUpCommon(void) {
   ps_hv_lambda_mode_B.i_adc_max_oor        = HV_LAMBDA_MODE_B_IADC_MAX_OUT_OT_RANGE;
 
 
-  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, ps_hv_lambda_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_hv_lambda_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
+  SetPowerSupplyTarget(&ps_hv_lambda_mode_B, 16000, 10000);
   
 
 
@@ -982,12 +1096,12 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_A.v_max_set_point      = MAX_MAGNETRON_MODE_A_VOLTAGE_SET_POINT;
   
   ps_magnetron_mode_A.v_dac_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_A_VDAC_OUTPUT_AT_0xFFFF);
-  ps_magnetron_mode_A.v_dac_cal_gain       = ps_magnetron_mode_A_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_magnetron_mode_A.v_dac_cal_offset     = ps_magnetron_mode_A_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_magnetron_mode_A.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_A.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_magnetron_mode_A.v_adc_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_A_VADC_INPUT_AT_0xFFFF);
-  ps_magnetron_mode_A.v_adc_cal_gain       = ps_magnetron_mode_A_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_magnetron_mode_A.v_adc_cal_offset     = ps_magnetron_mode_A_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_magnetron_mode_A.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_A.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnetron_mode_A.v_adc_over_abs       = Scale16Bit(MAGNETRON_MODE_A_VADC_OVER_VOLTAGE_HARD, ps_magnetron_mode_A.v_adc_scale);
   ps_magnetron_mode_A.v_adc_over_scale     = MakeScale(MAGNETRON_MODE_A_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_magnetron_mode_A.v_adc_under_scale    = MakeScale(MAGNETRON_MODE_A_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -997,12 +1111,12 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_A.i_max_set_point      = MAX_MAGNETRON_MODE_A_CURRENT_SET_POINT;
   
   ps_magnetron_mode_A.i_dac_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_A_IDAC_OUTPUT_AT_0xFFFF);
-  ps_magnetron_mode_A.i_dac_cal_gain       = ps_magnetron_mode_A_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_magnetron_mode_A.i_dac_cal_offset     = ps_magnetron_mode_A_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_magnetron_mode_A.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_A.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_magnetron_mode_A.i_adc_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_A_IADC_INPUT_AT_0xFFFF);
-  ps_magnetron_mode_A.i_adc_cal_gain       = ps_magnetron_mode_A_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_magnetron_mode_A.i_adc_cal_offset     = ps_magnetron_mode_A_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_magnetron_mode_A.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_A.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnetron_mode_A.i_adc_over_abs       = Scale16Bit(MAGNETRON_MODE_A_IADC_OVER_CURRENT_HARD, ps_magnetron_mode_A.i_adc_scale);
   ps_magnetron_mode_A.i_adc_over_scale     = MakeScale(MAGNETRON_MODE_A_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_magnetron_mode_A.i_adc_under_scale    = MakeScale(MAGNETRON_MODE_A_IADC_UNDER_CURRENT_SCALE*8192, 8192);
@@ -1014,7 +1128,7 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_A.v_adc_max_reading    = 0;
   ps_magnetron_mode_A.v_adc_min_reading    = 0xFFFF;
 
-  SetPowerSupplyTarget(&ps_magnetron_mode_A, ps_magnetron_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
+  //SetPowerSupplyTarget(&ps_magnetron_mode_A, ps_magnetron_mode_A_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_A_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
 
@@ -1025,12 +1139,12 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_B.v_max_set_point      = MAX_MAGNETRON_MODE_B_VOLTAGE_SET_POINT;
   
   ps_magnetron_mode_B.v_dac_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_B_VDAC_OUTPUT_AT_0xFFFF);
-  ps_magnetron_mode_B.v_dac_cal_gain       = ps_magnetron_mode_B_config_ram_copy[EEPROM_V_DAC_CAL_GAIN];
-  ps_magnetron_mode_B.v_dac_cal_offset     = ps_magnetron_mode_B_config_ram_copy[EEPROM_V_DAC_CAL_OFFSET]; 
+  ps_magnetron_mode_B.v_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_B.v_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_magnetron_mode_B.v_adc_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_B_VADC_INPUT_AT_0xFFFF);
-  ps_magnetron_mode_B.v_adc_cal_gain       = ps_magnetron_mode_B_config_ram_copy[EEPROM_V_ADC_CAL_GAIN];
-  ps_magnetron_mode_B.v_adc_cal_offset     = ps_magnetron_mode_B_config_ram_copy[EEPROM_V_ADC_CAL_OFFSET];
+  ps_magnetron_mode_B.v_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_B.v_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnetron_mode_B.v_adc_over_abs       = Scale16Bit(MAGNETRON_MODE_B_VADC_OVER_VOLTAGE_HARD, ps_magnetron_mode_B.v_adc_scale);
   ps_magnetron_mode_B.v_adc_over_scale     = MakeScale(MAGNETRON_MODE_B_VADC_OVER_VOLTAGE_SCALE*8192, 8192);
   ps_magnetron_mode_B.v_adc_under_scale    = MakeScale(MAGNETRON_MODE_B_VADC_UNDER_VOLTAGE_SCALE*8192, 8192);
@@ -1040,12 +1154,12 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_B.i_max_set_point      = MAX_MAGNETRON_MODE_B_CURRENT_SET_POINT;
   
   ps_magnetron_mode_B.i_dac_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_B_IDAC_OUTPUT_AT_0xFFFF);
-  ps_magnetron_mode_B.i_dac_cal_gain       = ps_magnetron_mode_B_config_ram_copy[EEPROM_I_DAC_CAL_GAIN];
-  ps_magnetron_mode_B.i_dac_cal_offset     = ps_magnetron_mode_B_config_ram_copy[EEPROM_I_DAC_CAL_OFFSET]; 
+  ps_magnetron_mode_B.i_dac_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_B.i_dac_cal_offset     = EEPROM_CAL_OFFSET_0;
   
   ps_magnetron_mode_B.i_adc_scale          = MakeScale(0xFFFF, MAGNETRON_MODE_B_IADC_INPUT_AT_0xFFFF);
-  ps_magnetron_mode_B.i_adc_cal_gain       = ps_magnetron_mode_B_config_ram_copy[EEPROM_I_ADC_CAL_GAIN];
-  ps_magnetron_mode_B.i_adc_cal_offset     = ps_magnetron_mode_B_config_ram_copy[EEPROM_I_ADC_CAL_OFFSET];
+  ps_magnetron_mode_B.i_adc_cal_gain       = EEPROM_CAL_GAIN_1;
+  ps_magnetron_mode_B.i_adc_cal_offset     = EEPROM_CAL_OFFSET_0;
   ps_magnetron_mode_B.i_adc_over_abs       = Scale16Bit(MAGNETRON_MODE_B_IADC_OVER_CURRENT_HARD, ps_magnetron_mode_B.i_adc_scale);
   ps_magnetron_mode_B.i_adc_over_scale     = MakeScale(MAGNETRON_MODE_B_IADC_OVER_CURRENT_SCALE*8192, 8192);
   ps_magnetron_mode_B.i_adc_under_scale    = MakeScale(MAGNETRON_MODE_B_IADC_UNDER_CURRENT_SCALE*8192, 8192);
@@ -1057,7 +1171,7 @@ void DoA34760StartUpCommon(void) {
   ps_magnetron_mode_B.v_adc_max_reading    = 0;
   ps_magnetron_mode_B.v_adc_min_reading    = 0xFFFF;
 
-  SetPowerSupplyTarget(&ps_magnetron_mode_B, ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
+  //SetPowerSupplyTarget(&ps_magnetron_mode_B, ps_magnetron_mode_B_config_ram_copy[EEPROM_V_SET_POINT], ps_magnetron_mode_B_config_ram_copy[EEPROM_I_SET_POINT]);
   
 
 
@@ -1297,28 +1411,6 @@ void DoA34760StartUpCommon(void) {
 
   ResetAllFaults();
 
-
-  // DPARKER - At some point want to recover the pulse and arc counter from RAM
-  // ------------ Load the pulse and arc counters ---------------- //
-  unsigned_int_ptr = &pulse_counter_persistent;              //unsigned_int_ptr now points to the Least Significant word of pulse_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[3];
-  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[2];
-  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[1];
-  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of pulse_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[0];
-
-
-  unsigned_int_ptr = &arc_counter_persistent;                //unsigned_int_ptr now points to the Least Significant word of arc_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[5];
-  unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of arc_counter_persistent
-  *unsigned_int_ptr = pulse_counter_repository_ram_copy[4];
-  
-  arc_counter_this_hv_on = 0;
-  pulse_counter_this_hv_on = 0;
- 
-  fast_reset_counter_persistent = pulse_counter_repository_ram_copy[6];
   
   /*
     Check to See if this was a faulty processor Reset.
@@ -1429,8 +1521,9 @@ void DoA34760StartUpFastProcess(void) {
 
   processor_crash_count++;
 
-  fast_reset_counter_persistent++;
-  pulse_counter_repository_ram_copy[6] = fast_reset_counter_persistent;
+  // DPARKER - WHAT IS THE FAST RESET COUNTER PERSISTENT AND DO WE STILL NEED IT
+  //fast_reset_counter_persistent++;
+  //pulse_counter_repository_ram_copy[6] = fast_reset_counter_persistent;
   PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART;
 
   // Taken from StartWarmUp(); & the start of State Warm Ready
@@ -2167,7 +2260,7 @@ void FilterADCs(void) {
   
   unsigned int adc_reading;
 #if !defined(__SET_MAGNETRON_OVER_SERIAL_INTERFACE)
-  unsigned int vtemp;
+  //unsigned int vtemp;
 #endif
 
   last_known_action = LAST_ACTION_FILTER_ADC;
@@ -2414,26 +2507,31 @@ void ExitHvOnState(void) {
 
 void SavePulseCountersToEEPROM(void) {
   unsigned int *unsigned_int_ptr;
-  unsigned_int_ptr = &pulse_counter_persistent;              //unsigned_int_ptr now points to the Least Significant word of pulse_counter_persistent
-  pulse_counter_repository_ram_copy[3] = *unsigned_int_ptr; 
+  unsigned int eeprom_write_data[16];
+
+  unsigned_int_ptr = (unsigned int*)&pulse_counter_persistent;              //unsigned_int_ptr now points to the Least Significant word of pulse_counter_persistent
+  eeprom_write_data[3] = *unsigned_int_ptr; 
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
-  pulse_counter_repository_ram_copy[2] = *unsigned_int_ptr;
+  eeprom_write_data[2] = *unsigned_int_ptr;
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the next lest signigicant word of pulse_counter_persistent
-  pulse_counter_repository_ram_copy[1] = *unsigned_int_ptr;
+  eeprom_write_data[1] = *unsigned_int_ptr;
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of pulse_counter_persistent
-  pulse_counter_repository_ram_copy[0] = *unsigned_int_ptr;
+  eeprom_write_data[0] = *unsigned_int_ptr;
   
   
-  unsigned_int_ptr = &arc_counter_persistent;                //unsigned_int_ptr now points to the Least Significant word of arc_counter_persistent
-  pulse_counter_repository_ram_copy[5] = *unsigned_int_ptr;
+  unsigned_int_ptr = (unsigned int*)&arc_counter_persistent;                //unsigned_int_ptr now points to the Least Significant word of arc_counter_persistent
+  eeprom_write_data[5] = *unsigned_int_ptr;
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of arc_counter_persistent
-  pulse_counter_repository_ram_copy[4] = *unsigned_int_ptr;
+  eeprom_write_data[4] = *unsigned_int_ptr;
 
   // The values have now been saved to the array in RAM.  Save the RAM data to EEPROM
+  ETMEEPromWritePageFast(PAGE_1_PULSE_COUNTERS, eeprom_write_data);
+  /*
   _wait_eedata();
   _erase_eedata(EE_address_pulse_counter_repository_in_EEPROM, _EE_ROW);
   _wait_eedata();
   _write_eedata_row(EE_address_pulse_counter_repository_in_EEPROM, pulse_counter_repository_ram_copy);
+  */
 }
 
 
@@ -3100,17 +3198,17 @@ unsigned int CalculatePoly(unsigned int set_point) {
   temp = set_point;
   temp *= set_point;
   temp = temp >> 14;
-  temp *= control_loop_cal_data_ram_copy[EEPROM_CNTRL_MAGNET_FACTOR_SQUARE];
+  temp *= 0;  // We never use the sqaured factor
   temp = temp >> 10;
   sum = temp;
 
   temp = set_point;
-  temp *= control_loop_cal_data_ram_copy[EEPROM_CNTRL_MAGNET_FACTOR_LINEAR];
+  temp *= magnet_scaling_linear_factor;
   temp = temp >> 10;
 
   sum += temp;
 
-  temp = control_loop_cal_data_ram_copy[EEPROM_CNTRL_MAGNET_FACTOR_CONST];
+  temp = magnet_scaling_constant_factor;
   
   temp = temp << 2;
 
