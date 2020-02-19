@@ -123,7 +123,7 @@ unsigned int ETMEEPromWritePageWithConfirmation(unsigned int page_number, unsign
     Will return 0 if there were any errors (write/read/crc/confirmation)
   */
 
-
+  unsigned int n;
   unsigned int page_read[16];
   page_number = page_number * 2;
   
@@ -137,8 +137,11 @@ unsigned int ETMEEPromWritePageWithConfirmation(unsigned int page_number, unsign
   }
   
 
-  // DPARKER Figure out how to confirm the data sent matches the data read back
-  
+  for (n=0; n<16; n++) {
+    if (page_data[n] != page_read[n]) {
+      return 0;
+    }
+  }
   
   // Repeat for B register
   if (ETMEEPromPrivateWriteSinglePage(page_number + 1, &page_data[0]) == 0) {
@@ -148,8 +151,14 @@ unsigned int ETMEEPromWritePageWithConfirmation(unsigned int page_number, unsign
   if (ETMEEPromPrivateReadSinglePage(page_number + 1, &page_read[0]) == 0) {
     return 0;
   }
-  
-  // DPARKER Figure out how to confirm the data sent matches the data read back
+
+
+  for (n = 0; n<16; n++) {
+    if (page_data[n] != page_read[n]) {
+      return 0;
+    }
+  }
+
 
   return 0xFFFF; // The write operation was sucessful
 }

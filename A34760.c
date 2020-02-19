@@ -759,6 +759,17 @@ void DoA34760StartUpCommon(void) {
       break;
     }
   }
+
+  read_attempt = 0;
+  while (ETMEEPromWritePageWithConfirmation(PAGE_0_SETTINGS, eeprom_data) == 0) {
+    read_attempt++;
+    eeprom_read_failure_count++;
+    if (read_attempt >= 10) {
+      break;
+    }
+  }
+
+  
   magnet_scaling_linear_factor   = eeprom_data[0];
   magnet_scaling_constant_factor = eeprom_data[1];
   scale_interleaved              = eeprom_data[2];
