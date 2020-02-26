@@ -2,6 +2,6 @@
 #define __VERSION_H
 
 
-#define VERSION_NUMBER 0x0305  // High Byte is Agile Rev, Low Byte is identification (should be set to zero when built for agile)
+#define VERSION_NUMBER 0x0306  // High Byte is Agile Rev, Low Byte is identification (should be set to zero when built for agile)
 
 #endif
