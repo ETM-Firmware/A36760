@@ -38,6 +38,8 @@
       <itemPath>../Serial.c</itemPath>
       <itemPath>../Buffer64.c</itemPath>
       <itemPath>../ETM_SCALE.s</itemPath>
+      <itemPath>../eeprom.c</itemPath>
+      <itemPath>../ETM_CRC.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

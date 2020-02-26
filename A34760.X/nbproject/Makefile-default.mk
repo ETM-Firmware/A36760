@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s
+SOURCEFILES_QUOTED_IF_SPACED=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s ../eeprom.c ../ETM_CRC.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1472/Main.o.d ${OBJECTDIR}/_ext/1472/LTC2656.o.d ${OBJECTDIR}/_ext/1472/ETMI2C.o.d ${OBJECTDIR}/_ext/1472/ETMSPI.o.d ${OBJECTDIR}/_ext/1472/MCP23017.o.d ${OBJECTDIR}/_ext/1472/IOPorts.o.d ${OBJECTDIR}/_ext/1472/ETMdsp.o.d ${OBJECTDIR}/_ext/1472/A34760.o.d ${OBJECTDIR}/_ext/1472/faults.o.d ${OBJECTDIR}/_ext/1472/Serial.o.d ${OBJECTDIR}/_ext/1472/Buffer64.o.d ${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o ${OBJECTDIR}/_ext/1472/eeprom.o ${OBJECTDIR}/_ext/1472/ETM_CRC.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1472/Main.o.d ${OBJECTDIR}/_ext/1472/LTC2656.o.d ${OBJECTDIR}/_ext/1472/ETMI2C.o.d ${OBJECTDIR}/_ext/1472/ETMSPI.o.d ${OBJECTDIR}/_ext/1472/MCP23017.o.d ${OBJECTDIR}/_ext/1472/IOPorts.o.d ${OBJECTDIR}/_ext/1472/ETMdsp.o.d ${OBJECTDIR}/_ext/1472/A34760.o.d ${OBJECTDIR}/_ext/1472/faults.o.d ${OBJECTDIR}/_ext/1472/Serial.o.d ${OBJECTDIR}/_ext/1472/Buffer64.o.d ${OBJECTDIR}/_ext/1472/ETM_SCALE.o.d ${OBJECTDIR}/_ext/1472/eeprom.o.d ${OBJECTDIR}/_ext/1472/ETM_CRC.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o
+OBJECTFILES=${OBJECTDIR}/_ext/1472/Main.o ${OBJECTDIR}/_ext/1472/LTC2656.o ${OBJECTDIR}/_ext/1472/ETMI2C.o ${OBJECTDIR}/_ext/1472/ETMSPI.o ${OBJECTDIR}/_ext/1472/MCP23017.o ${OBJECTDIR}/_ext/1472/IOPorts.o ${OBJECTDIR}/_ext/1472/ETMdsp.o ${OBJECTDIR}/_ext/1472/A34760.o ${OBJECTDIR}/_ext/1472/faults.o ${OBJECTDIR}/_ext/1472/Serial.o ${OBJECTDIR}/_ext/1472/Buffer64.o ${OBJECTDIR}/_ext/1472/ETM_SCALE.o ${OBJECTDIR}/_ext/1472/eeprom.o ${OBJECTDIR}/_ext/1472/ETM_CRC.o
 
 # Source Files
-SOURCEFILES=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s
+SOURCEFILES=../Main.c ../LTC2656.c ../ETMI2C.c ../ETMSPI.c ../MCP23017.c ../IOPorts.c ../ETMdsp.s ../A34760.c ../faults.c ../Serial.c ../Buffer64.c ../ETM_SCALE.s ../eeprom.c ../ETM_CRC.c
 
 
 CFLAGS=
@@ -164,6 +164,20 @@ ${OBJECTDIR}/_ext/1472/Buffer64.o: ../Buffer64.c  nbproject/Makefile-${CND_CONF}
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ../Buffer64.c  -o ${OBJECTDIR}/_ext/1472/Buffer64.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/Buffer64.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1    -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/Buffer64.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/_ext/1472/eeprom.o: ../eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/eeprom.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/eeprom.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../eeprom.c  -o ${OBJECTDIR}/_ext/1472/eeprom.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/eeprom.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1    -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/eeprom.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/_ext/1472/ETM_CRC.o: ../ETM_CRC.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_CRC.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_CRC.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../ETM_CRC.c  -o ${OBJECTDIR}/_ext/1472/ETM_CRC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/ETM_CRC.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1    -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETM_CRC.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/_ext/1472/Main.o: ../Main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
@@ -234,6 +248,20 @@ ${OBJECTDIR}/_ext/1472/Buffer64.o: ../Buffer64.c  nbproject/Makefile-${CND_CONF}
 	@${RM} ${OBJECTDIR}/_ext/1472/Buffer64.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ../Buffer64.c  -o ${OBJECTDIR}/_ext/1472/Buffer64.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/Buffer64.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/Buffer64.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/_ext/1472/eeprom.o: ../eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/eeprom.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/eeprom.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../eeprom.c  -o ${OBJECTDIR}/_ext/1472/eeprom.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/eeprom.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/eeprom.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/_ext/1472/ETM_CRC.o: ../ETM_CRC.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_CRC.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/ETM_CRC.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../ETM_CRC.c  -o ${OBJECTDIR}/_ext/1472/ETM_CRC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/ETM_CRC.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -I".." -I"." -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/ETM_CRC.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

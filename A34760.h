@@ -551,16 +551,24 @@ extern unsigned int mode_B_pulse_magnetron_current_adc_reading_min;
 extern BUFFER64BYTE uart1_input_buffer;
 extern BUFFER64BYTE uart1_output_buffer;
 
-extern signed int ps_magnet_config_ram_copy[16];
-extern signed int ps_filament_config_ram_copy[16];
-extern signed int ps_thyr_cathode_htr_config_ram_copy[16];
-extern signed int ps_thyr_reservoir_htr_config_ram_copy[16];
-extern signed int ps_hv_lambda_mode_A_config_ram_copy[16];
-extern signed int ps_hv_lambda_mode_B_config_ram_copy[16];
-extern signed int ps_magnetron_mode_A_config_ram_copy[16];
-extern signed int ps_magnetron_mode_B_config_ram_copy[16];
-extern signed int pulse_counter_repository_ram_copy[16];
-extern signed int control_loop_cal_data_ram_copy[16];
+
+
+extern unsigned int magnet_scaling_linear_factor;
+extern unsigned int magnet_scaling_constant_factor;
+extern unsigned int eeprom_write_failure_count;
+extern unsigned int eeprom_read_failure_count;
+
+
+//extern signed int ps_magnet_config_ram_copy[16];
+extern unsigned int ps_filament_config_ram_copy[16];
+extern unsigned int ps_thyr_cathode_htr_config_ram_copy[16];
+extern unsigned int ps_thyr_reservoir_htr_config_ram_copy[16];
+extern unsigned int ps_hv_lambda_mode_A_config_ram_copy[16];
+extern unsigned int ps_hv_lambda_mode_B_config_ram_copy[16];
+extern unsigned int ps_magnetron_mode_A_config_ram_copy[16];
+extern unsigned int ps_magnetron_mode_B_config_ram_copy[16];
+extern unsigned int pulse_counter_repository_ram_copy[16];
+extern unsigned int control_loop_cal_data_ram_copy[16];
 
 extern unsigned long EE_address_ps_magnet_config_in_EEPROM;
 extern unsigned long EE_address_ps_filament_config_in_EEPROM;
