@@ -239,6 +239,10 @@ void HVLambdaStartCharging(void);
 
 unsigned int CalculatePoly(unsigned int set_point);
 
+extern unsigned int ReturnPowerSupplyADCScaledVoltage(POWERSUPPLY* ptr, unsigned int value);
+extern unsigned int ReturnPowerSupplyADCScaledCurrent(POWERSUPPLY* ptr, unsigned int value);
+
+
 //unsigned int RCFilter256Tau(unsigned int previous_value, unsigned int current_reading); moved to .h
 //unsigned int RCFilter64Tau(unsigned int previous_value, unsigned int current_reading); moved to .h
 //unsigned int RCFilter16Tau(unsigned int previous_value, unsigned int current_reading); moved to .h
@@ -433,6 +437,13 @@ void DoStateMachine(void) {
     arc_counter_this_hv_on = 0;
     pulse_counter_this_hv_on = 0;
     global_run_post_pulse_process = 0;
+    
+    lambda_eoc_fault = 0;
+    eoc_counts = 0;
+    eoc_max_reached_timer = 0;
+    for (vtemp = 0; vtemp < EOC_MAX_COUNT; vtemp++)
+    	eoc_10ms_timer[vtemp] = 0;    
+    
     // PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART; // THIS is a redundent command and should be removed 
 
     _T1IE = 1; // This is added for the fast restart process.  Normally _T1IE is set in HVLambdaStartCharging(), but the fast restart clears this bit temporarily
@@ -1942,6 +1953,17 @@ void Do10msTicToc(void) {
 
     time_since_last_trigger++;
     
+    if (eoc_counts)	{
+    	if (eoc_counts < EOC_MAX_COUNT) { 
+	    	for (vtemp = 0; vtemp < EOC_MAX_COUNT; vtemp++)	{
+	        	if (eoc_10ms_timer[vtemp] > 0) eoc_10ms_timer[vtemp]--;
+	        }
+        }
+        else {
+        	if (eoc_max_reached_timer > 0) eoc_max_reached_timer--;
+        }
+    }
+    
     led_pulse_count = ((led_pulse_count + 1) & 0b00001111);
     if (led_pulse_count == 0) {
       // 10ms * 16 counter has ocurred
@@ -3123,7 +3145,8 @@ void _ISRNOPSV _T1Interrupt(void) {
     If the lambda is not at EOC, it does not enable the trigger and sets the Lambda EOC Timeout Fault bit
     If the lambda is at EOC, It enables the trigger & sets status bits to show that the lambda is not charging and that the system is ready to fire.    
   */
-  unsigned char lambda_eoc_fault;
+  unsigned char lambda_eoc_happened = 0;
+  unsigned char n;
 
   last_known_action = LAST_ACTION_T1_INT;
   
@@ -3132,37 +3155,87 @@ void _ISRNOPSV _T1Interrupt(void) {
   T1CONbits.TON = 0;   // Stop the timer from incrementing (Again this will be restarted with the next time the capacitor charge sequence starts)
   
   // DPARKER - Consider adding more checks - Magnet Current, Actual Lambda Voltage, Check all the fault registers to confirm good to go!!!!
-
-  lambda_eoc_fault = 0;
-  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
-    __delay32(DELAY_TCY_10US);
-    if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
-      __delay32(DELAY_TCY_10US);
-      if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
-	__delay32(DELAY_TCY_10US);
-	if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
-	  __delay32(DELAY_TCY_10US);
+  
+  if (!lambda_eoc_fault) {  
+	  lambda_eoc_happened = 0;
 	  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
-	    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
+	    __delay32(DELAY_TCY_10US);
+	    if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+	      __delay32(DELAY_TCY_10US);
+	      if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+		__delay32(DELAY_TCY_10US);
+		if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+		  __delay32(DELAY_TCY_10US);
+		  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
+	 //	    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
+	  			lambda_eoc_happened = 1;	        
+		  }
+		} 
+	      }
+	    }
 	  }
-	} 
+
+      if (lambda_eoc_happened) {
+      	if (!eoc_counts) {
+		   eoc_10ms_timer[0] = EOC_TIMER_WINDOW;
+		   eoc_counts = 1;
+		}
+	    else {
+	       eoc_counts++;
+	       if (eoc_counts >= EOC_MAX_COUNT) {
+	          eoc_counts = EOC_MAX_COUNT;
+	          lambda_eoc_fault = 1;  // declare EOC fault            
+	       }
+	       else {
+	          eoc_10ms_timer[eoc_counts - 1] = EOC_TIMER_WINDOW;  // remember the new window start time
+	       }
+	    }
+
       }
-    }
+      
+	  if (lambda_eoc_fault) {
+	  	 // == 10, need to hold 1s to find more PS info before declaring a fault 
+         eoc_max_reached_timer = 100;    
+	  }
+	  else if (lambda_eoc_happened) {
+	  	 // == 1, reset HV PS, skip one pulse
+	       PIN_HV_LAMBDA_ENABLE = !OLL_HV_LAMBDA_ENABLED;
+  		   PIN_HV_LAMBDA_INHIBIT = OLL_HV_LAMBDA_INHIBITED;
+           __delay32(EOC_RESET_TIME);
+
+		 // Actually enable the Lambda
+          HVLambdaStartCharging();
+	  }
+	  else if (eoc_counts && (eoc_counts < EOC_MAX_COUNT)) 
+	  {
+		   // check window timeout for eoc_counts
+		  while (eoc_counts && (eoc_10ms_timer[0] <= 0)) 
+	      {
+		  	 eoc_counts--;
+	         if (eoc_counts) 
+	         { // move 10ms window timer up
+	         	for (n = 0; n < eoc_counts; n++) 
+	            {
+	               eoc_10ms_timer[n] = eoc_10ms_timer[n+1];
+	            }
+	         }
+		  }
+	  }
   }
-
-  // Enable the the thyratron trigger and Enable the Trigger Interrupt
-
+  
 
   //DPARER CHECK FOR REQUENCY MODULATION HERE
-  if (CheckSkipNextPulse()) {
+  if (CheckSkipNextPulse() || lambda_eoc_fault || lambda_eoc_happened) {
     this_pulse_skipped = 1;
   } else {
     this_pulse_skipped = 0;
+  // Enable the the thyratron trigger and Enable the Trigger Interrupt
     PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+
+	_INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
+	_INT1IE = 1;
   }
 
-  _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
-  _INT1IE = 1;
 
 }  
 

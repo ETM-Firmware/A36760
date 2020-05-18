@@ -25,6 +25,15 @@ unsigned int faults_high_voltage_status_reg;
 unsigned int faults_high_voltage_fault_reg;
 unsigned int faults_high_voltage_warning_reg;
 
+#define EOC_RESET_TIME      15000 /* 1.5ms in 0.1us step */
+#define EOC_MAX_COUNT	    3
+#define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
+unsigned char lambda_eoc_fault = 0;
+unsigned char eoc_counts = 0;
+int eoc_max_reached_timer = 0;
+int eoc_10ms_timer[EOC_MAX_COUNT];
+
+
 // THYRATRON HEATER FAULT REGISTERS
 unsigned int faults_thyratron_status_reg;
 unsigned int faults_thyratron_fault_reg;
@@ -269,7 +278,7 @@ void UpdateFaults(void) {
   if (PIN_HV_LAMBDA_SUM_FAULT == ILL_HV_LAMBDA_SUM_FAULT_FAULTED) {
     // Record the sum fault and check the other fault lines
     RecordThisHighVoltageFault(FAULT_HV_LAMBDA_SUM_FAULT);
-    
+        
     temp_u16int = MCP23017ReadSingleByte(&U64_MCP23017, MCP23017_REGISTER_GPIOA);
     if (temp_u16int >= 0xFA00) {
       global_debug_counter.i2c_bus_error++;
@@ -287,10 +296,20 @@ void UpdateFaults(void) {
       if (U64_MCP23017.input_port_a_in_ram & BIT_INPUT_HV_LAMBDA_PHASE_LOSS) {
 	RecordThisHighVoltageFault(FAULT_HV_LAMBDA_PHASE_LOSS);
       }
+      
     }
+    
+    if (lambda_eoc_fault) {
+  	  	RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);	// report eoc fault after sum fault happened
+    }
+   
   }
   
-  /*
+  if (lambda_eoc_fault && (eoc_max_reached_timer <= 0)) {
+  	  RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);	// report eoc fault after 1s delay
+  }
+
+ /*
     FAULT_LAMBDA_EOC_TIMEOUT is checked/set by the TMR1 Interrupt
   */
 
@@ -449,6 +468,9 @@ void ResetAllFaults(void) {
   // HIGH VOLTAGE FAULT REGISTERS
   faults_high_voltage_fault_reg    = 0;
   faults_high_voltage_warning_reg  = 0;
+  
+  lambda_eoc_fault = 0;
+  eoc_counts = 0;
   
   // THYRATRON HEATER FAULT REGISTERS
   faults_thyratron_fault_reg       = 0;

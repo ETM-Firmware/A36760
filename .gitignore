@@ -14,3 +14,4 @@
 # Emacs Files to Ignore
 *~
 *#
+*.bak
