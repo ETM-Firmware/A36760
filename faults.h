@@ -161,6 +161,7 @@ extern unsigned char lambda_eoc_fault;
 extern unsigned char eoc_counts;
 extern int eoc_max_reached_timer;
 extern int eoc_10ms_timer[EOC_MAX_COUNT];
+extern unsigned int eoc_counts_total;
 
 
 #define FAULT_ARC_OVER_COUNT_CONSECUTIVE          0x0001 // There have been too many consecutive arcs 

@@ -3057,7 +3057,7 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     false_trigger = 1;
   }
 
-  while (TMR1 < 3);  // 256 clock cycles, 25.6uS
+  while (TMR1 < 4);  // 256 clock cycles, 25.6uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
     false_trigger = 1;
   }
@@ -3168,7 +3168,8 @@ void _ISRNOPSV _T1Interrupt(void) {
 		  __delay32(DELAY_TCY_10US);
 		  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
 	 //	    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
-	  			lambda_eoc_happened = 1;	        
+	  			lambda_eoc_happened = 1;
+                eoc_counts_total++;	        
 		  }
 		} 
 	      }
@@ -3225,18 +3226,24 @@ void _ISRNOPSV _T1Interrupt(void) {
   
 
   //DPARER CHECK FOR REQUENCY MODULATION HERE
-  if (CheckSkipNextPulse() || lambda_eoc_fault || lambda_eoc_happened) {
-    this_pulse_skipped = 1;
+  if (lambda_eoc_fault || lambda_eoc_happened) {
+      this_pulse_skipped = 1;
   } else {
-    this_pulse_skipped = 0;
-  // Enable the the thyratron trigger and Enable the Trigger Interrupt
-    PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+	  if (CheckSkipNextPulse()) {
+	    this_pulse_skipped = 1;
+	  } else {
+	    this_pulse_skipped = 0;
+	  // Enable the the thyratron trigger and Enable the Trigger Interrupt
+	    PIN_THYRATRON_TRIGGER_ENABLE = OLL_THYRATRON_TRIGGER_ENABLED; // Enable the thyratron trigger pass through.
+      }
+     
+      _INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
+      _INT1IE = 1;
 
-	_INT1IF = 0;                                                  // Enable INT1 (thyratron trigger) interrupt
-	_INT1IE = 1;
   }
 
-
+  
+  
 }  
 
 

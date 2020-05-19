@@ -32,6 +32,7 @@ unsigned char lambda_eoc_fault = 0;
 unsigned char eoc_counts = 0;
 int eoc_max_reached_timer = 0;
 int eoc_10ms_timer[EOC_MAX_COUNT];
+unsigned int eoc_counts_total = 0;
 
 
 // THYRATRON HEATER FAULT REGISTERS
