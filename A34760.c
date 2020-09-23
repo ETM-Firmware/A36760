@@ -1957,9 +1957,17 @@ void Do10msTicToc(void) {
     }
     
     temp32 = 1562500;
+
+#ifdef __PFN_800_HZ
+    if (last_period < 100) {
+      last_period = 100;
+    }
+#else
     if (last_period < 345) {
       last_period = 345;
     }
+#endif
+    
     temp32 /= last_period;
     prf_deciherz = temp32;
     if (_T3IF) {

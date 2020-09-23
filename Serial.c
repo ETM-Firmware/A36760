@@ -803,7 +803,7 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
 
     case RAM_READ_AVERAGE_PULSE_FREQUENCY:
-      data_return = average_pulse_repetition_frequency_deci_herz;
+      data_return = prf_deciherz;
       break;
 
     case RAM_READ_AVERAGE_MAGNETRON_INPUT_POWER:

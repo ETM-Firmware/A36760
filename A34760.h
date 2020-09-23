@@ -27,6 +27,9 @@
 //#define __SELECT_ARI_BENCHTOP_MODE           // This will set the VPROG from the GUI and select the benchtop fault settings
 
 
+#define __PFN_800_HZ        // This will compile for 800HZ PFN
+
+
 #ifdef __SELECT_ARI_BENCHTOP_MODE
 #define __SET_MAGNETRON_OVER_SERIAL_INTERFACE  // If this is set the magnetron voltage/current is set over the serial interface
                                                // If this mode is not selected, the the set point is set over the analog interface
@@ -158,7 +161,12 @@
 */
 #define A34760_T1CON_VALUE             (T1_OFF & T1_IDLE_CON & T1_GATE_OFF & T1_PS_1_64 & T1_SOURCE_INT)
 #define TMR1_DELAY_HOLDOFF_US          52        // 50uS
+
+#ifdef __PFN_800_HZ
+#define TMR1_LAMBDA_CHARGE_TIME_US     1150      // 1.1500ms
+#else
 #define TMR1_LAMBDA_CHARGE_TIME_US     2400      // 2.400ms
+#endif
 #define TMR1_DELAY_HOLDOFF             (FCY_CLK_MHZ*TMR1_DELAY_HOLDOFF_US/64)    
 #define TMR1_LAMBDA_CHARGE_PERIOD      (FCY_CLK_MHZ*TMR1_LAMBDA_CHARGE_TIME_US/64)
 //#define TMR1_DELAY_HOLDOFF             24        //52.1uS
@@ -449,7 +457,7 @@ extern volatile unsigned char global_adc_ignore_this_sample;
 
 extern unsigned char a_b_selected_mode;
 
-
+extern unsigned int prf_deciherz;
 
 
 

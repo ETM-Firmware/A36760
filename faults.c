@@ -698,7 +698,13 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
     power_milli_joule *= 47;
     power_milli_joule >>= 14;
   */
+
+#ifdef __PFN_800_HZ
+  power_milli_joule *= 3280; // 2/3 the capacitance of normal PFN
+#else
   power_milli_joule *= 4920;
+#endif
+  
   power_milli_joule >>= 27;
   
   if (power_milli_joule >= 0xFFFF) {
