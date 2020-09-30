@@ -700,7 +700,8 @@ unsigned int CalculatePulseEnergyMilliJoules(unsigned int lambda_voltage) {
   */
 
 #ifdef __PFN_800_HZ
-  power_milli_joule *= 3280; // 2/3 the capacitance of normal PFN
+  //power_milli_joule *= 3280; // 2/3 the capacitance of normal PFN
+  power_milli_joule *= 2800; // Futher decreasing the capacitance to try and keep the Heater Resistance Flat 
 #else
   power_milli_joule *= 4920;
 #endif
