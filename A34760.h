@@ -72,10 +72,10 @@
 
 
 /* ------------------------------ CLOCK AND TIMING CONFIGURATION ------------------------- */
-//#define FCY_CLK                    29495000      // 29.495 MHz
-//#define FCY_CLK_MHZ                29.495        // 29.495 MHz
-#define FCY_CLK                    10000000      // 29.495 MHz
-#define FCY_CLK_MHZ                10.000        // 29.495 MHz
+#define FCY_CLK                    29495000      // 29.495 MHz
+#define FCY_CLK_MHZ                29.495        // 29.495 MHz
+//#define FCY_CLK                    10000000      // 29.495 MHz
+//#define FCY_CLK_MHZ                10.000        // 29.495 MHz
 
 #define UART1_BAUDRATE             9600        // U1 Baud Rate
 #define I2C_CLK                    100000        // Target I2C Clock frequency of 100KHz
@@ -162,6 +162,8 @@
 #define A34760_T1CON_VALUE             (T1_OFF & T1_IDLE_CON & T1_GATE_OFF & T1_PS_1_64 & T1_SOURCE_INT)
 #define TMR1_DELAY_HOLDOFF_US          52        // 50uS
 
+
+
 #ifdef __PFN_800_HZ
 #define TMR1_LAMBDA_CHARGE_TIME_US     1150      // 1.1500ms
 #else
@@ -199,7 +201,7 @@
 #define A34760_T5CON_VALUE     (T5_OFF & T5_IDLE_CON & T5_GATE_OFF & T5_PS_1_8 & T5_SOURCE_INT)
 #define A34760_PR5_VALUE_US    10000   // 10mS
 #define A34760_PR5_VALUE       (FCY_CLK_MHZ*A34760_PR5_VALUE_US/8)
-//#define A34760_PR5_VALUE       36869
+
 
 
 
@@ -232,7 +234,8 @@
 
 #define A34760_ADCON1_VALUE (ADC_MODULE_OFF & ADC_IDLE_STOP & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON)
 #define A34760_ADCON2_VALUE (ADC_VREF_AVDD_AVSS & ADC_SCAN_ON & ADC_SAMPLES_PER_INT_11 & ADC_ALT_BUF_OFF & ADC_ALT_INPUT_OFF)
-#define A34760_ADCON3_VALUE (ADC_SAMPLE_TIME_3 & ADC_CONV_CLK_SYSTEM & ADC_CONV_CLK_7Tcy2)
+//#define A34760_ADCON3_VALUE (ADC_SAMPLE_TIME_3 & ADC_CONV_CLK_SYSTEM & ADC_CONV_CLK_7Tcy2)
+#define A34760_ADCON3_VALUE (ADC_SAMPLE_TIME_3 & ADC_CONV_CLK_SYSTEM & ADC_CONV_CLK_10Tcy)
 #define A34760_ADCHS_VALUE  (ADC_CH0_POS_SAMPLEA_AN3 & ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN3 & ADC_CH0_NEG_SAMPLEB_VREFN)
 #define A34760_ADPCFG_VALUE (ENABLE_AN3_ANA & ENABLE_AN4_ANA & ENABLE_AN5_ANA & ENABLE_AN6_ANA & ENABLE_AN7_ANA & ENABLE_AN8_ANA & ENABLE_AN9_ANA & ENABLE_AN10_ANA & ENABLE_AN11_ANA & ENABLE_AN12_ANA & ENABLE_AN13_ANA)
 #define A34760_ADCSSL_VALUE (SKIP_SCAN_AN0 & SKIP_SCAN_AN1 & SKIP_SCAN_AN2 & SKIP_SCAN_AN14 & SKIP_SCAN_AN15)
@@ -283,7 +286,7 @@
 
 
 // ---- Hard Coded Delays ---- //
-#define DELAY_TCY_10US                          100       // 10us us at 10MHz Clock
+#define DELAY_TCY_10US                          (10*FCY_CLK_MHZ)       // 10us us at 10MHz Clock
 
 #define DELAY_PULSE_CABLE_SELECT_PROP_DELAY_US  20        // 20uS
                                                           // This delay must be longer than the propogation delay on the Isolated DAC Cable Select Line

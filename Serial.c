@@ -957,7 +957,8 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
 
     case RAM_READ_LAST_OSCCON_BEFORE_CRASH:
-      data_return = last_osccon;
+      //data_return = last_osccon;
+      data_return = timing_error_int1_count;
       break;
 
     case RAM_READ_PULSE_LATCH_RESET_ERROR:

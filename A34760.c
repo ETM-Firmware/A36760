@@ -1395,13 +1395,20 @@ void DoA34760StartUpCommon(void) {
   TMR2 = 0;
   _T2IF = 0;
 
+
   
+  /*  This was for a 10MHZ clock
   // Configure TMR3
   // Setup Timer 3 to measure interpulse period.
   T3CON = (T3_ON & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_64 & T3_SOURCE_INT);
   PR3 = 62500;  // 400mS
+  */
 
+  // For 29.495 MHz Clock
+  T3CON = (T3_ON & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_64 & T3_SOURCE_INT);
+  PR3 = 46085;  // 100mS
 
+  
   // Configure TMR4
   T4CON = A34760_T4CON_VALUE;
 
@@ -1955,9 +1962,12 @@ void Do10msTicToc(void) {
       average_pulse_repetition_frequency_deci_herz = RCFilter16Tau(average_pulse_repetition_frequency_deci_herz, ((prf_pulse_counter*125)>>1));
       prf_pulse_counter = 0;  
     }
-    
-    temp32 = 1562500;
 
+    temp32 = 156250;
+    temp32 *= FCY_CLK_MHZ;
+
+
+    // DPARKER DO THESE NEED TO BE BASED ON FCY_MHZ???
 #ifdef __PFN_800_HZ
     if (last_period < 100) {
       last_period = 100;
@@ -1971,7 +1981,7 @@ void Do10msTicToc(void) {
     temp32 /= last_period;
     prf_deciherz = temp32;
     if (_T3IF) {
-      // We are pulsing at less than 2.5Hz
+      // We are pulsing at less than 2.5Hz or 10Hz at 29.495 Mhz Clock
       // Set the rep rate to zero
       prf_deciherz = 0;
     }
@@ -3059,8 +3069,8 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   last_period = TMR3;
   TMR3 = 0;
   if (_T3IF) {
-    // The timer exceed it's period of 400ms - Will happen if the PRF is less than 2.5 Hz
-    last_period = 62501;  // This will indicate that the PRF is less than 2,5 Hz
+    // The timer exceed it's period
+    last_period = PR3 + 1; // Indicated that the PRF is below the value that can be measured  
   }
   _T3IF = 0;
 

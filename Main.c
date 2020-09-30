@@ -83,10 +83,10 @@
 
 /* Configuration Bit Settings */
 //_FOSC(LPRC & CSW_FSCM_OFF);
-_FOSC(ECIO & CSW_FSCM_OFF); // Primary Oscillator with PLL and Startup with User Selected Oscillator Source
+//_FOSC(ECIO & CSW_FSCM_OFF); // Primary Oscillator with PLL and Startup with User Selected Oscillator Source
 // DPARKER this is for use with 40MHz ext clock
 
-//_FOSC(FRC_PLL16 & CSW_FSCM_OFF); // Primary Oscillator with PLL and Startup with User Selected Oscillator Source
+_FOSC(FRC_PLL16 & CSW_FSCM_OFF); // Primary Oscillator with PLL and Startup with User Selected Oscillator Source
                                  // External Oscillator is 7.3738MHz with 16x PLL and 4x Clocks per Instruction cycle
                                  // This yields an Instruction Cycle Frequency of 29.4952 MHz
                                  // This yields an Instruction Cycle Time of 33.904nS
