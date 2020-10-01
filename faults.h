@@ -154,6 +154,16 @@ extern unsigned int faults_high_voltage_status_reg;
 extern unsigned int faults_high_voltage_fault_reg;
 extern unsigned int faults_high_voltage_warning_reg;
 
+#define EOC_RESET_TIME      15000 /* 1.5ms in 0.1us step */
+#define EOC_MAX_COUNT	    3
+#define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
+extern unsigned char lambda_eoc_fault;
+extern unsigned char eoc_counts;
+extern int eoc_max_reached_timer;
+extern int eoc_10ms_timer[EOC_MAX_COUNT];
+extern unsigned int eoc_counts_total;
+
+
 #define FAULT_ARC_OVER_COUNT_CONSECUTIVE          0x0001 // There have been too many consecutive arcs 
 #define FAULT_ARC_OVER_COUNT_FAST                 0x0002 // The arc rate exceeded the max arcs per short time period
 #define FAULT_ARC_OVER_COUNT_SLOW                 0x0004 // The arc rate exceeded the max arcs per long time period
@@ -352,11 +362,7 @@ extern unsigned int faults_control_board_warning_reg;
 
 
 #define FAULT_MASK_THYRATRON_STATE_HV_ON            (NO_FAULTS)
-#ifdef __PFN_800_HZ
-#define FAULT_MASK_HIGH_VOLTAGE_STATE_HV_ON         (FAULT_ARC_OVER_COUNT_FAST | FAULT_ARC_OVER_COUNT_SLOW | FAULT_HV_LAMBDA_SUM_FAULT | FAULT_HV_LAMBDA_EOC_TIMEOUT)
-#else
-#define FAULT_MASK_HIGH_VOLTAGE_STATE_HV_ON         (FAULT_ARC_OVER_COUNT_FAST | FAULT_ARC_OVER_COUNT_SLOW | FAULT_HV_LAMBDA_SUM_FAULT | FAULT_HV_LAMBDA_EOC_TIMEOUT)
-#endif
+#define FAULT_MASK_HIGH_VOLTAGE_STATE_HV_ON         (FAULT_ARC_OVER_COUNT_FAST | FAULT_ARC_OVER_COUNT_SLOW | FAULT_HV_LAMBDA_SUM_FAULT | FAULT_HV_LAMBDA_EOC_TIMEOUT | FAULT_HV_LAMBDA_OVER_TEMP | FAULT_HV_LAMBDA_INTERLOCK_FAULT | FAULT_HV_LAMBDA_LOAD_FAULT | FAULT_HV_LAMBDA_PHASE_LOSS)
 #ifndef __SELECT_ARI_BENCHTOP_MODE
 #define FAULT_MASK_CONTROL_BOARD_STATE_HV_ON        (FAULT_LAMBDA_OFF)
 #else

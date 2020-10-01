@@ -970,7 +970,7 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
 
     case RAM_READ_COUNT_LVD_INTERRUPT:
-      data_return = lvdinterrupt_counter;
+      data_return = eoc_counts_total; // should be lvdinterrupt_counter;
       break;
 
     case RAM_READ_LAST_ACTION_BEFORE_CRASH:
