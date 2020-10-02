@@ -25,7 +25,7 @@ unsigned int faults_high_voltage_status_reg;
 unsigned int faults_high_voltage_fault_reg;
 unsigned int faults_high_voltage_warning_reg;
 
-#define EOC_RESET_TIME      15000 /* 1.5ms in 0.1us step */
+
 #define EOC_MAX_COUNT	    3
 #define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
 unsigned char lambda_eoc_fault = 0;

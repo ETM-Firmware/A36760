@@ -60,7 +60,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>ICD3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.24</languageToolchainVersion>
+        <languageToolchainVersion>1.23</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <packs>
@@ -69,7 +69,7 @@
       <compileType>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibFileItem>C:/Program Files (x86)/Microchip/xc16/v1.24/lib/libdsp-elf.a</linkerLibFileItem>
+            <linkerLibFileItem>C:/Program Files (x86)/Microchip/xc16/v1.23/lib/libdsp-elf.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>

@@ -2888,7 +2888,7 @@ void HVLambdaStartCharging(void) {
   TMR1 = 0;
   _T1IF = 0;
   _T1IE = 1;
-  PR1 = (TMR1_LAMBDA_CHARGE_PERIOD);
+  PR1 = (TMR1_LAMBDA_CHARGE_PERIOD_TURN_ON);
   T1CONbits.TON = 1;
 
   // Setup T2 to roll in 100ms if there are no pulses
@@ -3120,11 +3120,13 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PR1 = (TMR1_LAMBDA_CHARGE_PERIOD - TMR1_DELAY_HOLDOFF);
   T1CONbits.TON = 1;
 
-  // Wait for the pulse latches to clear
-  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TMR1 < 20));
-  while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < 20));
+#define MAX_LATCH_RESET_TIME (FCY_CLK_MHZ * 2) // 128uS
   
-  if (TMR1 >= 20) {
+  // Wait for the pulse latches to clear
+  while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TMR1 < MAX_LATCH_RESET_TIME));
+  while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < MAX_LATCH_RESET_TIME));
+  
+  if (TMR1 >= MAX_LATCH_RESET_TIME) {
     // there was an error with the pulse latch reset 
     global_debug_counter.pulse_latch_reset_error++; 
   }
