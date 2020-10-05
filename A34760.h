@@ -165,7 +165,7 @@
 
 
 #ifdef __PFN_800_HZ
-#define TMR1_LAMBDA_CHARGE_TIME_US     1100      // 1.1000ms
+#define TMR1_LAMBDA_CHARGE_TIME_US     1050      // 1.050ms
 #else
 #define TMR1_LAMBDA_CHARGE_TIME_US     2400      // 2.400ms
 #endif
