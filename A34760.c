@@ -3049,6 +3049,10 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   Nop();
 
 
+  // ADD in 17 more instruction cycle delay
+  __delay32(17);
+    
+
   PIN_PULSE_ADC_TRIGGER = OLL_TRIGGER_PULSE_ADCS;                  // Trigger the conversion process on both ADCs
   _INT1IF = 0;
   _INT1IE = 0;
