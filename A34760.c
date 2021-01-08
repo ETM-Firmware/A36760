@@ -26,6 +26,8 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 #endif
 
 
+unsigned int thyratron_delay;
+
 unsigned int magnet_scaling_linear_factor;
 unsigned int magnet_scaling_constant_factor;
 unsigned int eeprom_write_failure_count;
@@ -1309,7 +1311,7 @@ void DoA34760StartUpCommon(void) {
   TRIS_PIN_SUM_FAULT_COPPER = TRIS_OUTPUT_MODE;
   TRIS_PIN_LATCH_RESET = TRIS_OUTPUT_MODE;
   TRIS_PIN_PULSE_LATCH_RESET = TRIS_OUTPUT_MODE;
-  TRIS_PIN_MAIN_CONTACTOR_CLOSE = TRIS_OUTPUT_MODE;
+  //TRIS_PIN_MAIN_CONTACTOR_CLOSE = TRIS_OUTPUT_MODE;  // DPARKER this is now the EOC input
   TRIS_PIN_SAMPLE_PFN_IREV = TRIS_OUTPUT_MODE;
   TRIS_PIN_RS422_DE = TRIS_OUTPUT_MODE;
   TRIS_PIN_MCU_CLOCK_OUT_TEST_POINT = TRIS_OUTPUT_MODE;
@@ -1507,7 +1509,9 @@ void DoA34760StartUpCommon(void) {
   */   
 
 
- 
+
+  thyratron_delay = TMR1_DELAY_HOLDOFF;
+  
 }
 
 
@@ -2240,7 +2244,7 @@ void DoMagnetronFilamentAdjust(void) {
 	break;
       }
     
-    
+
     temp32 >>= 7;
     look_up_position = (temp32 & 0b00111111);
     new_position = (signed int)look_up_position;
@@ -3324,17 +3328,17 @@ void _ISRNOPSV _ADCInterrupt(void) {
     pac_2_array[adc_result_index] = ADCBUF2;
     
     thyratron_cathode_heater_voltage_array[adc_result_index] = ADCBUF3;
-    thyratron_reservoir_heater_voltage_array[adc_result_index] = ADCBUF4;
+    thyratron_reservoir_heater_voltage_array[adc_result_index] = ADCBUF3;
     
-    magnetron_magnet_current_array[adc_result_index]= ADCBUF5;
-    magnetron_magnet_voltage_array[adc_result_index]= ADCBUF6;
+    magnetron_magnet_current_array[adc_result_index]= ADCBUF4;
+    magnetron_magnet_voltage_array[adc_result_index]= ADCBUF5;
     
-    magnetron_filament_voltage_array[adc_result_index] = ADCBUF7;
-    magnetron_filament_current_array[adc_result_index] = ADCBUF8;
+    magnetron_filament_voltage_array[adc_result_index] = ADCBUF6;
+    magnetron_filament_current_array[adc_result_index] = ADCBUF7;
 
     
-    lambda_vpeak_array[adc_result_index] = ADCBUF9;
-    lambda_vmon_array[adc_result_index] = ADCBUFA;
+    lambda_vpeak_array[adc_result_index] = ADCBUF8;
+    lambda_vmon_array[adc_result_index] = ADCBUF9;
     
     adc_result_index++;
     adc_result_index &= 0b01111111;
