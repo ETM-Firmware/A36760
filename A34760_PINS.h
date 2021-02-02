@@ -17,12 +17,24 @@
 
 #define PIN_HV_LAMBDA_INHIBIT                _LATD0
 #define TRIS_PIN_HV_LAMBDA_INHIBIT           _TRISD0
-#define OLL_HV_LAMBDA_INHIBITED              0
 
 // HV Lambda Input Pins
+#ifdef __PFN_800_HZ
+// This is an 800Hz PFN, use the alternate EOC input
 #define PIN_HV_LAMBDA_EOC_INPUT              _RB7   // PIN22 / RB7 / AN7
 #define TRIS_PIN_HV_LAMBDA_EOC_INPUT         _TRISB7
 #define ILL_HV_LAMBDA_AT_EOC                 1
+#define OLL_HV_LAMBDA_INHIBITED              0
+
+#else
+// This is a 400Hz PFN, use the standard EOC input
+#define PIN_HV_LAMBDA_EOC_INPUT              _RD2
+#define TRIS_PIN_HV_LAMBDA_EOC_INPUT         _TRISD2
+#define ILL_HV_LAMBDA_AT_EOC                 0
+#define OLL_HV_LAMBDA_INHIBITED              1
+
+#endif
+
 
 #define PIN_HV_LAMBDA_SUM_FAULT              _RC14
 #define TRIS_PIN_HV_LAMBDA_SUM_FAULT         _TRISC14

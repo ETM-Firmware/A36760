@@ -3073,17 +3073,17 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   
   false_trigger = 0;
 
-  while (TMR1 < 2);  // 128 clock cycles, 12.8uS
+  while (TMR1 < 6);  // 384 clock cycles, 12.8uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
     false_trigger = 1;
   }
 
-  while (TMR1 < 3);  // 192 clock cycles, 19.2uS
+  while (TMR1 < 9);  // 576 clock cycles, 19.2uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
     false_trigger = 1;
   }
 
-  while (TMR1 < 4);  // 256 clock cycles, 25.6uS
+  while (TMR1 < 12);  // 768 clock cycles, 25.6uS
   if (PIN_MODULATOR_DRIVE_INPUT != ILL_MODULATOR_DRIVE_ACTIVE) {
     false_trigger = 1;
   }
@@ -3093,7 +3093,6 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
     arc_detected = 1;
   }
 
-  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;  // Clear the pulse latches so we can detect a false trigger
 
   // Calculate the PRF
   last_period = TMR3;
@@ -3106,6 +3105,9 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
 
   while(!_T1IF);                                                   // what for the holdoff time to pass
 
+  PIN_PULSE_LATCH_RESET = OLL_PULSE_LATCH_RESET;  // Clear the pulse latches so we can detect a false trigger
+
+  
 
   // Read the state of the A_B select Optical input and adjust the system as nesseasry
   if (PIN_A_B_MODE_SELECT == ILL_A_MODE_SELECTED) {

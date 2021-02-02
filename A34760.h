@@ -27,8 +27,6 @@
 //#define __SELECT_ARI_BENCHTOP_MODE           // This will set the VPROG from the GUI and select the benchtop fault settings
 
 
-#define __PFN_800_HZ        // This will compile for 800HZ PFN
-
 
 #ifdef __SELECT_ARI_BENCHTOP_MODE
 #define __SET_MAGNETRON_OVER_SERIAL_INTERFACE  // If this is set the magnetron voltage/current is set over the serial interface
@@ -169,6 +167,7 @@
 #else
 #define TMR1_LAMBDA_CHARGE_TIME_US     2400      // 2.400ms
 #endif
+
 #define TMR1_DELAY_HOLDOFF             (FCY_CLK_MHZ*TMR1_DELAY_HOLDOFF_US/64)    
 #define TMR1_LAMBDA_CHARGE_PERIOD      (FCY_CLK_MHZ*TMR1_LAMBDA_CHARGE_TIME_US/64)
 #define TMR1_LAMBDA_CHARGE_PERIOD_TURN_ON ((FCY_CLK_MHZ * (TMR1_LAMBDA_CHARGE_TIME_US + 1000)) / 64)
