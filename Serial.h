@@ -198,6 +198,10 @@ unsigned int GenerateFilamentVprog(unsigned int iprog);
 #define RAM_READ_TARGET_ADJUST_MAX_COOLDOWN                     0xB6
 #define RAM_READ_TARGET_ADJUST_INITIAL_MAGNITUDE                0xB7
 
+#define RAM_READ_MAGNETRON_OVER_CURRENT_COUNT                   0xC0
+#define RAM_READ_MAGNETRON_UNDER_CURRENT_COUNT                  0xC1
+#define RAM_READ_PS_FAULT_COUNT                                 0xC2
+
 /*
 
 

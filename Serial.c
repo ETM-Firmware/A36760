@@ -797,6 +797,19 @@ unsigned int ReadFromRam(unsigned int ram_location) {
       break;
       
 
+    case RAM_READ_MAGNETRON_OVER_CURRENT_COUNT:
+      data_return = magnetron_over_current_count_persistent;
+      break;
+      
+    case RAM_READ_MAGNETRON_UNDER_CURRENT_COUNT:
+      data_return = magnetron_under_current_count_persistent;
+      break;
+
+    case RAM_READ_PS_FAULT_COUNT:
+      data_return = ps_fault_count_persistent;
+      break;
+
+      
       // Power information
     case RAM_READ_AVERAGE_PULSE_ENERGY:
       data_return = average_energy_per_pulse_milli_joules;

@@ -698,4 +698,10 @@ extern unsigned int scale_low_energy;
 #define MODE_ULTRA_LOW_DOSE_LOW_ENERGY    0x1020
 
 
+extern unsigned int magnetron_over_current_count_persistent;
+extern unsigned int magnetron_under_current_count_persistent;
+extern unsigned int ps_fault_count_persistent;
+
+
+
 #endif

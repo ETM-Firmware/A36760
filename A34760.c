@@ -26,6 +26,9 @@ const unsigned int FilamentLookUpTable[64] = {FILAMENT_LOOK_UP_TABLE_VALUES_FOR_
 #endif
 
 
+unsigned int eeprom_write_timer;
+#define UPDATE_EEPROM_PULSE_COUNTER_PERIOD         52560 // once per hour
+
 unsigned int thyratron_delay;
 
 unsigned int magnet_scaling_linear_factor;
@@ -129,6 +132,12 @@ unsigned int arc_counter_fast;
 unsigned int arc_counter_slow;
 unsigned int pulse_counter_fast;
 unsigned int pulse_counter_slow;
+unsigned int magnetron_over_current_count_persistent;
+unsigned int magnetron_under_current_count_persistent;
+unsigned int ps_fault_count_persistent;
+
+
+
 
 unsigned int led_pulse_count;
 
@@ -464,6 +473,17 @@ void DoStateMachine(void) {
 	}
       }
 
+
+      if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+	__delay32(100); // 10uS
+	if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+	  __delay32(100); // 10uS
+	  if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+	    RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+	  }
+	}
+      }
+      
       
       if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
 	linac_low_energy_target_current_set_point = linac_low_energy_target_current_set_point_gantry_mode;
@@ -828,9 +848,9 @@ void DoA34760StartUpCommon(void) {
       eeprom_write[3] = 0;
       eeprom_write[4] = 0;
       eeprom_write[5] = 0;
-      eeprom_write[6] = 0;
-      eeprom_write[7] = 0;
-      eeprom_write[8] = 0;
+      eeprom_write[6] = 1;
+      eeprom_write[7] = 1;
+      eeprom_write[8] = 1;
       eeprom_write[9] = 0;
       eeprom_write[10] = 0;
       eeprom_write[11] = 0;
@@ -846,9 +866,9 @@ void DoA34760StartUpCommon(void) {
       eeprom_data[3] = 0;
       eeprom_data[4] = 0;
       eeprom_data[5] = 0;
-      eeprom_data[6] = 0;
-      eeprom_data[7] = 0;
-      eeprom_data[8] = 0;
+      eeprom_data[6] = 1;
+      eeprom_data[7] = 1;
+      eeprom_data[8] = 1;
       eeprom_data[9] = 0;
       eeprom_data[10] = 0;
       eeprom_data[11] = 0;
@@ -875,6 +895,11 @@ void DoA34760StartUpCommon(void) {
   *unsigned_int_ptr = eeprom_data[5];
   unsigned_int_ptr++;                                        //unsigned_int_ptr now points to the most signigicant word of arc_counter_persistent
   *unsigned_int_ptr = eeprom_data[4];
+
+
+  magnetron_over_current_count_persistent = eeprom_data[6];
+  magnetron_under_current_count_persistent = eeprom_data[7];
+  ps_fault_count_persistent = eeprom_data[8];
   
   arc_counter_this_hv_on = 0;
   pulse_counter_this_hv_on = 0;
@@ -1962,6 +1987,14 @@ void Do10msTicToc(void) {
     _T5IF = 0;
     //10ms roll has occured
 
+    if (control_state == STATE_HV_ON) {
+      eeprom_write_timer++;
+      if (eeprom_write_timer > UPDATE_EEPROM_PULSE_COUNTER_PERIOD) {
+	SavePulseCountersToEEPROM();
+	eeprom_write_timer = 0;
+      }
+    }
+    
     time_since_last_trigger++;
     
     if (eoc_counts)	{
@@ -2654,6 +2687,11 @@ void SavePulseCountersToEEPROM(void) {
   eeprom_write_data[4] = *unsigned_int_ptr;
 
   // The values have now been saved to the array in RAM.  Save the RAM data to EEPROM
+
+  eeprom_write_data[6] = magnetron_over_current_count_persistent;
+  eeprom_write_data[7] = magnetron_under_current_count_persistent;
+  eeprom_write_data[8] = ps_fault_count_persistent;
+
   ETMEEPromWritePageFast(PAGE_1_PULSE_COUNTERS, eeprom_write_data);
   /*
   _wait_eedata();
@@ -2661,6 +2699,9 @@ void SavePulseCountersToEEPROM(void) {
   _wait_eedata();
   _write_eedata_row(EE_address_pulse_counter_repository_in_EEPROM, pulse_counter_repository_ram_copy);
   */
+  
+  eeprom_write_timer = 0;
+
 }
 
 
@@ -3089,10 +3130,18 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   }
 
   arc_detected = 0;
-  if ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) || (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT)) {
+  if (PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) {
     arc_detected = 1;
+    magnetron_over_current_count_persistent++;
   }
 
+  if (PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) {
+    arc_detected = 1;
+    magnetron_under_current_count_persistent++;
+  }
+
+
+  
 
   // Calculate the PRF
   last_period = TMR3;
@@ -3131,10 +3180,12 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   T1CONbits.TON = 1;
 
 #define MAX_LATCH_RESET_TIME (FCY_CLK_MHZ * 2) // 128uS
+
+  //__delay32(2700);
   
   // Wait for the pulse latches to clear
   while ((PIN_PULSE_OVER_CUR_LATCH == ILL_PULSE_OVER_CURRENT_FAULT) && (TMR1 < MAX_LATCH_RESET_TIME));
-  while ((PIN_PULSE_MIN_CUR_LATCH == ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < MAX_LATCH_RESET_TIME));
+  while ((PIN_PULSE_MIN_CUR_LATCH != ILL_PULSE_MIN_CURRENT_FAULT) && (TMR1 < MAX_LATCH_RESET_TIME));
   
   if (TMR1 >= MAX_LATCH_RESET_TIME) {
     // there was an error with the pulse latch reset 
@@ -3199,7 +3250,8 @@ void _ISRNOPSV _T1Interrupt(void) {
 		  if (PIN_HV_LAMBDA_EOC_INPUT != ILL_HV_LAMBDA_AT_EOC) {
 	 //	    RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);
 	  			lambda_eoc_happened = 1;
-                eoc_counts_total++;	        
+                eoc_counts_total++;
+		ps_fault_count_persistent++;
 		  }
 		} 
 	      }
