@@ -474,15 +474,15 @@ void DoStateMachine(void) {
       }
 
 
-      if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
-	__delay32(100); // 10uS
-	if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
-	  __delay32(100); // 10uS
-	  if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
-	    RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
-	  }
-	}
-      }
+      //      if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+      //	__delay32(100); // 10uS
+      //	if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+      //	  __delay32(100); // 10uS
+      //	  if (PIN_PULSE_MIN_CUR_LATCH == !ILL_PULSE_MIN_CURRENT_FAULT) {
+      //	    RecordThisThyratronFault(FAULT_THYR_FALSE_TRIGGER);
+      //	  }
+      //	}
+      //      }
       
       
       if (PIN_GANTRY_PORTAL_SELECT == ILL_GANTRY_MODE) {
@@ -1990,7 +1990,7 @@ void Do10msTicToc(void) {
     if (control_state == STATE_HV_ON) {
       eeprom_write_timer++;
       if (eeprom_write_timer > UPDATE_EEPROM_PULSE_COUNTER_PERIOD) {
-	SavePulseCountersToEEPROM();
+	//SavePulseCountersToEEPROM();
 	eeprom_write_timer = 0;
       }
     }
@@ -3179,7 +3179,7 @@ void _ISRFASTNOPSV _INT1Interrupt(void) {
   PR1 = (TMR1_LAMBDA_CHARGE_PERIOD - TMR1_DELAY_HOLDOFF);
   T1CONbits.TON = 1;
 
-#define MAX_LATCH_RESET_TIME (FCY_CLK_MHZ * 2) // 128uS
+#define MAX_LATCH_RESET_TIME (FCY_CLK_MHZ * 6) // 384uS
 
   //__delay32(2700);
   

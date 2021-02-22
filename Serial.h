@@ -80,6 +80,11 @@ unsigned int GenerateFilamentVprog(unsigned int iprog);
 #define CMD_SAVE_CNTRL_CAL_DATA_TO_EEPROM               0xEA
 
 
+#define CMD_SET_CNTRL_CAL_DATA_RAM_ONLY                 0xC0
+#define CMD_SET_SCALE_INTERLEAVED_RAM_ONLY              0xC1
+#define CMD_SET_SCALE_LOW_ENERGY_RAM_ONLY               0xC2
+#define CMD_SET_MAGNETRON_FILAMENT_CURRENT_RAM_ONLY     0xC3
+
 
 
 

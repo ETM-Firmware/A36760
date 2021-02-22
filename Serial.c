@@ -448,6 +448,17 @@ void ExecuteCommand(void) {
       }
       break;
 
+
+    case CMD_SET_CNTRL_CAL_DATA_RAM_ONLY:
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_LINEAR) {
+	  magnet_scaling_linear_factor = data_word;
+      }
+
+      if (command_string.register_byte == EEPROM_CNTRL_MAGNET_FACTOR_CONST) {
+	  magnet_scaling_constant_factor = data_word;
+      }
+      break;
+      
     case CMD_READ_CNTRL_CAL_DATA:
       return_data_word = 0;
 
@@ -489,17 +500,8 @@ void ExecuteCommand(void) {
       if (eeprom_write_complete) {
 	scale_interleaved = data_word;
       }
-
-      
-      /*
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_INTERLEAVED_POWER_SCALE] = data_word;
-      _wait_eedata();
-      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
-      */ 
       break;
-      
+
     case CMD_SET_SCALE_LOW_ENERGY:
       eeprom_write_complete = 0;
       eeprom_write_attempt = 0;
@@ -514,17 +516,16 @@ void ExecuteCommand(void) {
       if (eeprom_write_complete) {
 	scale_low_energy = data_word;
       }
-
-
-      /*
-      control_loop_cal_data_ram_copy[EEPROM_CNTRL_LOW_ENERGY_POWER_SCALE] = data_word;
-      _wait_eedata();
-      _erase_eedata(EE_address_control_loop_cal_data_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_control_loop_cal_data_in_EEPROM, control_loop_cal_data_ram_copy);
-      */   
       break;
 
+    case CMD_SET_SCALE_INTERLEAVED_RAM_ONLY:
+      scale_interleaved = data_word;
+      break;
+      
+    case CMD_SET_SCALE_LOW_ENERGY_RAM_ONLY:
+      scale_low_energy = data_word;
+      break;
+      
     case CMD_FORCE_SOFTWARE_RESTART:
       /*
 	We don't want to be forcing software resets on a production system
@@ -559,18 +560,15 @@ void ExecuteCommand(void) {
 	vtemp = GenerateFilamentVprog(itemp);
 	SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
       }
-
-      
-      /*
-      ps_filament_config_ram_copy[EEPROM_V_SET_POINT] = ps_filament.v_command_set_point;
-      ps_filament_config_ram_copy[EEPROM_I_SET_POINT] = ps_filament.i_command_set_point;
-      _wait_eedata();
-      _erase_eedata(EE_address_ps_filament_config_in_EEPROM, _EE_ROW);
-      _wait_eedata();
-      _write_eedata_row(EE_address_ps_filament_config_in_EEPROM, ps_filament_config_ram_copy);
-      */
       break;
 
+    case CMD_SET_MAGNETRON_FILAMENT_CURRENT_RAM_ONLY:
+      itemp = data_word;
+      vtemp = GenerateFilamentVprog(itemp);
+      SetPowerSupplyTarget(&ps_filament, vtemp, itemp);
+      break;
+
+      
     case CMD_CLEAR_PROCESSOR_RESET_DATA:
       // DPARKER using this command to reset "reset data"
       debug_status_register = 0;
