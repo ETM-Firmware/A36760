@@ -9,7 +9,7 @@
 */dist/default/debug/*
 *.production.cof
 *.production.map
-
+*/.generated_files/*
 
 # Emacs Files to Ignore
 *~

@@ -454,7 +454,7 @@
 
 
 // Configuration for Poly Conversions for Lambda Voltage to Lambda Current
-#define CONTROL_LOOP_CAL_DATA_DEFAULT_CONFIG        {0,950,750,0, 0,0,0,0, 0,0x7FFF,0x7FFF,0, 0,0,0,0}
+#define CONTROL_LOOP_CAL_DATA_DEFAULT_CONFIG        {0,850,750,0, 0,0,0,0, 0,0x7FFF,0x7FFF,0, 0,0,0,0}
 
 #define EEPROM_CNTRL_MAGNET_FACTOR_SQUARE   0
 #define EEPROM_CNTRL_MAGNET_FACTOR_LINEAR   1

@@ -26,14 +26,14 @@
   Therefore it is found at absolute location Page 4 word zero and mirrored at Page 5 word zero
 */
 
-#define EEPROM_REGISTER_MAGNET_SCALING_LINEAR       0
-#define EEPROM_REGISTER_MAGNET_SCALING_CONST        1
-#define EEPROM_REGISTER_SCALE_INTERLEAVED           2
-#define EEPROM_REGISTER_SCALE_LOW_ENERGY            3
-#define EEPROM_REGISTER_MAGNETRON_FILAMENT_CURRENT  4
+#define EEPROM_REGISTER_MAGNET_SCALING_LINEAR       0+32
+#define EEPROM_REGISTER_MAGNET_SCALING_CONST        1+32
+#define EEPROM_REGISTER_SCALE_INTERLEAVED           2+32
+#define EEPROM_REGISTER_SCALE_LOW_ENERGY            3+32
+#define EEPROM_REGISTER_MAGNETRON_FILAMENT_CURRENT  4+32
 
 
-#define PAGE_0_SETTINGS                             0
+#define PAGE_0_SETTINGS                             0+2
 #define PAGE_1_PULSE_COUNTERS                       1
 
 

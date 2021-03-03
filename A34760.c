@@ -807,7 +807,7 @@ void DoA34760StartUpCommon(void) {
     if (read_attempt > 15) {
       // The EEPROM is not working, signal a massive fault
       // DPARKER HOW TO SIGNAL THIS FAULT???
-      eeprom_data[0] = 950;
+      eeprom_data[0] = 850;
       eeprom_data[1] = 750;
       eeprom_data[2] = 0x7FFF;
       eeprom_data[3] = 0x7FFF;
