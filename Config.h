@@ -19,7 +19,7 @@
 
 
 
-//#define __PFN_800_HZ        // This will compile for 800HZ PFN
+#define __PFN_800_HZ        // This will compile for 800HZ PFN
                             // In 800Hz Mode, the alternate EOC input pin is used and timings are adjusted
 
 
