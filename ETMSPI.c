@@ -1,10 +1,12 @@
 #include "ETMSPI.h"
 
+#define  SPI_RX_OVFLOW_CLR     0xffbf   /* Clear receive overflow bit.*/
 
 unsigned long SendAndReceiveSPI(unsigned int data_word, unsigned char spi_port) {
   unsigned char spi_bus_status;
   unsigned int return_data;
-
+  unsigned int temp;
+  
   spi_bus_status = SPI_BUS_ACTIVE;
   SPI_TIMER_REGISTER = 0;
   SPI_TIMER_PERIOD = SPI_TIMEOUT_CYCLES;
@@ -53,6 +55,11 @@ unsigned long SendAndReceiveSPI(unsigned int data_word, unsigned char spi_port) 
 #if defined(_SPI1IF)
   if (spi_port == 1) {
     _SPI1IF = 0;
+    SPI1STAT &= SPI_RX_OVFLOW_CLR;
+    if(SPI1STATbits.SPIRBF)
+    {
+      temp = SPI1BUF;
+    }
     SPI1BUF = data_word;
     while (spi_bus_status == SPI_BUS_ACTIVE) {
       if (SPI_TIMER_INT_FLAG) {
@@ -94,6 +101,11 @@ unsigned long SendAndReceiveSPI(unsigned int data_word, unsigned char spi_port) 
   if (spi_port == 2) {
 
     _SPI2IF = 0;
+    SPI2STAT &= SPI_RX_OVFLOW_CLR;
+    if(SPI2STATbits.SPIRBF)
+    {
+      temp = SPI2BUF;
+    }
     SPI2BUF = data_word;
     while (spi_bus_status == SPI_BUS_ACTIVE) {
       if (SPI_TIMER_INT_FLAG) {
