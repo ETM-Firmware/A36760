@@ -26,7 +26,8 @@ unsigned int faults_high_voltage_fault_reg;
 unsigned int faults_high_voltage_warning_reg;
 
 
-#define EOC_MAX_COUNT	    100
+#define EOC_MAX_COUNT	    3
+#define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
 unsigned char lambda_eoc_fault = 0;
 unsigned char eoc_counts = 0;
 int eoc_max_reached_timer = 0;
