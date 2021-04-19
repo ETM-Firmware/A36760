@@ -26,12 +26,9 @@ unsigned int faults_high_voltage_fault_reg;
 unsigned int faults_high_voltage_warning_reg;
 
 
-#define EOC_MAX_COUNT	    3
-#define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
 unsigned char lambda_eoc_fault = 0;
-unsigned char eoc_counts = 0;
+unsigned char eoc_counts_consecutive = 0;
 int eoc_max_reached_timer = 0;
-int eoc_10ms_timer[EOC_MAX_COUNT];
 unsigned int eoc_counts_total = 0;
 
 
@@ -299,11 +296,7 @@ void UpdateFaults(void) {
       }
       
     }
-    
-    if (lambda_eoc_fault) {
-  	  	RecordThisHighVoltageFault(FAULT_HV_LAMBDA_EOC_TIMEOUT);	// report eoc fault after sum fault happened
-    }
-   
+       
   }
   
   if (lambda_eoc_fault && (eoc_max_reached_timer <= 0)) {
@@ -471,7 +464,7 @@ void ResetAllFaults(void) {
   faults_high_voltage_warning_reg  = 0;
   
   lambda_eoc_fault = 0;
-  eoc_counts = 0;
+  eoc_counts_consecutive = 0;
   
   // THYRATRON HEATER FAULT REGISTERS
   faults_thyratron_fault_reg       = 0;

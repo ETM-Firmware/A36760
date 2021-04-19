@@ -450,10 +450,8 @@ void DoStateMachine(void) {
     global_run_post_pulse_process = 0;
     
     lambda_eoc_fault = 0;
-    eoc_counts = 0;
+    eoc_counts_consecutive = 0;
     eoc_max_reached_timer = 0;
-    for (vtemp = 0; vtemp < EOC_MAX_COUNT; vtemp++)
-    	eoc_10ms_timer[vtemp] = 0;    
     
     // PIN_FAST_RESTART_STORAGE_CAP_OUTPUT = OLL_DO_FAST_RESTART; // THIS is a redundent command and should be removed 
 
@@ -1997,16 +1995,7 @@ void Do10msTicToc(void) {
     
     time_since_last_trigger++;
     
-    if (eoc_counts)	{
-    	if (eoc_counts < EOC_MAX_COUNT) { 
-	    	for (vtemp = 0; vtemp < EOC_MAX_COUNT; vtemp++)	{
-	        	if (eoc_10ms_timer[vtemp] > 0) eoc_10ms_timer[vtemp]--;
-	        }
-        }
-        else {
-        	if (eoc_max_reached_timer > 0) eoc_max_reached_timer--;
-        }
-    }
+   	if (eoc_max_reached_timer > 0) eoc_max_reached_timer--;
     
     led_pulse_count = ((led_pulse_count + 1) & 0b00001111);
     if (led_pulse_count == 0) {
@@ -3227,7 +3216,6 @@ void _ISRNOPSV _T1Interrupt(void) {
     If the lambda is at EOC, It enables the trigger & sets status bits to show that the lambda is not charging and that the system is ready to fire.    
   */
   unsigned char lambda_eoc_happened = 0;
-  unsigned char n;
 
   last_known_action = LAST_ACTION_T1_INT;
   
@@ -3259,51 +3247,42 @@ void _ISRNOPSV _T1Interrupt(void) {
 	  }
 
       if (lambda_eoc_happened) {
-      	if (!eoc_counts) {
-		   eoc_10ms_timer[0] = EOC_TIMER_WINDOW;
-		   eoc_counts = 1;
-		}
-	    else {
-	       eoc_counts++;
-	       if (eoc_counts >= EOC_MAX_COUNT) {
-	          eoc_counts = EOC_MAX_COUNT;
-	          lambda_eoc_fault = 1;  // declare EOC fault            
-	       }
-	       else {
-	          eoc_10ms_timer[eoc_counts - 1] = EOC_TIMER_WINDOW;  // remember the new window start time
-	       }
-	    }
-
+      	eoc_counts_consecutive++;
+        if (eoc_counts_consecutive > EOC_MAX_COUNT)
+        {
+            lambda_eoc_fault = 1;  // declare EOC fault            
+        }
+                
       }
+      else
+      	eoc_counts_consecutive = 0;
       
 	  if (lambda_eoc_fault) {
 	  	 // == 10, need to hold 1s to find more PS info before declaring a fault 
-         eoc_max_reached_timer = 100;    
+         eoc_max_reached_timer = EOC_FAULT_DELAY_TIME;    
 	  }
 	  else if (lambda_eoc_happened) {
 	  	 // == 1, reset HV PS, skip one pulse
 	       PIN_HV_LAMBDA_ENABLE = !OLL_HV_LAMBDA_ENABLED;
   		   PIN_HV_LAMBDA_INHIBIT = OLL_HV_LAMBDA_INHIBITED;
-           __delay32(EOC_RESET_TIME);
-
+           
+           switch (eoc_counts_consecutive)
+           {
+           	case 1:
+            	__delay32(EOC_RESET_TIME_1p5ms);
+            	break;
+            case 2:
+            	__delay32(EOC_RESET_TIME_3ms);
+           	    break;
+            default:
+            	__delay32(EOC_RESET_TIME_5ms);
+           	    break;
+           }
+           
 		 // Actually enable the Lambda
           HVLambdaStartCharging();
 	  }
-	  else if (eoc_counts && (eoc_counts < EOC_MAX_COUNT)) 
-	  {
-		   // check window timeout for eoc_counts
-		  while (eoc_counts && (eoc_10ms_timer[0] <= 0)) 
-	      {
-		  	 eoc_counts--;
-	         if (eoc_counts) 
-	         { // move 10ms window timer up
-	         	for (n = 0; n < eoc_counts; n++) 
-	            {
-	               eoc_10ms_timer[n] = eoc_10ms_timer[n+1];
-	            }
-	         }
-		  }
-	  }
+
   }
   
 

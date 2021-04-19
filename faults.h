@@ -154,13 +154,15 @@ extern unsigned int faults_high_voltage_status_reg;
 extern unsigned int faults_high_voltage_fault_reg;
 extern unsigned int faults_high_voltage_warning_reg;
 
-#define EOC_RESET_TIME      (1500 * FCY_CLK_MHZ)  /* 1.5ms in 0.1us step */
-#define EOC_MAX_COUNT	    3
-#define EOC_TIMER_WINDOW   	100	  /* 1s in 10ms step */
+#define EOC_RESET_TIME_1p5ms    (1500 * FCY_CLK_MHZ)  /* 1.5ms */
+#define EOC_RESET_TIME_3ms      (3000 * FCY_CLK_MHZ)  /* 1.5ms */
+#define EOC_RESET_TIME_5ms      (5000 * FCY_CLK_MHZ)  /* 1.5ms */
+
+#define EOC_MAX_COUNT	    10
+#define EOC_FAULT_DELAY_TIME   	100	  /* 1s in 10ms step, delay fault report for data logging */
 extern unsigned char lambda_eoc_fault;
-extern unsigned char eoc_counts;
+extern unsigned char eoc_counts_consecutive;
 extern int eoc_max_reached_timer;
-extern int eoc_10ms_timer[EOC_MAX_COUNT];
 extern unsigned int eoc_counts_total;
 
 
