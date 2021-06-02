@@ -158,7 +158,7 @@
   x64 multiplier will yield max period of 142mS, 2.17uS per tick
 */
 #define A34760_T1CON_VALUE             (T1_OFF & T1_IDLE_CON & T1_GATE_OFF & T1_PS_1_64 & T1_SOURCE_INT)
-#define TMR1_DELAY_HOLDOFF_US          152        // 50uS
+#define TMR1_DELAY_HOLDOFF_US          252        // 50uS
 
 
 
